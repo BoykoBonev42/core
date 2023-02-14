@@ -1,3 +1,5 @@
+1.20.2
+chore: bump due to dependencies update
 1.20.1
 feat: added bundleTo methods to the group
 1.20.0
