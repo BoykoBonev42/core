@@ -2123,7 +2123,7 @@ Next, go to the `startAppWithWorkspace()` function and modify the existing code 
 try {
     const workspace = await glue.workspaces.restoreWorkspace("Client Space", restoreConfig);
 
-    await raiseNotificationOnWorkspaceOpen(glue, client.name, workspace);
+    await raiseNotificationOnWorkspaceOpen(glue, client.clientName, workspace);
 } catch (error) {
     console.error(error.message);
 };
