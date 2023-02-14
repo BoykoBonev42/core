@@ -1,3 +1,5 @@
+1.21.2
+fix: Fix handler returned from raise to have 'instance' type.
 1.21.1
 feat: added support for bundleItemTo
 1.21.0

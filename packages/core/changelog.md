@@ -1,4 +1,5 @@
-5.8.1
+5.9.0
+feat: added experimental support for running the platform as a workspace frame inside an iframe
 fix: updated ws to ^8.12.1, which fixes a regression in ws when bundling for the browser
 5.8.0
 feat: updated all dependencies to the latest major versions
