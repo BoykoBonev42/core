@@ -401,7 +401,7 @@ export class IntentsController implements LibController {
 
         return {
             request,
-            handler: { ...handler, instanceId },
+            handler: { ...handler, instanceId, type: "instance" },
             result: result.returned
         };
     }

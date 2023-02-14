@@ -88,7 +88,8 @@ describe('raise()', () => {
         const intentResult = await glue.intents.raise(intentRequest);
         const expectedHandler = {
             ...intentHandler,
-            instanceId: intentResult.handler.instanceId
+            instanceId: intentResult.handler.instanceId,
+            type: "instance"
         };
 
         const appInstances = glue.appManager.application(appName).instances;
@@ -162,7 +163,8 @@ describe('raise()', () => {
         const intentResult = await glue.intents.raise(intentRequest);
         const expectedHandler = {
             ...intentHandler,
-            instanceId: intentResult.handler.instanceId
+            instanceId: intentResult.handler.instanceId,
+            type: "instance"
         };
 
         const appInstances = glue.appManager.application(appName).instances;
