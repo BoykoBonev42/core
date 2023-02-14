@@ -39,7 +39,7 @@ export default class WebPlatformTransport implements Transport {
     private parentInExtMode = false;
 
     private readonly webNamespace = "g42_core_web";
-    private readonly parent: Window | undefined;
+    private parent: Window | undefined;
     private readonly parentType: "opener" | "top" | "workspace" | undefined;
     private readonly parentPingTimeout = 5000;
     private readonly connectionRequestTimeout = 7000;
@@ -264,11 +264,59 @@ export default class WebPlatformTransport implements Transport {
     private async waitParent(target: Window, parentType: "opener" | "top" | "workspace"): Promise<void> {
         const connectionNotPossibleMsg = "Cannot initiate glue, because this window was not opened or created by a glue client";
 
+        this.logger.debug("Checking the default parent");
+
+        const defaultParentCheck = await this.isParentCheckSuccess(this.tryFindProxy(target, parentType));
+
+        if (defaultParentCheck.success) {
+            this.logger.debug("The default parent was found!");
+            return;
+        }
+
+        this.logger.debug("the default parent check failed, trying to find a g42x");
+
+        const extensionCheck = this.extContentAvailable ? await this.isParentCheckSuccess(this.requestConnectionPermissionFromExt()) : { success: false };
+
+        if (extensionCheck.success) {
+            this.logger.debug("G42X was found!");
+            return;
+        }
+
+        if (parentType === "opener") {
+            throw new Error(connectionNotPossibleMsg);
+        }
+
+        this.logger.debug("the default and g42x parent checks failed, trying the direct parent, if it is different than the top");
+
+        const directParentCheck = window.top !== window.parent ? await this.isParentCheckSuccess(this.tryFindProxy(window.parent, parentType)) : { success: false };
+
+        if (directParentCheck.success) {
+            this.logger.debug("The direct parent was found!");
+            this.parent = window.parent;
+            return;
+        }
+
+        throw new Error(connectionNotPossibleMsg);
+    }
+
+    private async isParentCheckSuccess(parentCheck: Promise<void>): Promise<{ success: boolean }> {
+        try {
+            await parentCheck;
+
+            return { success: true };
+        } catch (error) {
+            return { success: false };
+        }
+    }
+
+    private tryFindProxy(target: Window, parentType: "opener" | "top" | "workspace"): Promise<void> {
+        const connectionNotPossibleMsg = "Cannot initiate glue, because this window was not opened or created by a glue client";
+
         const parentCheck = PromisePlus<void>((resolve, reject) => {
 
-            const isIframe = window.self !== window.top;
+            const iAmTop = window.self === window.top;
 
-            if (parentType === "top" && !isIframe) {
+            if (parentType === "top" && iAmTop) {
                 return reject(connectionNotPossibleMsg);
             }
 
@@ -295,21 +343,7 @@ export default class WebPlatformTransport implements Transport {
             }
         });
 
-        if (!this.extContentAvailable) {
-            return parentCheck;
-        }
-
-        try {
-            await parentCheck;
-
-            return;
-        } catch (error) {
-            this.logger.debug("the parent check failed, but there is an associated extension content script, requesting permission...");
-            // all attempts failed, but there is a glue extension content script
-            // requesting connection permission there
-            await this.requestConnectionPermissionFromExt();
-        }
-
+        return parentCheck;
     }
 
     private setUpMessageListener(): void {
@@ -676,7 +710,6 @@ export default class WebPlatformTransport implements Transport {
     // --- ext methods ---
 
     private requestConnectionPermissionFromExt(): Promise<void> {
-
         // here I know that a content script is started, but not sure if it is ready
 
         return this.waitForContentScript()
