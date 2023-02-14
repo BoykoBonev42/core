@@ -204,7 +204,13 @@ export class GlueController {
         if (!intent) return false;
 
         if (typeof this.intent === "object" && this.intent.target === "reuse") {
-            return !intent.handlers.find(handler => handler.applicationName === app.name && handler.type === "instance" && handler.instanceId);
+            const handlersForCurrentIntent = intent.handlers.filter(handler => handler.applicationName === app.name);
+
+            if (!handlersForCurrentIntent.length) return false;
+
+            const openedInstance = handlersForCurrentIntent.some(handler => handler.instanceId);
+
+            return !openedInstance;
         }
 
         return !!intent.handlers.find((handler) => handler.applicationName === app.name);

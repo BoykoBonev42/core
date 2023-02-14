@@ -1,3 +1,5 @@
+1.2.1
+fix: checking if app is a handler for target 'reuse' in glue42 enterprise
 1.2.0
 feat: updated all dependencies to the latest major versions
 1.1.0
