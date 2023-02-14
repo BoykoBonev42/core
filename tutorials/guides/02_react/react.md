@@ -1613,7 +1613,7 @@ All Workspaces are contained in a specialized standalone web app called [Workspa
 
 Create a **Client Details** app that will be used for showing client information by following these steps:
 
-- Create a new React app named `client-details` in the root directory of your [**Glue42 Core**](https://glue42.com/core/) project following the instructions in [Chapter 1.5.](#1_initial_setup-15_react_project_setup).
+- Create a new React app named `client-details` in the root directory of your [**Glue42 Core**](https://glue42.com/core/) project following the instructions in [Chapter 1.4.](#1_initial_setup-14_react_project_setup).
 
 - Create a `ClientDetails.jsx` file in `/client-details/src` and paste the following code:
 
