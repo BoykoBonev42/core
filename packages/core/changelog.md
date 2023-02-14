@@ -1,3 +1,5 @@
+5.8.1
+fix: updated ws to ^8.12.1, which fixes a regression in ws when bundling for the browser
 5.8.0
 feat: updated all dependencies to the latest major versions
 5.7.10
