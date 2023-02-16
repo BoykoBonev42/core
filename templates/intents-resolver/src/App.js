@@ -44,7 +44,8 @@ const App = () => {
 
     const app = glue.appManager.application(handler.applicationName);
 
-    return app.title || handler.applicationName;
+    // App can be undefined if it's an iframe
+    return app ? app.title || app.name : handler.applicationName;
   };
 
   const subscribeOnHandlerAdded = () => {
@@ -95,82 +96,90 @@ const App = () => {
 
       <div className='row mt-3' style={{ cursor: "default" }}>
         <div className='col'>
-          <h3 style={{ margin: 0 }}>Choose an app to {glue.intents.resolver.intent}</h3>
+          <h3 style={{ margin: 0 }}>Choose an app to {typeof glue.intents.resolver.intent === "object" ? glue.intents.resolver.intent.intent : glue.intents.resolver.intent}</h3>
         </div>
       </div>
 
-      <div className='row mt-3' style={{ cursor: "default" }}>
-        <div className='col'>
-          <h5>Start new:</h5>
-        </div>
-      </div>
-
-      <ul className='list-group'>
-        {handlers
-          .filter((handler) => !handler.instanceId)
-          .map((handler) => (
-            <li
-              className='list-group-item list-group-item-action d-flex justify-content-between align-items-center'
-              key={handler.id}
-              onClick={() => submitHandler(handler.id)}
-              style={{cursor: "pointer"}}
-            >
-              <span>
-                {handler.applicationIcon ? (
-                  <img
-                    src={'data:image/png;base64, ' + handler.applicationIcon}
-                    alt=''
-                    style={{ width: 16 }}
-                    className='mr-3'
-                  ></img>
-                ) : (
-                  <i className='icon-app mr-3'></i>
-                )}
-                { handler.title || handler.applicationName }
-              </span>
-              <span className={`badge badge-info badge-pill`}>app</span>
-            </li>
-          ))}
-      </ul>
-
-      {!!handlers.filter((handler) => handler.instanceId).length && (
-        <>
-          <div className='row mt-3'>
-            <div className='col'>
-              <h5>Use already running:</h5>
+      {
+        !!handlers.filter((handler) => !handler.instanceId).length && (
+          <>
+            <div className='row mt-3'>
+              <div className='col'>
+                <h5>Start new:</h5>
+              </div>
             </div>
-          </div>
 
-          <ul className='list-group'>
-            {handlers
-              .filter((handler) => handler.instanceId)
-              .map((handler) => (
-                <li
-                  className='list-group-item list-group-item-action d-flex justify-content-between align-items-center'
-                  key={handler.id}
-                  onClick={() => submitHandler(handler.id)}
-                  style={{cursor: "pointer"}}
-                >
-                  <span>
-                    {handler.applicationIcon ? (
-                      <img
-                        src={'data:image/png;base64, ' + handler.applicationIcon}
-                        alt=''
-                        style={{ width: 16 }}
-                        className='mr-3'
-                      ></img>
-                    ) : (
-                      <i className='icon-app mr-3'></i>
-                    )}
-                    {handler.title || handler.applicationName}
-                  </span>
-                  <span className={`badge badge-secondary badge-pill`}>inst</span>
-                </li>
-              ))}
-          </ul>
-        </>
-      )}
-    </div>
+            <ul className='list-group'>
+              {handlers
+                .filter((handler) => !handler.instanceId)
+                .map((handler) => (
+                  <li
+                    className='list-group-item list-group-item-action d-flex justify-content-between align-items-center'
+                    key={handler.id}
+                    onClick={() => submitHandler(handler.id)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span>
+                      {handler.applicationIcon ? (
+                        <img
+                          src={'data:image/png;base64, ' + handler.applicationIcon}
+                          alt=''
+                          style={{ width: 16 }}
+                          className='mr-3'
+                        ></img>
+                      ) : (
+                        <i className='icon-app mr-3'></i>
+                      )}
+                      {handler.title || handler.applicationName}
+                    </span>
+                    <span className={`badge badge-info badge-pill`}>app</span>
+                  </li>
+                ))}
+            </ul>
+          </>
+        )
+      }
+
+      {
+        !!handlers.filter((handler) => handler.instanceId).length && (
+          <>
+            <div className='row mt-3'>
+              <div className='col'>
+                <h5>Use already running:</h5>
+              </div>
+            </div>
+
+            <ul className='list-group'>
+              {handlers
+                .filter((handler) => handler.instanceId)
+                .map((handler) => (
+                  <li
+                    className='list-group-item list-group-item-action d-flex justify-content-between align-items-center'
+                    key={handler.id}
+                    onClick={() => submitHandler(handler.id)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span>
+                      {handler.applicationIcon ? (
+                        <img
+                          src={'data:image/png;base64, ' + handler.applicationIcon}
+                          alt=''
+                          style={{ width: 16 }}
+                          className='mr-3'
+                        ></img>
+                      ) : (
+                        <i className='icon-app mr-3'></i>
+                      )}
+                      {handler.title || handler.applicationName}
+                    </span>
+                    <span className={`badge badge-secondary badge-pill`}>inst</span>
+                  </li>
+                ))}
+            </ul>
+          </>
+        )
+      }
+    </div >
   );
 };
 
