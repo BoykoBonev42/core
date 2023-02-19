@@ -1,6 +1,6 @@
 {
     "name": "@glue42/web",
-    "version": "2.14.2",
+    "version": "2.15.0",
     "description": "Glue42 Core client application package",
     "main": "dist/web.umd.js",
     "module": "dist/web.es.js",
