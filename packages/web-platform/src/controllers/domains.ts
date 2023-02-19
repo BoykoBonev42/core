@@ -1,5 +1,5 @@
 import { Glue42WebPlatform } from "../../platform";
-import { CoreClientData, InternalPlatformConfig, LibController, LibDomains, PlatformDomain } from "../common/types";
+import { CoreClientData, InternalPlatformConfig, PlatformDomain } from "../common/types";
 import { libDomainDecoder } from "../shared/decoders";
 import { Glue42Web } from "@glue42/web";
 import logger from "../shared/logger";
@@ -47,6 +47,10 @@ export class DomainsController {
     public validateDomain(domainName: string): void {
 
         const domain = this.domains[domainName];
+
+        if (!domain) {
+            throw new Error(`Accessing a missing domain: ${domainName}. Mostly likely this is due to accessing Core Plus exclusive features.`);
+        }
 
         const decoder = domain.domainNameDecoder ? domain.domainNameDecoder : libDomainDecoder;
 

@@ -16,7 +16,6 @@ export interface PlatformDomain {
     domainNameDecoder?: Decoder<string>;
 }
 
-
 export interface OperationCheckConfig {
     operation: string;
 }

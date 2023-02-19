@@ -27,6 +27,9 @@ module.exports = {
             groupName: 'system'
         },
         {
+            groupName: 'themes'
+        },
+        {
             groupName: 'appManager'
         },
         {

@@ -115,7 +115,7 @@ export class PlatformController {
         const controlMessage: Glue42WebPlatform.ControlMessage = Object.assign({}, args, {
             commandId: generate(),
             callerId, callerType
-        })
+        });
 
         this.logger?.trace(`[${controlMessage.commandId}] received a command for a valid domain: ${args.domain} from ${callerType}: ${callerId}, forwarding to the appropriate controller`);
 

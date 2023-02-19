@@ -18,7 +18,7 @@ export interface LibController {
     handleBridgeMessage(args: any): Promise<void>;
 }
 
-export type LibDomains = "system" | "windows" | "appManager" | "layouts" | "notifications" | "intents" | "channels" | "extension";
+export type LibDomains = "system" | "windows" | "appManager" | "layouts" | "notifications" | "intents" | "channels" | "extension" | "themes";
 
 export interface BridgeOperation {
     name: string;

@@ -20,7 +20,7 @@ export class NotificationsController implements LibController {
         requestPermission: { name: "requestPermission", resultDecoder: permissionRequestResultDecoder, execute: this.handleRequestPermission.bind(this) },
         getPermission: { name: "getPermission", resultDecoder: permissionQueryResultDecoder, execute: this.handleGetPermission.bind(this) },
         operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
-    }
+    };
 
     constructor(
         private readonly glueController: GlueController,

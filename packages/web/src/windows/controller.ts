@@ -3,7 +3,7 @@ import { Glue42Core } from "@glue42/core";
 import { Glue42Web } from "../../web";
 import { GlueBridge } from "../communication/bridge";
 import { nonEmptyStringDecoder, windowOpenSettingsDecoder, windowOperationTypesDecoder } from "../shared/decoders";
-import { LibController, LibDomains, OperationCheckConfig, OperationCheckResult } from "../shared/types";
+import { LibController, OperationCheckConfig, OperationCheckResult } from "../shared/types";
 import { HelloSuccess, OpenWindowConfig, CoreWindowData, WindowHello, operations, WindowBoundsResult, WindowTitleConfig, WindowUrlResult, WindowMoveResizeConfig, WindowProjection, FocusEventData } from "./protocol";
 import {
     default as CallbackRegistryFactory,
@@ -311,7 +311,7 @@ export class WindowsController implements LibController {
         try {
             await this.bridge.send<OperationCheckConfig, OperationCheckResult>("windows", systemOperations.operationCheck, { operation: "focusChange" });
         } catch (error) {
-            this.logger.warn(`The platform of this client is outdated and does not support focus tracking, disabling focus events for this client.`);
+            this.logger.warn("The platform of this client is outdated and does not support focus tracking, disabling focus events for this client.");
             return;
         }
 

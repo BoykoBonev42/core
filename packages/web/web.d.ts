@@ -114,6 +114,7 @@ export namespace Glue42Web {
         channels: Glue42Web.Channels.API;
         appManager: Glue42Web.AppManager.API;
         intents: Glue42Web.Intents.API;
+        themes?: Glue42Web.Themes.API;
         workspaces?: Glue42Workspaces.API;
     }
 
@@ -1456,6 +1457,43 @@ export namespace Glue42Web {
              * The data returned by the intent implementation when handling the intent.
              */
             result?: any;
+        }
+    }
+
+    /**
+     * @intro
+     * Very helpful Themes description
+     */
+    namespace Themes {
+        export interface API {
+            /**
+             * Returns the current theme.
+             * @param request can be the intent's name or an IntentRequest object carrying the intent, and its optional target, context and start options (see "startNew").
+             * @returns Promise that resolves with IntentResult.
+             */
+            getCurrent(): Promise<Theme>;
+
+            /**
+             * Returns list of available themes
+             */
+            list(): Promise<Theme[]>;
+
+            /**
+             * Notifies you when the theme is changed.
+             * @param callback Callback to handle the event. Receives the theme object as an argument.
+             */
+            onChanged(callback: (theme: Theme) => any): void;
+
+            /**
+             * Selects a new theme
+             * @param name The name of the theme
+             */
+            select(name: string): Promise<void>;
+        }
+
+        export interface Theme {
+            displayName: string;
+            name: string;
         }
     }
 }

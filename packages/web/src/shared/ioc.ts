@@ -19,7 +19,8 @@ import { Notification } from "../notifications/notification";
 import { ExtController } from "../extension/controller";
 import { EventsDispatcher } from "./dispatcher";
 import { PreferredConnectionController } from "../communication/preferred";
-import { LegacyIntentsHelper } from '../intents/legacyHelper';
+import { LegacyIntentsHelper } from "../intents/legacyHelper";
+import { ThemesController } from "../themes/controller";
 
 export class IoC {
     private _coreGlue!: Glue42Core.GlueCore;
@@ -34,6 +35,7 @@ export class IoC {
     private _intentsControllerInstance!: IntentsController;
     private _legacyIntentsHelperInstance!: LegacyIntentsHelper;
     private _channelsControllerInstance!: ChannelsController;
+    private _themesControllerInstance!: ThemesController;
     private _extensionController!: ExtController;
     private _systemControllerInstance!: SystemController;
     private _bridgeInstance!: GlueBridge;
@@ -48,8 +50,9 @@ export class IoC {
         intents: this.intentsController,
         channels: this.channelsController,
         system: this.systemController,
-        extension: this.extensionController
-    }
+        extension: this.extensionController,
+        themes: this.themesController
+    };
 
     public get communicationId(): string {
         return this._communicationId;
@@ -91,6 +94,14 @@ export class IoC {
         }
 
         return this._layoutsControllerInstance;
+    }
+
+    public get themesController(): ThemesController {
+        if (!this._themesControllerInstance) {
+            this._themesControllerInstance = new ThemesController();
+        }
+
+        return this._themesControllerInstance;
     }
 
     public get notificationsController(): NotificationsController {

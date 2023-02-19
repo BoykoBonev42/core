@@ -2,15 +2,16 @@
 import { Glue42Core } from "@glue42/core";
 import { libDomainDecoder } from "../shared/decoders";
 import { PromisePlus } from "../shared/promise-plus";
-import { BridgeOperation, LibController, LibDomains } from "../shared/types";
-import { GlueClientControlName, GlueWebPlatformControlName, GlueWebPlatformStreamName } from "./constants";
+import { systemOperations } from "../shared/systemOperations";
+import { BridgeOperation, LibController, LibDomains, OperationCheckConfig, OperationCheckResult } from "../shared/types";
+import { GlueClientControlName, GlueCorePlusThemesStream, GlueWebPlatformControlName, GlueWebPlatformStreamName } from "./constants";
 
 export class GlueBridge {
     private readonly platformMethodTimeoutMs = 10000;
     private controllers!: { [key in LibDomains]: LibController };
     private sub!: Glue42Core.AGM.Subscription;
 
-    constructor(private readonly coreGlue: Glue42Core.GlueCore, private readonly communicationId: string) { }
+    constructor(private readonly coreGlue: Glue42Core.GlueCore, private readonly communicationId: string) {}
 
     public get contextLib(): Glue42Core.Contexts.API {
         return this.coreGlue.contexts;
@@ -54,14 +55,22 @@ export class GlueBridge {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public async send<OutBound, InBound>(domain: LibDomains, operation: BridgeOperation, operationData: OutBound, options?: Glue42Core.AGM.InvokeOptions): Promise<InBound> {
+    public async send<OutBound, InBound>(domain: LibDomains, operation: BridgeOperation, operationData: OutBound, options?: Glue42Core.AGM.InvokeOptions, webOptions?: { includeOperationCheck?: boolean }): Promise<InBound> {
 
         if (operation.dataDecoder) {
             try {
                 operation.dataDecoder.runWithException(operationData);
             } catch (error: any) {
-                throw new Error(`Unexpected internal outgoing validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
+                throw new Error(`Unexpected Web->Platform outgoing validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
             }
+        }
+
+        const operationSupported = webOptions?.includeOperationCheck ? 
+            (await this.checkOperationSupported(domain, operation)).isSupported :
+            true;
+
+        if (!operationSupported) {
+            throw new Error(`Cannot complete operation: ${operation.name} for domain: ${domain} because this client is connected to a platform which does not support it`);
         }
 
         try {
@@ -75,9 +84,29 @@ export class GlueBridge {
 
         } catch (error: any) {
             if (error.kind) {
-                throw new Error(`Unexpected internal incoming validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
+                throw new Error(`Unexpected Web<-Platform incoming validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
             }
             throw new Error(error.message);
+        }
+    }
+
+    public async createNotificationsSteam(): Promise<Glue42Core.AGM.Subscription> {
+        const streamExists = this.coreGlue.interop.methods().some((method) => method.name === GlueCorePlusThemesStream);
+
+        if (!streamExists) {
+            throw new Error("Cannot subscribe to theme changes, because the underlying interop stream does not exist. Most likely this is the case when this client is not connected to Core Plus.");
+        }
+
+        return this.coreGlue.interop.subscribe(GlueCorePlusThemesStream, this.communicationId ? { target: { instance: this.communicationId } } : undefined);
+    }
+
+    private async checkOperationSupported(domain: LibDomains, operation: BridgeOperation): Promise<OperationCheckResult> {
+        try {
+            const result = await this.send<OperationCheckConfig, OperationCheckResult>(domain, systemOperations.operationCheck, { operation: operation.name });
+
+            return result;
+        } catch (error) {
+            return { isSupported: false };
         }
     }
 

@@ -1,3 +1,5 @@
+1.21.3
+chore: improved logging and minor code cleanup
 1.21.2
 fix: Fix handler returned from raise to have 'instance' type.
 1.21.1

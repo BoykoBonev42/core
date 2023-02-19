@@ -7,11 +7,12 @@ import { HelloSuccess, OpenWindowConfig, CoreWindowData, WindowHello, WindowOper
 import { IntentsOperationTypes, WrappedIntentFilter, WrappedIntents } from "../intents/protocol";
 import { IntentResolverResponse, LibDomains, OperationCheckConfig, OperationCheckResult, SimpleItemIdRequest, WorkspaceFrameBoundsResult, IntentRequestWithResolverInfo, IntentRequestResolverConfig } from "./types";
 import { NotificationEventPayload, NotificationsOperationTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotification } from "../notifications/protocol";
+import { AllThemesResponse, SelectThemeConfig, SimpleThemeResponse } from "../themes/protocol";
 
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
 export const nonNegativeNumberDecoder: Decoder<number> = number().where((num) => num >= 0, "Expected a non-negative number");
 
-export const libDomainDecoder: Decoder<LibDomains> = oneOf<"system" | "windows" | "appManager" | "layouts" | "intents" | "notifications" | "channels" | "extension">(
+export const libDomainDecoder: Decoder<LibDomains> = oneOf<"system" | "windows" | "appManager" | "layouts" | "intents" | "notifications" | "channels" | "extension" | "themes">(
     constant("system"),
     constant("windows"),
     constant("appManager"),
@@ -19,7 +20,8 @@ export const libDomainDecoder: Decoder<LibDomains> = oneOf<"system" | "windows" 
     constant("intents"),
     constant("notifications"),
     constant("channels"),
-    constant("extension")
+    constant("extension"),
+    constant("themes")
 );
 
 export const windowOperationTypesDecoder: Decoder<WindowOperationTypes> = oneOf<"openWindow" | "getBounds" | "getFrameBounds" | "windowHello" | "windowAdded" | "windowRemoved" | "getUrl" | "moveResize" | "focus" | "close" | "getTitle" | "setTitle" | "focusChange">(
@@ -747,4 +749,21 @@ export const operationCheckConfigDecoder: Decoder<OperationCheckConfig> = object
 
 export const workspaceFrameBoundsResultDecoder: Decoder<WorkspaceFrameBoundsResult> = object({
     bounds: windowBoundsDecoder
+});
+
+export const themeDecoder: Decoder<Glue42Web.Themes.Theme> = object({
+    displayName: nonEmptyStringDecoder,
+    name: nonEmptyStringDecoder
+});
+
+export const simpleThemeResponseDecoder: Decoder<SimpleThemeResponse> = object({
+    theme: themeDecoder
+});
+
+export const allThemesResponseDecoder: Decoder<AllThemesResponse> = object({
+    themes: array(themeDecoder)
+});
+
+export const selectThemeConfigDecoder: Decoder<SelectThemeConfig> = object({
+    name: nonEmptyStringDecoder
 });
