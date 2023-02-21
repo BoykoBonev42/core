@@ -1,6 +1,6 @@
 {
     "name": "@glue42/web-worker",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "main": "dist/web.worker.umd.js",
     "module": "dist/web.worker.es.js",
     "types": "./web.worker.d.ts",

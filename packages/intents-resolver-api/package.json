@@ -1,6 +1,6 @@
 {
     "name": "@glue42/intents-resolver-api",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "description": "Glue42 Intents Resolver",
     "main": "./dist/intents-resolver-api.umd.js",
     "module": "./dist/intents-resolver-api.es.js",
