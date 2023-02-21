@@ -56,6 +56,10 @@ export class GlueController {
 
             const builtHandler = this.buildIntentHandler(server.applicationName, server.instance);
 
+            if (!builtHandler) {
+                return;
+            }
+
             callback(builtHandler);
         });
     }
@@ -70,6 +74,10 @@ export class GlueController {
 
             const builtInstance = this.buildIntentHandler(server.applicationName, server.instance);
 
+            if (!builtInstance) {
+                return;
+            }
+
             callback(builtInstance);
         });
     }
@@ -83,6 +91,11 @@ export class GlueController {
             }
 
             const builtHandler = this.buildIntentHandler(app.name);
+    
+
+            if (!builtHandler) {
+                return;
+            }
 
             callback(builtHandler);
         });
@@ -97,6 +110,10 @@ export class GlueController {
             }
 
             const builtHandler = this.buildIntentHandler(app.name);
+
+            if (!builtHandler) {
+                return;
+            }
 
             callback(builtHandler);
         });
@@ -220,7 +237,7 @@ export class GlueController {
         return !!(this.intent as IntentRequest).handlers?.find(handler => handler.applicationName === server.application && server.windowId === handler.instanceId);
     }
 
-    private buildIntentHandler(appName: string, instanceId?: string): ResolverIntentHandler {
+    private buildIntentHandler(appName: string, instanceId?: string): ResolverIntentHandler | undefined {
         const foundApp = this.glue.appManager.application(appName);
 
         const serverInstance = this.glue.interop.servers().find(server => server.instance === instanceId);
@@ -236,6 +253,10 @@ export class GlueController {
                 applicationIcon: foundApp?.icon,
                 instanceId
             }
+        }
+
+        if (!serverInstance) {
+            return;
         }
 
         return {
