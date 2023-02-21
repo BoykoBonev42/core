@@ -1,3 +1,5 @@
+1.2.2
+fix: additional check if server instance exists when building the handler
 1.2.1
 fix: checking if app is a handler for target 'reuse' in glue42 enterprise
 1.2.0
