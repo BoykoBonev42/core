@@ -1,13 +1,17 @@
 import { Glue42Web } from "@glue42/web";
 import { anyJson, array, boolean, constant, Decoder, number, object, oneOf, optional, string } from "decoder-validate";
 import { nonEmptyStringDecoder, nonNegativeNumberDecoder } from "../../shared/decoders";
-import { NotificationsOperationsTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotificationConfig } from "./types";
+import { AllNotificationsData, NotificationClickConfig, NotificationsOperationsTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotificationConfig, SimpleNotificationSelect } from "./types";
 
-export const notificationsOperationDecoder: Decoder<NotificationsOperationsTypes> = oneOf<"raiseNotification" | "requestPermission" | "getPermission" | "operationCheck">(
+export const notificationsOperationDecoder: Decoder<NotificationsOperationsTypes> = oneOf<"raiseNotification" | "requestPermission" | "getPermission" | "operationCheck" | "list" | "click" | "clear" | "clearAll">(
     constant("raiseNotification"),
     constant("requestPermission"),
     constant("getPermission"),
-    constant("operationCheck")
+    constant("operationCheck"),
+    constant("list"),
+    constant("clear"),
+    constant("click"),
+    constant("clearAll")
 );
 
 
@@ -48,7 +52,16 @@ const glue42NotificationOptionsDecoder: Decoder<Glue42Web.Notifications.RaiseOpt
     silent: optional(boolean()),
     tag: optional(string()),
     timestamp: optional(nonNegativeNumberDecoder),
-    vibrate: optional(array(number()))
+    vibrate: optional(array(number())),
+    severity: optional(oneOf<"Low" | "Medium" | "High" | "Critical" | "None">(
+        constant("Low"),
+        constant("None"),
+        constant("Medium"),
+        constant("High"),
+        constant("Critical")
+    )),
+    showToast: optional(boolean()),
+    showInPanel: optional(boolean())
 });
 
 export const raiseNotificationDecoder: Decoder<RaiseNotificationConfig> = object({
@@ -66,4 +79,51 @@ export const permissionQueryResultDecoder: Decoder<PermissionQueryResult> = obje
         constant("granted"),
         constant("denied")
     )
+});
+
+export const simpleNotificationSelectDecoder: Decoder<SimpleNotificationSelect> = object({
+    id: nonEmptyStringDecoder
+});
+
+export const notificationClickConfigDecoder: Decoder<NotificationClickConfig> = object({
+    id: nonEmptyStringDecoder,
+    action: optional(nonEmptyStringDecoder)
+});
+
+export const notificationsDataDecoder: Decoder<Glue42Web.Notifications.NotificationData> = object({
+    id: nonEmptyStringDecoder,
+    title: nonEmptyStringDecoder,
+    clickInterop: optional(interopActionSettingsDecoder),
+    actions: optional(array(glue42NotificationActionDecoder)),
+    focusPlatformOnDefaultClick: optional(boolean()),
+    badge: optional(string()),
+    body: optional(string()),
+    data: optional(anyJson()),
+    dir: optional(oneOf<"auto" | "ltr" | "rtl">(
+        constant("auto"),
+        constant("ltr"),
+        constant("rtl")
+    )),
+    icon: optional(string()),
+    image: optional(string()),
+    lang: optional(string()),
+    renotify: optional(boolean()),
+    requireInteraction: optional(boolean()),
+    silent: optional(boolean()),
+    tag: optional(string()),
+    timestamp: optional(nonNegativeNumberDecoder),
+    vibrate: optional(array(number())),
+    severity: optional(oneOf<"Low" | "Medium" | "High" | "Critical" | "None">(
+        constant("Low"),
+        constant("None"),
+        constant("Medium"),
+        constant("High"),
+        constant("Critical")
+    )),
+    showToast: optional(boolean()),
+    showInPanel: optional(boolean())
+});
+
+export const allNotificationsDataDecoder: Decoder<AllNotificationsData> = object({
+    notifications: array(notificationsDataDecoder)
 });

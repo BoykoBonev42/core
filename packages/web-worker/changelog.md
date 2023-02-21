@@ -1,3 +1,5 @@
+1.3.0
+feat: added support for notification close event
 1.2.0
 feat: updated all dependencies to the latest major versions
 1.1.2

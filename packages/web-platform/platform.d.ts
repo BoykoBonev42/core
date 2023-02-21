@@ -351,6 +351,14 @@ export namespace Glue42WebPlatform {
         }
     }
 
+    export namespace Notifications {
+        export interface Config {
+            enable?: boolean;
+            enableToasts?: boolean;
+            clearNotificationOnClick?: boolean;
+        }
+    }
+
     export namespace CorePlus {
         export interface Config {
             start: (ioc: any, platformConfig: any) => Promise<void>;
@@ -367,6 +375,7 @@ export namespace Glue42WebPlatform {
     export interface Config {
         clientOnly?: boolean;
         windows?: Windows.Config;
+        notifications?: Notifications.Config;
         applications?: Applications.Config;
         layouts?: Layouts.Config;
         channels?: Channels.Config;

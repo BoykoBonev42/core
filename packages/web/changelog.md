@@ -1,3 +1,5 @@
+2.16.0
+feat: extended the Notifications API to support a custom notifications panel
 2.15.0
 feat: added support for Themes API
 2.14.2

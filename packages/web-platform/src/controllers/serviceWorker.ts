@@ -92,8 +92,12 @@ export class ServiceWorkerController {
         }
     }
 
-    public onNotificationClick(callback: (clickData: { action: string; glueData: GlueNotificationData; definition: Glue42Web.Notifications.NotificationDefinition }) => void): UnsubscribeFunction {
+    public onNotificationClick(callback: (clickData: { action: string; glueData: GlueNotificationData;  }) => void): UnsubscribeFunction {
         return this.registry.add("notification-click", callback);
+    }
+
+    public onNotificationClose(callback: (clickData: { action: string; glueData: GlueNotificationData;  }) => void): UnsubscribeFunction {
+        return this.registry.add("notification-close", callback);
     }
 
     private setUpBroadcastChannelConnection(): void {
@@ -117,9 +121,15 @@ export class ServiceWorkerController {
                 const action = eventData.action as string;
                 const glueData = eventData.glueData;
 
-                const definition: Glue42Web.Notifications.NotificationDefinition = eventData.definition;
+                this.registry.execute("notification-click", { action, glueData });
+                return;
+            }
 
-                this.registry.execute("notification-click", { action, glueData, definition });
+            if (messageType === "notificationClose") {
+                const action = eventData.action as string;
+                const glueData = eventData.glueData;
+
+                this.registry.execute("notification-close", { action, glueData });
                 return;
             }
 

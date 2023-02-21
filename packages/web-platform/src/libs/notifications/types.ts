@@ -1,6 +1,7 @@
 import { Glue42Web } from "@glue42/web";
 
-export type NotificationsOperationsTypes = "raiseNotification" | "requestPermission" | "getPermission" | "operationCheck";
+export type NotificationsOperationsTypes = "raiseNotification" | "requestPermission" | "getPermission" | "operationCheck" |
+    "list" | "click" | "clear" | "clearAll";
 
 export type NotificationPermissionTypes = "default" | "granted" | "denied";
 
@@ -30,7 +31,15 @@ export interface NotificationEventPayload {
     id?: string;
 }
 
-export interface ExtensionNotification {
+export interface NotificationClickConfig {
     id: string;
-    settings: Glue42Web.Notifications.RaiseOptions;
+    action?: string;
+}
+
+export interface SimpleNotificationSelect {
+    id: string;
+}
+
+export interface AllNotificationsData {
+    notifications: Glue42Web.Notifications.NotificationData[];
 }

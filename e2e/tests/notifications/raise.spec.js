@@ -1,14 +1,23 @@
 describe("raise ", () => {
 
+    let unsub;
+
     before(() => coreReady);
 
     beforeEach(() => window.notificationsFakePermission = "granted");
 
-    afterEach(() => {
+    afterEach(async () => {
+        if (unsub) {
+            unsub();
+            unsub = undefined;
+        }
+
+        await glue.notifications.clearAll();
+
         window.sinonSandbox.reset();
         window.notificationsFakeTriggerClick = false;
         if (glue.interop.methods().some((method) => method.name === "testMethod")) {
-            return glue.interop.unregister("testMethod");
+            await glue.interop.unregister("testMethod");
         }
     });
 
@@ -278,4 +287,138 @@ describe("raise ", () => {
         });
     });
 
+    it("should be present in list", async () => {
+        await glue.notifications.raise({ title: "test" });
+
+        const presentNotifications = await glue.notifications.list();
+
+        expect(presentNotifications.length).to.eql(1);
+        expect(presentNotifications[0].title).to.eql("test");
+    });
+
+    it("should fire onRaised", async () => {
+
+        const wrapper = gtf.wrapPromise();
+
+        unsub = glue.notifications.onRaised((notification) => {
+            try {
+                expect(notification.title).to.eql("test");
+                wrapper.resolve();
+            } catch (error) {
+                wrapper.reject(error);
+            }
+        });
+
+        await glue.notifications.raise({ title: "test" });
+
+        await wrapper.promise;
+    });
+
+
+    describe("showToast option ", () => {
+        it("should not raise a native notification when showToast is false", async () => {
+            await glue.notifications.raise({ title: "test", showToast: false });
+
+            const title = window.notificationConstructorFake.firstArg;
+            const settings = window.notificationConstructorFake.lastArg;
+
+            expect(title).to.not.exist;
+            expect(settings).to.not.exist;
+        });
+
+        it("should raise a native notification when showToast is true", async () => {
+            const input = { title: "test", showToast: true };
+
+            await glue.notifications.raise(input);
+
+            const title = window.notificationConstructorFake.firstArg;
+            const settings = window.notificationConstructorFake.lastArg;
+
+
+            Object.keys(input).forEach((key) => {
+                if (key === "title") {
+                    expect(input[key]).to.eql(title);
+                    return;
+                }
+
+                expect(input[key]).to.eql(settings[key]);
+            });
+        });
+
+        it("should raise a native notification when no showToast is provided", async () => {
+            const input = { title: "test" };
+
+            await glue.notifications.raise(input);
+
+            const title = window.notificationConstructorFake.firstArg;
+            const settings = window.notificationConstructorFake.lastArg;
+
+
+            Object.keys(input).forEach((key) => {
+                if (key === "title") {
+                    expect(input[key]).to.eql(title);
+                    return;
+                }
+
+                expect(input[key]).to.eql(settings[key]);
+            });
+        });
+
+    });
+
+    describe("showInPanel option ", () => {
+        it("should include showInPanel false when raised with showInPanel false", async () => {
+            await glue.notifications.raise({ title: "asd", showInPanel: false });
+
+            const notification = (await glue.notifications.list()).find((not) => not.title === "asd");
+
+            expect(notification.showInPanel).to.be.false;
+        });
+
+        it("should include showInPanel true when raised with showInPanel true", async () => {
+            await glue.notifications.raise({ title: "asd", showInPanel: true });
+
+            const notification = (await glue.notifications.list()).find((not) => not.title === "asd");
+
+            expect(notification.showInPanel).to.be.true;
+        });
+
+        it("should include showInPanel true when raised with no showInPanel", async () => {
+            await glue.notifications.raise({ title: "asd" });
+
+            const notification = (await glue.notifications.list()).find((not) => not.title === "asd");
+
+            expect(notification.showInPanel).to.be.true;
+        });
+
+
+    });
+
+    describe("severity option", () => {
+
+        it("should include no severity when raised with no severity", async () => {
+            await glue.notifications.raise({ title: "asd" });
+
+            const notification = (await glue.notifications.list()).find((not) => not.title === "asd");
+
+            expect(notification.severity).to.be.undefined;
+        });
+
+        [
+            "Low",
+            "Medium",
+            "High",
+            "Critical",
+            "None"
+        ].forEach((severity) => {
+            it("should include correct severity when raised with correct severity", async () => {
+                await glue.notifications.raise({ title: "asd", severity });
+
+            const notification = (await glue.notifications.list()).find((not) => not.title === "asd");
+
+            expect(notification.severity).to.eql(severity);
+            });
+        });
+
+    });
 });

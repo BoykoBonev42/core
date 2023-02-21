@@ -203,8 +203,8 @@ export class IoC {
         return { id, model, api };
     }
 
-    public buildNotification(config: Glue42Web.Notifications.RaiseOptions): Glue42Web.Notifications.Notification {
-        return new Notification(config);
+    public buildNotification(config: Glue42Web.Notifications.RaiseOptions, id: string): Glue42Web.Notifications.Notification {
+        return new Notification(config, id);
     }
 
     public async buildApplication(app: BaseApplicationData, applicationInstances: InstanceData[]): Promise<Glue42Web.AppManager.Application> {

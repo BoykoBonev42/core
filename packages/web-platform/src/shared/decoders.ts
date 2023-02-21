@@ -395,9 +395,16 @@ export const corePlusConfigDecoder: Decoder<Glue42WebPlatform.CorePlus.Config> =
     version: nonEmptyStringDecoder
 });
 
+export const notificationsConfigDecoder: Decoder<Glue42WebPlatform.Notifications.Config> = object({
+    enable: optional(boolean()),
+    enableToasts: optional(boolean()),
+    clearNotificationOnClick: optional(boolean())
+});
+
 export const platformConfigDecoder: Decoder<Glue42WebPlatform.Config> = object({
     windows: optional(windowsConfigDecoder),
     applications: optional(applicationsConfigDecoder),
+    notifications: optional(notificationsConfigDecoder),
     layouts: optional(layoutsConfigDecoder),
     channels: optional(channelsConfigDecoder),
     plugins: optional(pluginsConfigDecoder),

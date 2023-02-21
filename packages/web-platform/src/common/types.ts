@@ -29,6 +29,12 @@ export interface InternalWindowsConfig {
     defaultWindowOpenBounds: Glue42Web.Windows.Bounds;
 }
 
+export interface InternalNotificationsConfig {
+    enable: boolean;
+    enableToasts: boolean;
+    clearNotificationOnClick: boolean;
+}
+
 export interface InternalApplicationsConfig {
     local: Array<Glue42Web.AppManager.Definition | Glue42WebPlatform.Applications.FDC3Definition>;
     remote?: Glue42WebPlatform.RemoteStore;
@@ -67,6 +73,7 @@ export interface InternalPlatformConfig {
     glue?: Glue42Web.Config;
     gateway?: Glue42WebPlatform.Gateway.Config;
     windows: InternalWindowsConfig;
+    notifications: InternalNotificationsConfig;
     applications: InternalApplicationsConfig;
     layouts: InternalLayoutsConfig;
     channels: {

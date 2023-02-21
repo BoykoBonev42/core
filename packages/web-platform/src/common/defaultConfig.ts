@@ -10,6 +10,11 @@ export const defaultPlatformConfig: InternalPlatformConfig = {
             height: 600
         }
     },
+    notifications: {
+        enable: true,
+        enableToasts: true,
+        clearNotificationOnClick: true
+    },
     applications: {
         local: []
     },

@@ -6,7 +6,7 @@ import { AllLayoutsFullConfig, AllLayoutsSummariesResult, GetAllLayoutsConfig, L
 import { HelloSuccess, OpenWindowConfig, CoreWindowData, WindowHello, WindowOperationTypes, SimpleWindowCommand, WindowTitleConfig, WindowBoundsResult, WindowMoveResizeConfig, WindowUrlResult, FrameWindowBoundsResult, FocusEventData } from "../windows/protocol";
 import { IntentsOperationTypes, WrappedIntentFilter, WrappedIntents } from "../intents/protocol";
 import { IntentResolverResponse, LibDomains, OperationCheckConfig, OperationCheckResult, SimpleItemIdRequest, WorkspaceFrameBoundsResult, IntentRequestWithResolverInfo, IntentRequestResolverConfig } from "./types";
-import { NotificationEventPayload, NotificationsOperationTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotification } from "../notifications/protocol";
+import { AllNotificationsData, NotificationEventPayload, NotificationsOperationTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotification, SimpleNotificationData, SimpleNotificationSelect } from "../notifications/protocol";
 import { AllThemesResponse, SelectThemeConfig, SimpleThemeResponse } from "../themes/protocol";
 
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
@@ -65,12 +65,18 @@ export const layoutsOperationTypesDecoder: Decoder<LayoutsOperationTypes> = oneO
     constant("requestGlobalPermission")
 );
 
-export const notificationsOperationTypesDecoder: Decoder<NotificationsOperationTypes> = oneOf<"raiseNotification" | "requestPermission" | "notificationShow" | "notificationClick" | "getPermission">(
+export const notificationsOperationTypesDecoder: Decoder<NotificationsOperationTypes> = oneOf<"raiseNotification" | "requestPermission" | "notificationShow" | "notificationClick" | "getPermission" | "list" | "notificationRaised" | "notificationClosed" | "click" | "clear" | "clearAll">(
     constant("raiseNotification"),
     constant("requestPermission"),
     constant("notificationShow"),
     constant("notificationClick"),
-    constant("getPermission")
+    constant("getPermission"),
+    constant("list"),
+    constant("notificationRaised"),
+    constant("notificationClosed"),
+    constant("click"),
+    constant("clear"),
+    constant("clearAll")
 );
 
 export const windowRelativeDirectionDecoder: Decoder<Glue42Web.Windows.RelativeDirection> = oneOf<"top" | "left" | "right" | "bottom">(
@@ -675,7 +681,16 @@ export const glue42NotificationOptionsDecoder: Decoder<Glue42Web.Notifications.R
     silent: optional(boolean()),
     tag: optional(string()),
     timestamp: optional(nonNegativeNumberDecoder),
-    vibrate: optional(array(number()))
+    vibrate: optional(array(number())),
+    severity: optional(oneOf<"Low" | "Medium" | "High" | "Critical" | "None">(
+        constant("Low"),
+        constant("None"),
+        constant("Medium"),
+        constant("High"),
+        constant("Critical")
+    )),
+    showToast: optional(boolean()),
+    showInPanel: optional(boolean())
 });
 
 export const channelContextDecoder: Decoder<Glue42Web.Channels.ChannelContext> = object({
@@ -766,4 +781,50 @@ export const allThemesResponseDecoder: Decoder<AllThemesResponse> = object({
 
 export const selectThemeConfigDecoder: Decoder<SelectThemeConfig> = object({
     name: nonEmptyStringDecoder
+});
+
+export const notificationsDataDecoder: Decoder<Glue42Web.Notifications.NotificationData> = object({
+    id: nonEmptyStringDecoder,
+    title: nonEmptyStringDecoder,
+    clickInterop: optional(interopActionSettingsDecoder),
+    actions: optional(array(glue42NotificationActionDecoder)),
+    focusPlatformOnDefaultClick: optional(boolean()),
+    badge: optional(string()),
+    body: optional(string()),
+    data: optional(anyJson()),
+    dir: optional(oneOf<"auto" | "ltr" | "rtl">(
+        constant("auto"),
+        constant("ltr"),
+        constant("rtl")
+    )),
+    icon: optional(string()),
+    image: optional(string()),
+    lang: optional(string()),
+    renotify: optional(boolean()),
+    requireInteraction: optional(boolean()),
+    silent: optional(boolean()),
+    tag: optional(string()),
+    timestamp: optional(nonNegativeNumberDecoder),
+    vibrate: optional(array(number())),
+    severity: optional(oneOf<"Low" | "Medium" | "High" | "Critical" | "None">(
+        constant("Low"),
+        constant("None"),
+        constant("Medium"),
+        constant("High"),
+        constant("Critical")
+    )),
+    showToast: optional(boolean()),
+    showInPanel: optional(boolean())
+});
+
+export const simpleNotificationDataDecoder: Decoder<SimpleNotificationData> = object({
+    notification: notificationsDataDecoder
+});
+
+export const allNotificationsDataDecoder: Decoder<AllNotificationsData> = object({
+    notifications: array(notificationsDataDecoder)
+});
+
+export const simpleNotificationSelectDecoder: Decoder<SimpleNotificationSelect> = object({
+    id: nonEmptyStringDecoder
 });

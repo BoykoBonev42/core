@@ -218,8 +218,53 @@ export const setupCore: Glue42WebWorkerFactoryFunction = (config?: WebWorkerConf
                 }
             })
             .then(() => {
-                console.log("The platform is prepared, posting the click message");
                 const messageType = "notificationClick";
+
+                const action = (event as any).action;
+                const glueData = (event as any).notification.data.glueData;
+
+                const definition = {
+                    badge: (event as any).notification.badge,
+                    body: (event as any).notification.body,
+                    data: (event as any).notification.data,
+                    dir: (event as any).notification.dir,
+                    icon: (event as any).notification.icon,
+                    image: (event as any).notification.image,
+                    lang: (event as any).notification.lang,
+                    renotify: (event as any).notification.renotify,
+                    requireInteraction: (event as any).notification.requireInteraction,
+                    silent: (event as any).notification.silent,
+                    tag: (event as any).notification.tag,
+                    timestamp: (event as any).notification.timestamp,
+                    vibrate: (event as any).notification.vibrate
+                };
+
+                channel.postMessage({ messageType, action, glueData, definition });
+            })
+            .catch((error) => {
+                const stringError = typeof error === "string" ? error : JSON.stringify(error.message);
+                channel.postMessage({ messageType: "notificationError", error: stringError });
+            });
+
+        event.waitUntil(executionPromise);
+    });
+
+    self.addEventListener("notificationclose", (event: any) => {
+        const channel = new BroadcastChannel(serviceWorkerBroadcastChannelName);
+
+        console.debug("Received a notification close event, checking if the platform is open");
+
+        const executionPromise = checkPlatformOpen()
+            .then((platformExists: boolean) => {
+
+                console.debug(`The platform is: ${platformExists ? "open" : "not open"}`);
+
+                if (!platformExists) {
+                    console.log("The platform is not opened and will not open it for a notification close event");
+                    return;
+                }
+
+                const messageType = "notificationClose";
 
                 const action = (event as any).action;
                 const glueData = (event as any).notification.data.glueData;

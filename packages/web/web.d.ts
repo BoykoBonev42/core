@@ -658,9 +658,42 @@ export namespace Glue42Web {
              */
             raise(notification: RaiseOptions): Promise<Notification>;
 
+            /** Glue42 Core and Core Plus only. Retrieves the state of the native browser notification permission for the platform. */
             getPermission?(): Promise<"default" | "granted" | "denied">;
 
+            /** Glue42 Core and Core Plus only. Triggers the native browser permission dialog. Must only be called from within a platform. */
             requestPermission?(): Promise<boolean>;
+
+            /** Returns a list of all known notifications. */
+            list(): Promise<NotificationData[]>;
+
+            /**
+             * Notifies the user of any new raised notifications via the Notifications API.
+             * @param callback A function which will be called when a new notification is raised.
+             */
+            onRaised(callback: (notification: NotificationData) => void): UnsubscribeFunction;
+
+            /**
+             * Notifies the user when a notification was removed via the Notifications API.
+             * @param callback A function which will be called when a notification is removed.
+             */
+            onClosed(callback: (notification: { id: string }) => void): UnsubscribeFunction;
+
+            /**
+             * Issues a programmatic click on a notification.
+             * @param id The id of the notification to click on.
+             * @param actions Optional action value to click on.
+             */
+            click(id: string, action?: string): Promise<void>;
+
+            /**
+             * Clears a specified notification.
+             * @param id The id of the notification to be removed.
+             */
+            clear(id: string): Promise<void>;
+
+            /** Removes all known notifications from the system. */
+            clearAll(): Promise<void>;
         }
 
         export interface NotificationDefinition {
@@ -679,19 +712,30 @@ export namespace Glue42Web {
             vibrate?: number[];
         }
 
-        export interface Notification extends NotificationDefinition {
-            onclick: () => any;
-            onshow: () => any;
-        }
-
         export interface RaiseOptions extends NotificationDefinition {
             /** the title of the notification */
             title: string;
             /** set to make the notification click invoke an interop method with specific arguments */
             clickInterop?: InteropActionSettings;
+            /** List of action attached to the notification. Those will appear as buttons in the notification UI */
             actions?: NotificationAction[];
             /** Glue42 Core Only. If set to true, the platform app will be focused when the user clicks on the notification. Defaults to false. */
             focusPlatformOnDefaultClick?: boolean;
+            /** Severity of the alert */
+            severity?: "Low" | "Medium" | "High" | "Critical" | "None";
+            /** Indicates whether a native toast will be shown or not. Defaults to true */
+            showToast?: boolean;
+            /** Indicates whether the notification should appear in notification panels. Defaults to true */
+            showInPanel?: boolean;
+        }
+
+        export interface NotificationData extends RaiseOptions {
+            id: string;
+        }
+
+        export interface Notification extends NotificationData {
+            onclick: () => any;
+            onshow: () => any;
         }
 
         export interface NotificationAction {
@@ -1245,19 +1289,19 @@ export namespace Glue42Web {
              * The UI provides the user with a list of all available applications and running instances which can handle the raised intent.
              * Default value: true
              */
-             enableIntentsResolverUI?: boolean;
+            enableIntentsResolverUI?: boolean;
 
-             /**
-              * Specify your custom application name for Intents Resolver UI which will open when glue.intents.raise() is invoked.
-              * If not provided, Intents API will use the default Intents Resolver UI application to handle raising an intent with multiple handlers
-              */
-             intentsResolverAppName?: string;
+            /**
+             * Specify your custom application name for Intents Resolver UI which will open when glue.intents.raise() is invoked.
+             * If not provided, Intents API will use the default Intents Resolver UI application to handle raising an intent with multiple handlers
+             */
+            intentsResolverAppName?: string;
 
-             /**
-              * Timeout to wait for response from Intents Resolver UI 
-              * @default 60000
-              */
-             methodResponseTimeoutMs?: number;
+            /**
+             * Timeout to wait for response from Intents Resolver UI 
+             * @default 60000
+             */
+            methodResponseTimeoutMs?: number;
         }
 
         interface ResolverIntentHandler {
@@ -1392,7 +1436,7 @@ export namespace Glue42Web {
             /**
              * Result type may be a type name, the string "channel" (which indicates that the app will return a channel) or a string indicating a channel that returns a specific type, e.g. "channel<fdc3.instrument>"
              */
-             resultType?: string;
+            resultType?: string;
         }
 
         /**

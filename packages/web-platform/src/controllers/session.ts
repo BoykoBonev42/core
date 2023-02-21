@@ -3,7 +3,6 @@ import { Glue42Web } from "@glue42/web";
 import { SessionNonGlueData, SessionSystemSettings, SessionWindowData, WorkspaceWindowSession } from "../common/types";
 import { BaseApplicationData, BridgeInstanceData, InstanceData } from "../libs/applications/types";
 import { LayoutsSnapshot } from "../libs/layouts/types";
-import { ExtensionNotification } from "../libs/notifications/types";
 import { FrameSessionData } from "../libs/workspaces/types";
 import logger from "../shared/logger";
 
@@ -20,7 +19,7 @@ export class SessionStorageController {
     private readonly workspaceLayoutsNamespace = "g42_core_layouts_workspace";
     private readonly appDefsNamespace = "g42_core_app_definitions";
     private readonly appDefsInmemoryNamespace = "g42_core_app_definitions_inmemory";
-    private readonly extNotificationsNamespace = "g42_ext_notifications";
+    private readonly notificationsNamespace = "g42_core_notifications";
     private readonly systemNamespace = "g42_system";
 
     constructor() {
@@ -38,7 +37,7 @@ export class SessionStorageController {
             this.appDefsNamespace,
             this.workspaceHibernationNamespace,
             this.appDefsInmemoryNamespace,
-            this.extNotificationsNamespace
+            this.notificationsNamespace
         ].forEach((namespace) => {
             const data = this.sessionStorage.getItem(namespace);
 
@@ -320,17 +319,17 @@ export class SessionStorageController {
     }
 
     public removeNotification(id: string): void {
-        const allNotifications: ExtensionNotification[] = JSON.parse(this.sessionStorage.getItem(this.extNotificationsNamespace) as string);
+        const allNotifications: Glue42Web.Notifications.NotificationData[] = JSON.parse(this.sessionStorage.getItem(this.notificationsNamespace) as string);
 
         const notification = allNotifications.find((notification) => notification.id === id);
 
         if (notification) {
-            this.sessionStorage.setItem(this.extNotificationsNamespace, JSON.stringify(allNotifications.filter((notification) => notification.id !== id)));
+            this.sessionStorage.setItem(this.notificationsNamespace, JSON.stringify(allNotifications.filter((notification) => notification.id !== id)));
         }
     }
 
-    public saveNotification(notification: ExtensionNotification): void {
-        const allNotifications: ExtensionNotification[] = JSON.parse(this.sessionStorage.getItem(this.extNotificationsNamespace) as string);
+    public saveNotification(notification: Glue42Web.Notifications.NotificationData): void {
+        const allNotifications: Glue42Web.Notifications.NotificationData[] = JSON.parse(this.sessionStorage.getItem(this.notificationsNamespace) as string);
 
         if (allNotifications.some((entry) => entry.id === notification.id)) {
             this.logger?.trace(`did not save this data: ${JSON.stringify(notification)}, because an entry with this id already exists`);
@@ -341,13 +340,19 @@ export class SessionStorageController {
 
         allNotifications.push(notification);
 
-        this.sessionStorage.setItem(this.extNotificationsNamespace, JSON.stringify(allNotifications));
+        this.sessionStorage.setItem(this.notificationsNamespace, JSON.stringify(allNotifications));
     }
 
-    public getNotification(id: string): ExtensionNotification | undefined {
-        const allNotifications: ExtensionNotification[] = JSON.parse(this.sessionStorage.getItem(this.extNotificationsNamespace) as string);
+    public getNotification(id: string): Glue42Web.Notifications.NotificationData | undefined {
+        const allNotifications = this.getAllNotifications();
 
         return allNotifications.find((notification) => notification.id === id);
+    }
+
+    public getAllNotifications(): Glue42Web.Notifications.NotificationData[] {
+        const allNotifications: Glue42Web.Notifications.NotificationData[] = JSON.parse(this.sessionStorage.getItem(this.notificationsNamespace) as string);
+
+        return allNotifications;
     }
 
     public saveWindowData(data: SessionWindowData): void {

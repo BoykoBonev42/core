@@ -1,50 +1,62 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Web } from "@glue42/web";
-import { BridgeOperation, LibController, OperationCheckConfig, OperationCheckResult } from "../../common/types";
+import { BridgeOperation, InternalPlatformConfig, LibController, OperationCheckConfig, OperationCheckResult } from "../../common/types";
 import { GlueController } from "../../controllers/glue";
 import { ServiceWorkerController } from "../../controllers/serviceWorker";
 import { SessionStorageController } from "../../controllers/session";
 import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
 import logger from "../../shared/logger";
-import { notificationsOperationDecoder, permissionQueryResultDecoder, permissionRequestResultDecoder, raiseNotificationDecoder } from "./decoders";
-import { ExtensionNotification, GlueNotificationData, NotificationEventPayload, NotificationsOperationsTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotificationConfig } from "./types";
+import { allNotificationsDataDecoder, notificationClickConfigDecoder, notificationsOperationDecoder, permissionQueryResultDecoder, permissionRequestResultDecoder, raiseNotificationDecoder, simpleNotificationSelectDecoder } from "./decoders";
+import { AllNotificationsData, NotificationClickConfig, NotificationEventPayload, NotificationsOperationsTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotificationConfig, SimpleNotificationSelect } from "./types";
 
 export class NotificationsController implements LibController {
 
     private started = false;
     private isInExtension = false;
+    private enableToasts!: boolean;
+    private clearNotificationOnClick!: boolean;
     private extNotificationConfig: { defaultIcon: string; defaultMessage: string } | undefined;
 
     private operations: { [key in NotificationsOperationsTypes]: BridgeOperation } = {
         raiseNotification: { name: "raiseNotification", execute: this.handleRaiseNotification.bind(this), dataDecoder: raiseNotificationDecoder },
         requestPermission: { name: "requestPermission", resultDecoder: permissionRequestResultDecoder, execute: this.handleRequestPermission.bind(this) },
         getPermission: { name: "getPermission", resultDecoder: permissionQueryResultDecoder, execute: this.handleGetPermission.bind(this) },
-        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) },
+        list: { name: "list", resultDecoder: allNotificationsDataDecoder, execute: this.handleList.bind(this) },
+        click: { name: "click", dataDecoder: notificationClickConfigDecoder, execute: this.handleClick.bind(this) },
+        clear: { name: "clear", dataDecoder: simpleNotificationSelectDecoder, execute: this.handleClear.bind(this) },
+        clearAll: { name: "clearAll", execute: this.handleClearAll.bind(this) }
     };
 
     constructor(
         private readonly glueController: GlueController,
         private readonly serviceWorkerController: ServiceWorkerController,
         private readonly session: SessionStorageController
-    ) { }
+    ) {}
 
     private get logger(): Glue42Web.Logger.API | undefined {
         return logger.get("notifications.controller");
     }
 
-    public async start(): Promise<void> {
+    public async start(config: InternalPlatformConfig): Promise<void> {
+
+        if (!config.notifications.enable) {
+            this.logger?.log("Skipping the notifications controller initialization, because it was disabled upon platform initialization");
+            return;
+        }
+
+        this.enableToasts = config.notifications.enableToasts;
+        this.clearNotificationOnClick = config.notifications.clearNotificationOnClick;
 
         this.started = true;
 
         const currentProtocol = (new URL(window.location.href)).protocol;
 
         if (currentProtocol.includes("extension")) {
-            this.isInExtension = true;
-            this.extNotificationConfig = (await this.getExtNotificationsConfig()).notifications;
-            this.listenForExtensionNotificationsEvents();
+            await this.setupExtensionNotifications();
         }
 
-        this.serviceWorkerController.onNotificationClick(this.handleNotificationClick.bind(this));
+        this.listenForServiceWorkerNotificationEvents();
     }
 
     private async handleOperationCheck(config: OperationCheckConfig): Promise<OperationCheckResult> {
@@ -53,33 +65,6 @@ export class NotificationsController implements LibController {
         const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
 
         return { isSupported };
-    }
-
-    private handleNotificationClick(clickData: { action: string; glueData: GlueNotificationData; definition: Glue42Web.Notifications.NotificationDefinition }): void {
-        if (!clickData.action && clickData.glueData?.clickInterop) {
-            this.callDefinedInterop(clickData.glueData?.clickInterop);
-        }
-
-        if (clickData.action && clickData.glueData?.actions?.some((actionDef) => actionDef.action === clickData.action)) {
-            // this is a safe cast, because of the checks above
-            const notificationInteropAction = clickData.glueData?.actions?.find((action) => action.action === clickData.action) as Glue42Web.Notifications.NotificationAction;
-
-            if (notificationInteropAction.interop) {
-                this.callDefinedInterop(notificationInteropAction.interop);
-            }
-        }
-
-        if (clickData.definition.data?.glueData) {
-            delete clickData.definition.data.glueData;
-        }
-
-        const notificationEventPayload: NotificationEventPayload = {
-            definition: clickData.definition,
-            action: clickData.action,
-            id: clickData.glueData?.id
-        };
-
-        this.glueController.pushSystemMessage("notifications", "notificationClick", notificationEventPayload);
     }
 
     public async handleControl(args: any): Promise<any> {
@@ -120,25 +105,61 @@ export class NotificationsController implements LibController {
         return result;
     }
 
+    private async handleList(_: unknown, commandId: string): Promise<AllNotificationsData> {
+        this.logger?.trace(`[${commandId}] handling a list notification message`);
+
+        const allNotifications = this.session.getAllNotifications();
+
+        this.logger?.trace(`[${commandId}] list notification message completed`);
+
+        return { notifications: allNotifications };
+    }
+
+    private async handleClick(config: NotificationClickConfig, commandId: string): Promise<void> {
+        this.logger?.trace(`[${commandId}] handling a click notification message with data: ${JSON.stringify(config)}`);
+
+        const notification = this.session.getNotification(config.id);
+
+        if (!notification) {
+            throw new Error(`Cannot click a notification: ${config.id}, because it doesn't exist`);
+        }
+
+        if (config.action && notification.actions?.every((action) => action.action !== config.action)) {
+            throw new Error(`Cannot click action ${config.action} of  ${config.id}, because that notification does not have that action`);
+        }
+
+        this.handleNotificationClick({ notification, action: config.action });
+
+        this.logger?.trace(`[${commandId}] handling a click notification message completed`);
+    }
+
+    private async handleClear(config: SimpleNotificationSelect, commandId: string): Promise<void> {
+        this.logger?.trace(`[${commandId}] handling a clear notification message with data: ${JSON.stringify(config)}`);
+
+        this.removeNotification(config.id);
+
+        this.logger?.trace(`[${commandId}] handling a clear notification message completed`);
+    }
+
+    private async handleClearAll(_: unknown, commandId: string): Promise<void> {
+        this.logger?.trace(`[${commandId}] handling a clearAll notifications message`);
+
+        const allNotifications = this.session.getAllNotifications();
+
+        allNotifications.forEach((notification) => this.removeNotification(notification.id));
+
+        this.logger?.trace(`[${commandId}] handling a clearAll notification message completed`);
+    }
+
     private async handleRaiseNotification({ settings, id }: RaiseNotificationConfig, commandId: string): Promise<void> {
         this.logger?.trace(`[${commandId}] handling a raise notification message with a title: ${settings.title}`);
 
-        const hasDefinedActions = settings.actions && settings.actions.length;
+        this.processNewNotification(settings, id);
 
-        if (this.isInExtension) {
-            this.logger?.trace(`[${commandId}] notification with a title: ${settings.title} will be raised with the native extension notifications API, because the platform is running in extension mode`);
+        // system-level enable/disable always takes precedence 
+        const showToast = this.enableToasts ? !!settings.showToast : this.enableToasts;
 
-            await this.raiseExtensionNotification(settings, id);
-        } else if (hasDefinedActions) {
-
-            this.logger?.trace(`[${commandId}] notification with a title: ${settings.title} was found to be persistent and therefore the service worker will be instructed to raise it.`);
-
-            await this.serviceWorkerController.showNotification(settings, id);
-        } else {
-            this.logger?.trace(`[${commandId}] notification with a title: ${settings.title} was found to be non-persistent and therefore will be raised with the native notifications API`);
-
-            this.raiseSimpleNotification(settings, id);
-        }
+        await this.showToast({ settings, id }, showToast, commandId);
 
         const definition = Object.assign({}, settings, { title: undefined, clickInterop: undefined, actions: undefined });
 
@@ -151,6 +172,28 @@ export class NotificationsController implements LibController {
         this.logger?.trace(`[${commandId}] notification with a title: ${settings.title} was successfully raised`);
     }
 
+    private async showToast({ settings, id }: RaiseNotificationConfig, showToast: boolean, commandId: string): Promise<void> {
+        if (!showToast) {
+            return;
+        }
+
+        if (this.isInExtension) {
+            await this.raiseExtensionToast(settings, id, commandId);
+
+            return;
+        }
+
+        const hasDefinedActions = settings.actions && settings.actions.length;
+
+        if (hasDefinedActions) {
+            await this.raiseActionsToast(settings, id, commandId);
+
+            return;
+        }
+
+        this.raiseSimpleToast(settings, id, commandId);
+    }
+
     private async handleGetPermission(_: unknown, commandId: string): Promise<PermissionQueryResult> {
         this.logger?.trace(`[${commandId}] handling a get permission message`);
 
@@ -160,7 +203,6 @@ export class NotificationsController implements LibController {
 
         return { permission: permissionValue };
     }
-
 
     private async handleRequestPermission(_: unknown, commandId: string): Promise<PermissionRequestResult> {
         this.logger?.trace(`[${commandId}] handling a request permission message`);
@@ -178,28 +220,43 @@ export class NotificationsController implements LibController {
         return { permissionGranted };
     }
 
-    private callDefinedInterop(interopConfig: Glue42Web.Notifications.InteropActionSettings): void {
-        const method = interopConfig.method;
-        const args = interopConfig.arguments;
-        const target = interopConfig.target;
+    private async raiseSimpleToast(settings: Glue42Web.Notifications.RaiseOptions, id: string, commandId: string): Promise<void> {
+        this.logger?.trace(`[${commandId}] notification with a title: ${settings.title} was found to be non-persistent and therefore will be raised with the native notifications API`);
 
-        this.glueController.invokeMethod(method, args, target)
-            .catch((err) => {
-                const stringError = typeof err === "string" ? err : JSON.stringify(err.message);
-                this.logger?.warn(`The interop invocation defined in the clickInterop was rejected, reason: ${stringError}`);
-            });
+        const options: NotificationOptions = Object.assign({}, settings, { title: undefined, clickInterop: undefined });
+
+        const notification = new Notification(settings.title, options);
+
+        notification.onclick = (): void => {
+
+            // do not refactor to a separate function
+            // will break the focus due to browser limitations
+            if (settings.focusPlatformOnDefaultClick) {
+                window.focus();
+            }
+
+            const notificationData = this.session.getNotification(id);
+
+            if (!notificationData) {
+                return;
+            }
+
+            this.handleNotificationClick({ action: "", notification: notificationData });
+        };
+
+        notification.onclose = (): void => this.removeNotification(id);
     }
 
-    private getExtNotificationsConfig(): Promise<{ notifications: { defaultIcon: string; defaultMessage: string } }> {
-        return new Promise((resolve) => {
-            chrome.storage.local.get("notifications", (entry: any) => {
-                resolve(entry);
-            });
-        });
+    private async raiseActionsToast(settings: Glue42Web.Notifications.RaiseOptions, id: string, commandId: string): Promise<void> {
+        this.logger?.trace(`[${commandId}] notification with a title: ${settings.title} was found to be persistent and therefore the service worker will be instructed to raise it.`);
+
+        await this.serviceWorkerController.showNotification(settings, id);
     }
 
-    private raiseExtensionNotification(settings: Glue42Web.Notifications.RaiseOptions, id: string): Promise<void> {
+    private raiseExtensionToast(settings: Glue42Web.Notifications.RaiseOptions, id: string, commandId: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
+
+            this.logger?.trace(`[${commandId}] notification with a title: ${settings.title} will be raised with the native extension notifications API, because the platform is running in extension mode`);
 
             // need to get the notifications config from chrome
             if (!this.extNotificationConfig) {
@@ -221,47 +278,14 @@ export class NotificationsController implements LibController {
                 buttons
             };
 
-            const extensionNotification: ExtensionNotification = { id, settings };
-
-            this.session.saveNotification(extensionNotification);
-
             chrome.notifications.create(id, chromeOptions, () => resolve());
         });
     }
 
-    private raiseSimpleNotification(settings: Glue42Web.Notifications.RaiseOptions, id: string): void {
-        const options: NotificationOptions = Object.assign({}, settings, { title: undefined, clickInterop: undefined });
-
-        const notification = new Notification(settings.title, options);
-
-        notification.onclick = (event: any): void => {
-            const glueData: GlueNotificationData = {
-                id,
-                clickInterop: settings.clickInterop
-            };
-
-            const definition = {
-                badge: event.target.badge,
-                body: event.target.body,
-                data: event.target.data,
-                dir: event.target.dir,
-                icon: event.target.icon,
-                image: event.target.image,
-                lang: event.target.lang,
-                renotify: event.target.renotify,
-                requireInteraction: event.target.requireInteraction,
-                silent: event.target.silent,
-                tag: event.target.tag,
-                timestamp: event.target.timestamp,
-                vibrate: event.target.vibrate
-            };
-
-            if (settings.focusPlatformOnDefaultClick) {
-                window.focus();
-            }
-
-            this.handleNotificationClick({ action: "", glueData, definition });
-        };
+    private async setupExtensionNotifications(): Promise<void> {
+        this.isInExtension = true;
+        this.extNotificationConfig = (await this.getExtNotificationsConfig()).notifications;
+        this.listenForExtensionNotificationsEvents();
     }
 
     private listenForExtensionNotificationsEvents(): void {
@@ -273,16 +297,7 @@ export class NotificationsController implements LibController {
                 return;
             }
 
-            const glueData: GlueNotificationData = {
-                id,
-                clickInterop: notificationData.settings.clickInterop
-            };
-
-            const definition: Glue42Web.Notifications.NotificationDefinition = notificationData.settings;
-
-            this.handleNotificationClick({ action: "", definition, glueData });
-
-            this.session.removeNotification(id);
+            this.handleNotificationClick({ notification: notificationData });
         });
 
         chrome.notifications.onButtonClicked.addListener((id, buttonIndex) => {
@@ -293,24 +308,93 @@ export class NotificationsController implements LibController {
                 return;
             }
 
-            if (!notificationData.settings.actions) {
+            if (!notificationData.actions) {
                 return;
             }
 
-            const glueData: GlueNotificationData = {
-                id,
-                clickInterop: notificationData.settings.clickInterop
-            };
+            const action = notificationData.actions[buttonIndex].action;
 
-            const definition: Glue42Web.Notifications.NotificationDefinition = notificationData.settings;
-
-            const action = notificationData.settings.actions[buttonIndex].action;
-
-            this.handleNotificationClick({ action, definition, glueData });
-
-            this.session.removeNotification(id);
+            this.handleNotificationClick({ action, notification: notificationData });
         });
 
-        chrome.notifications.onClosed.addListener((id) => this.session.removeNotification(id));
+        chrome.notifications.onClosed.addListener((id) => this.removeNotification(id));
+    }
+
+    private listenForServiceWorkerNotificationEvents(): void {
+        this.serviceWorkerController.onNotificationClick((clickData) => {
+            const notificationData = this.session.getNotification(clickData.glueData.id);
+
+            if (!notificationData) {
+                return;
+            }
+
+            this.handleNotificationClick({ action: clickData.action, notification: notificationData });
+        });
+
+        this.serviceWorkerController.onNotificationClose((notification) => this.removeNotification(notification.glueData.id));
+    }
+
+    private getExtNotificationsConfig(): Promise<{ notifications: { defaultIcon: string; defaultMessage: string } }> {
+        return new Promise((resolve) => {
+            chrome.storage.local.get("notifications", (entry: any) => {
+                resolve(entry);
+            });
+        });
+    }
+
+    private handleNotificationClick(clickData: { notification: Glue42Web.Notifications.NotificationData; action?: string }): void {
+        if (!clickData.action && clickData.notification.clickInterop) {
+            this.callDefinedInterop(clickData.notification.clickInterop);
+        }
+
+        const foundNotificationInteropAction = clickData.action ?
+            clickData.notification.actions?.find((actionDef) => actionDef.action === clickData.action) :
+            null;
+
+        if (foundNotificationInteropAction && foundNotificationInteropAction.interop) {
+            this.callDefinedInterop(foundNotificationInteropAction.interop);
+        }
+
+        if (clickData.notification.data?.glueData) {
+            delete clickData.notification.data.glueData;
+        }
+
+        const notificationEventPayload: NotificationEventPayload = {
+            definition: clickData.notification,
+            action: clickData.action,
+            id: clickData.notification.id
+        };
+
+        if (this.clearNotificationOnClick) {
+            this.removeNotification(clickData.notification.id);
+        }
+
+        this.glueController.pushSystemMessage("notifications", "notificationClick", notificationEventPayload);
+    }
+
+    private callDefinedInterop(interopConfig: Glue42Web.Notifications.InteropActionSettings): void {
+        const method = interopConfig.method;
+        const args = interopConfig.arguments;
+        const target = interopConfig.target;
+
+        this.glueController.invokeMethod(method, args, target)
+            .catch((err) => {
+                const stringError = typeof err === "string" ? err : JSON.stringify(err.message);
+                this.logger?.warn(`The interop invocation defined in the clickInterop was rejected, reason: ${stringError}`);
+            });
+    }
+
+    private processNewNotification(settings: Glue42Web.Notifications.RaiseOptions, id: string): void {
+        const notificationData: Glue42Web.Notifications.NotificationData = { id, ...settings };
+
+        this.session.saveNotification(notificationData);
+
+        this.glueController.pushSystemMessage("notifications", "notificationRaised", { notification: notificationData });
+    }
+
+    private removeNotification(id: string): void {
+        this.session.removeNotification(id);
+
+        this.glueController.pushSystemMessage("notifications", "notificationClosed", { id });
     }
 }
