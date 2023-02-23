@@ -413,6 +413,14 @@ export class WorkspacesUIExecutor {
         return $(`#${this.getWorkspaceLayoutContainerId(workspaceId)}`)[0];
     }
 
+    public changeTheme(themeName: string, allThemes: string[]): void {
+        const htmlTag = $("html");
+
+        allThemes.forEach((t) => htmlTag.removeClass(t));
+
+        htmlTag.addClass(themeName);
+    }
+
     private hasTransition(element: HTMLElement): boolean {
         const transition = window.getComputedStyle(element, null).getPropertyValue("transition");
 

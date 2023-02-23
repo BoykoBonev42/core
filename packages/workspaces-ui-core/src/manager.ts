@@ -32,6 +32,7 @@ import { PlatformCommunicator } from "./interop/platformCommunicator";
 import { WorkspacesWrapperFactory } from "./state/factory";
 import { WorkspacesEventBundler } from "./utils/eventBundler";
 import { LayoutComponentsFactory } from "./layout/componentsFactory";
+import { ThemeController } from "./layout/themeController";
 
 export class WorkspacesManager {
     private _controller: LayoutController;
@@ -52,6 +53,7 @@ export class WorkspacesManager {
     private _systemSettings: WorkspacesSystemSettingsProvider;
     private _platformCommunicator: PlatformCommunicator;
     private _wrapperFactory: WorkspacesWrapperFactory;
+    private _themeController: ThemeController;
 
     public get stateResolver(): LayoutStateResolver {
         return this._stateResolver;
@@ -103,6 +105,8 @@ export class WorkspacesManager {
         this._applicationFactory = new ApplicationFactory(glue, this.stateResolver, this._frameController, this, new DelayedExecutor(), this._platformCommunicator, this._systemSettings);
         this._layoutsManager = new LayoutsManager(this.stateResolver, glue, this._configFactory, converter, new ConstraintsValidator(), this._platformCommunicator);
         this._popupManager = new PopupManagerComposer(new PopupManager(glue), new ComponentPopupManager(componentFactory, frameId), componentFactory);
+        this._themeController = new ThemeController(this._glue, uiExecutor);
+        this._themeController.applyTheme();
 
         if (!startupConfig.emptyFrame && !this._platformCommunicator.platformConfig?.initAsEmptyFrame) {
             this.initLayout();
@@ -132,7 +136,7 @@ export class WorkspacesManager {
 
     public getComponentBounds = (): Bounds => {
         return this._controller.bounds;
-    }
+    };
 
     public subscribeForWindowClicked = (cb: () => void): UnsubscribeFunction => {
         if (!this._frameController) {
@@ -141,7 +145,7 @@ export class WorkspacesManager {
             return (): void => { };
         }
         return this._frameController.onFrameContentClicked(cb);
-    }
+    };
 
     public async saveWorkspace(name: string, id?: string, saveContext?: boolean, metadata?: object): Promise<WorkspaceLayout> {
         const workspace = store.getById(id) || store.getActiveWorkspace();
