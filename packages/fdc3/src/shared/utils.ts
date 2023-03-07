@@ -1,4 +1,5 @@
 import { Listener, DesktopAgent } from '@finos/fdc3';
+import { nanoid } from 'nanoid';
 
 export const isInElectron = navigator.userAgent.toLowerCase().includes(" electron/");
 
@@ -90,3 +91,7 @@ export const promisePlus = <T>(promise: () => Promise<T>, timeoutMilliseconds: n
             });
     });
 };
+
+export const generateCommandId = (): string => {
+    return nanoid();
+}

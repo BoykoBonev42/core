@@ -27,6 +27,12 @@ export type CreateAppConfig = {
     name?: string;
     exposeFdc3?: boolean;
 }
+
+export type Fdc3AddIntentListenerReturnValue = {
+    context?: any;
+    privateChannel?: boolean;
+};
+
 export namespace Gtf {
     export interface Agm {
         getMethodName(): string;
@@ -74,11 +80,15 @@ export namespace Gtf {
         fdc3?: {
             joinUserChannel(channelId: string): Promise<void>;
             broadcast(context: Context): Promise<void>;
-            broadcastOnChannel(channelId: string, context: Context): Promise<void>;
+            broadcastOnAppChannel(channelId: string, context: Context): Promise<void>;
             raiseIntent(intent: string, context: Context, app?: AppIdentifier): Promise<IntentResolution>;
             addContextListenerOnPrivateChannel(contextType: string): Promise<void>;
             unsubscribeFromPrivateChannelListener(): Promise<void>;
             disconnectFromPrivateChannel(): Promise<void>;
+            addIntentListener(intent: string, returnValue?: Fdc3AddIntentListenerReturnValue): Promise<void>;
+            unsubscribeIntentListener(intent: string): Promise<void>;
+            getIntentListenerContext(intent: string): Promise<void>;
+            createPrivateChannel(): Promise<void>;
         }
     }
 

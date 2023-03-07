@@ -1,27 +1,68 @@
-describe("raiseIntent()", function() {
-    const supportAppName = 'coreSupport';
-    let supportApp;
+describe("raiseIntent()", function () {
+    let definitionsOnStart;
+    
+    const supportAppName1 = 'fdc3Support1';
+    let intentName1;
+    let contextType1;
+    let supportApp1;
+    
+    const supportAppName2 = 'fdc3Support2';
+    let intentName2;
+    let contextType2;
+    let supportApp2;
 
-    let intentName;
-
-    before(async() => {
+    before(async () => {
         await coreReady;
+
+        definitionsOnStart = await glue.appManager.inMemory.export();
     });
 
-    beforeEach(async() => {
-        supportApp = await gtf.createApp({ name: supportAppName, exposeFdc3: true });
-    })
+    beforeEach(async () => {
+        intentName1 = `fdc3.intent.1.${Date.now()}`;
+        contextType1 = `fdc3.context.1.${Date.now()}`;
+        const appDef1 = {
+            name: supportAppName1,
+            type: "window",
+            details: {
+                url: "http://localhost:4242/coreSupport/index.html"
+            },
+            intents: [
+                {
+                    name: intentName1,
+                    contexts: [contextType1]
+                }
+            ]
+        };
 
-    afterEach(async() => {
-        intentName = undefined;
+        intentName2 = `fdc3.intent.2.${Date.now()}`;
+        contextType2 = `fdc3.context.2.${Date.now()}`;
+        const appDef2 = {
+            name: supportAppName2,
+            type: "window",
+            details: {
+                url: "http://localhost:4242/coreSupport/index.html"
+            },
+            intents: [
+                {
+                    name: intentName2,
+                    contexts: [contextType2]
+                }
+            ]
+        };
 
-        gtf.clearWindowActiveHooks();
+        await glue.appManager.inMemory.import([appDef1, appDef2], "merge");
 
-        gtf.fdc3.removeActiveListeners();
+        supportApp1 = await gtf.createApp({ name: appDef1.name, exposeFdc3: true });
+        supportApp2 = await gtf.createApp({ name: appDef2.name, exposeFdc3: true });
+    });
 
-        supportApp.intents.unregisterIntent(intentName);
-
+    afterEach(async () => {
         await Promise.all(glue.appManager.instances().map(inst => inst.stop()));
+
+        await glue.appManager.inMemory.import(definitionsOnStart, "replace");
+
+        supportApp1 = undefined;
+        supportApp2 = undefined;
     });
 
     it("Should throw when invoked without arguments", (done) => {
@@ -30,7 +71,7 @@ describe("raiseIntent()", function() {
             .catch(() => done());
     });
 
-    [undefined, null, "", true, false, { test: 42 }, [], () => {}, 42].forEach((invalidArg) => {
+    [undefined, null, "", true, false, { test: 42 }, [], () => { }, 42].forEach((invalidArg) => {
         it(`Should throw when invoked with invalid intent - (${JSON.stringify(invalidArg)})`, (done) => {
             fdc3.raiseIntent(invalidArg)
                 .then(() => done("Should have thrown"))
@@ -38,7 +79,7 @@ describe("raiseIntent()", function() {
         });
     });
 
-    [undefined, null, "", true, false, { test: 42 }, [], () => {}, 42, "test"].forEach((invalidArg) => {
+    [undefined, null, "", true, false, { test: 42 }, [], () => { }, 42, "test"].forEach((invalidArg) => {
         it(`Should throw when invoked with invalid context - (${JSON.stringify(invalidArg)})`, (done) => {
             fdc3.raiseIntent("core-intent", invalidArg)
                 .then(() => done("Should have thrown"))
@@ -46,7 +87,7 @@ describe("raiseIntent()", function() {
         });
     });
 
-    [null, "", true, false, { test: 42 }, [], () => {}, 42].forEach((invalidArg) => {
+    [null, "", true, false, { test: 42 }, [], () => { }, 42].forEach((invalidArg) => {
         it(`"Should throw when invoked with invalid TargetApp as third argument - (${JSON.stringify(invalidArg)})`, (done) => {
             fdc3.raiseIntent("core-intent", { type: "fdc3.type" }, invalidArg)
                 .then(() => done("Should have thrown"))
@@ -54,41 +95,34 @@ describe("raiseIntent()", function() {
         });
     });
 
-    it("Should return an object", async() => {
-        intentName = Date.now().toString();
-        await supportApp.intents.addIntentListener(intentName);
+    it("Should return an object", async () => {
+        await supportApp1.fdc3.addIntentListener(intentName1);
 
-        const context = gtf.fdc3.getContext();
-
-        const resolution = await fdc3.raiseIntent(intentName, context);
+        const context = { ...gtf.fdc3.getContext(), type: contextType1 };
+        const resolution = await fdc3.raiseIntent(intentName1, context);
 
         expect(resolution).to.be.an("object");
     });
 
-    it("Should return a valid IntentResolution object", async() => {
-        intentName = Date.now().toString();
-        await supportApp.intents.addIntentListener(intentName);
-        
-        const context = gtf.fdc3.getContext();
+    it("Should return a valid IntentResolution object", async () => {
+        await supportApp1.fdc3.addIntentListener(intentName1);
 
-        const resolution = await fdc3.raiseIntent(intentName, context);
+        const context = { ...gtf.fdc3.getContext(), type: contextType1 };
+        const resolution = await fdc3.raiseIntent(intentName1, context);
 
         expect(resolution.source).to.be.an("object");
         expect(resolution.intent).to.be.a("string");
         expect(resolution.getResult).to.be.a("function");
     });
 
-    it("Should return correct IntentResolution object", async() => {
-        intentName = Date.now().toString();
+    it("Should return correct IntentResolution object", async () => {
+        await supportApp1.fdc3.addIntentListener(intentName1);
 
-        await supportApp.intents.addIntentListener(intentName);
+        const context = { ...gtf.fdc3.getContext(), type: contextType1 };
+        const resolution = await fdc3.raiseIntent(intentName1, context);
 
-        const context = gtf.fdc3.getContext();
-
-        const resolution = await fdc3.raiseIntent(intentName, context);
-
-        expect(resolution.source.appId).to.eql(supportAppName);
-        expect(resolution.intent).to.eql(intentName);
+        expect(resolution.source.appId).to.eql(supportAppName1);
+        expect(resolution.intent).to.eql(intentName1);
         expect(resolution.getResult).to.not.be.undefined;
     });
 
@@ -101,17 +135,15 @@ describe("raiseIntent()", function() {
             .catch(() => done());
     });
 
-    it("Should throw when there's an app registering an intent with such name but it's not the same app that is passed as a third argument", async() => {
+    it("Should throw when there's an app registering an intent with such name but it's not the same app that is passed as a third argument (string)", async () => {
+        const context = { ...gtf.fdc3.getContext(), type: contextType1 };
+
+        await supportApp1.fdc3.addIntentListener(intentName1);
+
         const raiseIntentThrownPromise = gtf.wrapPromise();
 
-        intentName = Date.now().toString();
-
-        await supportApp.intents.addIntentListener(intentName);
-        
-        const context = gtf.fdc3.getContext();
-
         try {
-            await fdc3.raiseIntent(intentName, context, "noSuchApp");
+            await fdc3.raiseIntent(intentName1, context, "noSuchApp");
             raiseIntentThrownPromise.reject("Should have thrown");
         } catch (error) {
             raiseIntentThrownPromise.resolve();
@@ -120,23 +152,102 @@ describe("raiseIntent()", function() {
         await raiseIntentThrownPromise.promise;
     });
 
-    describe("when the same app raises the intent, intentResolution.getResult() method", function() {
+    it("Should throw when there's an app registering an intent with such name but it's not the same app that is passed as a third argument ({ appId: string })", async () => {
+        const context = { ...gtf.fdc3.getContext(), type: contextType1 };
+
+        await supportApp1.fdc3.addIntentListener(intentName1);
+
+        const raiseIntentThrownPromise = gtf.wrapPromise();
+
+        try {
+            await fdc3.raiseIntent(intentName1, context, { appId: "noSuchApp" });
+            raiseIntentThrownPromise.reject("Should have thrown");
+        } catch (error) {
+            raiseIntentThrownPromise.resolve();
+        }
+
+        await raiseIntentThrownPromise.promise;
+    });
+
+    it("Should throw when there's an app registering an intent with such name but it's not the same instance that is passed as a third argument ({ appId: string, instanceId: string })", async () => {
+        const context = { ...gtf.fdc3.getContext(), type: contextType1 };
+
+        await supportApp1.fdc3.addIntentListener(intentName1);
+
+        const raiseIntentThrownPromise = gtf.wrapPromise();
+
+        try {
+            await fdc3.raiseIntent(intentName1, context, { appId: supportAppName1, instanceId: "random-instance-id" });
+            raiseIntentThrownPromise.reject("Should have thrown");
+        } catch (error) {
+            raiseIntentThrownPromise.resolve();
+        }
+
+        await raiseIntentThrownPromise.promise;
+    });
+
+    it("Should not be able to retrieve a private channel when there are two consumers of the channel (creator and client)", async () => {
+        const context = { ...gtf.fdc3.getContext(), type: contextType1 };
+
+        // supportApp1 creates a private channel
+        await supportApp1.fdc3.createPrivateChannel();
+
+        // supportApp1 adds a context listener whose callback will return the created private channel => this is the channel's first consumer (the creator)
+        await supportApp1.fdc3.addIntentListener(intentName1, { privateChannel: true });
+
+        // current app raises the intent and retrieves the result which is the private channel => this is the channel's second consumer (the client)
+        const resolution = await fdc3.raiseIntent(intentName1, context);
+        await resolution.getResult();
+
+        const errorThrownPromise = gtf.wrapPromise();
+
+        try {
+            // another app instance is started and it tries to raise the same intent which returns the private channel
+            await supportApp2.fdc3.raiseIntent(intentName1, context);
+            errorThrownPromise.reject("Should have thrown");
+        } catch (error) {
+            errorThrownPromise.resolve();
+        }
+
+        await errorThrownPromise.promise;
+    });
+
+    it("Should target the passed application by appId when there are two apps providing the same intent", async () => {
+        const context = { ...gtf.fdc3.getContext(), type: contextType1 };
+
+        await supportApp1.fdc3.addIntentListener(intentName1);
+
+        await fdc3.raiseIntent(intentName1, context, { appId: supportAppName1 });
+
+        const supportApp1Context = await supportApp1.fdc3.getIntentListenerContext(intentName1);
+
+        expect(supportApp1Context).to.eql(context);
+    });
+
+    it("Should target the passed application by appId and instanceId when there are two app instances providing the same intent", async () => {
+        const context = { ...gtf.fdc3.getContext(), type: contextType1 };
+
+        // both instances add intent listener for the intent
+        await supportApp1.fdc3.addIntentListener(intentName1);
+        await supportApp2.fdc3.addIntentListener(intentName1);
+
+        await fdc3.raiseIntent(intentName1, context, { appId: supportAppName1 });
+
+        const supportApp1Context = await supportApp1.fdc3.getIntentListenerContext(intentName1);
+
+        expect(supportApp1Context).to.eql(context);
+    });
+
+    describe("when the same app raises the intent, intentResolution.getResult() method", function () {
         const defaultChannelMethods = ["broadcast", "addContextListener", "getCurrentContext"];
         const defaultPrivateChannelMethods = ["id", "type", "displayMetadata", ...defaultChannelMethods, "onAddContextListener", "onUnsubscribe", "onDisconnect", "disconnect"];
 
-        it("Should be async", async() => {
-            const intentName = "fdc3-private-channel-intent";
-            const context = gtf.fdc3.getContext();
-            
-            const listener = await fdc3.addIntentListener(intentName, async(ctx) => {
-                if (ctx.name === context.name) {
-                    return Promise.resolve();
-                }
-            });
+        it("Should be async", async () => {
+            const context = { ...gtf.fdc3.getContext(), type: contextType1 };
 
-            gtf.fdc3.addActiveListener(listener);
+            await supportApp1.fdc3.addIntentListener(intentName1);
 
-            const resolution = await fdc3.raiseIntent(intentName, context);
+            const resolution = await fdc3.raiseIntent(intentName1, context);
 
             const getResultPromise = resolution.getResult();
 
@@ -144,241 +255,60 @@ describe("raiseIntent()", function() {
             expect(getResultPromise.catch).to.be.a("function");
         });
 
-        it("Should return correct context when intent handler returns a context", async() => {
-            const intentName = "fdc3.test.intent.name";
-            const context = gtf.fdc3.getContext();
-            const anotherContextToReturn = gtf.fdc3.getContext();
+        it("Should return correct context when intent handler returns a context", async () => {
+            const context = { ...gtf.fdc3.getContext(), type: contextType1 };
+            const contextToReturn = gtf.fdc3.getContext();
 
-            const listener = await fdc3.addIntentListener(intentName, (ctx) => {
-                if (ctx.name === context.name) {
-                    return anotherContextToReturn;
-                }
-            });
+            await supportApp1.fdc3.addIntentListener(intentName1, { context: contextToReturn });
 
-            gtf.fdc3.addActiveListener(listener);
-
-            const resolution = await fdc3.raiseIntent(intentName, context);
+            const resolution = await fdc3.raiseIntent(intentName1, context);
 
             const result = await resolution.getResult();
 
-            expect(result).to.eql(anotherContextToReturn);
+            expect(result).to.eql(contextToReturn);
         });
 
-        it("Should return correct channel when intent handler returns a channel", async() => {
-            const intentName = "fdc3.test.intent.name";
-            const context = gtf.fdc3.getContext();
-            
-            let privateChannel;
+        it("Should return correct channel when intent handler returns a channel", async () => {
+            const context = { ...gtf.fdc3.getContext(), type: contextType1 };
 
-            const listener = await fdc3.addIntentListener(intentName, async(ctx) => {
-                if (ctx.name === context.name) {
-                    const channel = await fdc3.createPrivateChannel();
+            await supportApp1.fdc3.createPrivateChannel();
 
-                    privateChannel = channel;
+            await supportApp1.fdc3.addIntentListener(intentName1, { privateChannel: true });
 
-                    return channel;
-                }
-            });
-
-            gtf.fdc3.addActiveListener(listener);
-
-            const resolution = await fdc3.raiseIntent(intentName, context);
+            const resolution = await fdc3.raiseIntent(intentName1, context);
 
             const result = await resolution.getResult();
 
-            expect(result.id).to.eql(privateChannel.id);
-            expect(result.type).to.eql(privateChannel.type);
+            expect(result.type).to.eql("private");
             expect(defaultChannelMethods.every(method => Object.keys(result).includes(method))).to.eql(true);
         });
 
-        it("Should be able to retrieve the same correct channel 3 times when getResult() is invoked 3 times", async() => {
-            const intentName = "fdc3-private-channel-intent";
-            const context = gtf.fdc3.getContext();
+        it("Should be able to retrieve the same correct channel 3 times when getResult() is invoked 3 times", async () => {
+            const context = { ...gtf.fdc3.getContext(), type: contextType1 };
 
-            const privateChannel = await fdc3.createPrivateChannel();
-        
-            const listener = await fdc3.addIntentListener(intentName, () => {
-                return privateChannel;
-            });
+            await supportApp1.fdc3.createPrivateChannel();
 
-            gtf.fdc3.addActiveListener(listener);
+            await supportApp1.fdc3.addIntentListener(intentName1, { privateChannel: true });
 
-            const resolution1 = await fdc3.raiseIntent(intentName, context);
+            const resolution1 = await fdc3.raiseIntent(intentName1, context);
             const channel1 = await resolution1.getResult();
 
-            const resolution2 = await fdc3.raiseIntent(intentName, context);
+            const resolution2 = await fdc3.raiseIntent(intentName1, context);
             const channel2 = await resolution2.getResult();
 
-            const resolution3 = await fdc3.raiseIntent(intentName, context);
+            const resolution3 = await fdc3.raiseIntent(intentName1, context);
             const channel3 = await resolution3.getResult();
 
             const channels = [channel1, channel2, channel3];
 
-            expect(channels.every(channel => channel.id === privateChannel.id)).to.eql(true);
-            expect(channels.every(channel => channel.type === privateChannel.type)).to.eql(true);
+            expect(channels.every(channel => channel.type === "private")).to.eql(true);
             // check the shape of each channel
             expect(Object.keys(channel1)).to.have.members(defaultPrivateChannelMethods);
             expect(Object.keys(channel2)).to.have.members(defaultPrivateChannelMethods);
             expect(Object.keys(channel3)).to.have.members(defaultPrivateChannelMethods);
-        });
-    });
-
-    describe("when support app raises the intent, intentResolution.getResult() method", function() {
-        it("Should be async", async() => {
-            const intentName = "fdc3-private-channel-intent";
-            const context = gtf.fdc3.getContext();
-            
-            const listener = await fdc3.addIntentListener(intentName, async(ctx) => {
-                if (ctx.name === context.name) {
-                    return Promise.resolve();
-                }
-            });
-
-            gtf.fdc3.addActiveListener(listener);
-
-            const resolution = await fdc3.raiseIntent(intentName, context);
-
-            const getResultPromise = resolution.getResult();
-
-            expect(getResultPromise.then).to.be.a("function");
-            expect(getResultPromise.catch).to.be.a("function");
-        });
-
-        it("Should return correct context when intent handler returns a context", async() => {
-            const intentName = "fdc3.test.intent.name";
-            const context = gtf.fdc3.getContext();
-            const anotherContextToReturn = gtf.fdc3.getContext();
-
-            const listener = await fdc3.addIntentListener(intentName, (ctx) => {
-                if (ctx.name === context.name) {
-                    return anotherContextToReturn;
-                }
-            });
-
-            gtf.fdc3.addActiveListener(listener);
-
-            const resolution = await supportApp.fdc3.raiseIntent(intentName, context);
-
-            const result = await resolution.getResult();
-
-            expect(result).to.eql(anotherContextToReturn);
-        });
-
-        it("Should return correct channel.id and channel.type when returning a channel", async() => {
-            const intentName = "fdc3-private-channel-intent";
-            const context = gtf.fdc3.getContext();
-
-            let channelId;
-            let channelType;
-
-            const listener = await fdc3.addIntentListener(intentName, async(ctx) => {
-                if (ctx.name === context.name) {
-                    const channel = await fdc3.createPrivateChannel();
-
-                    channelId = channel.id;
-                    channelType = channel.type;
-
-                    return channel;
-                }
-            });
-
-            gtf.fdc3.addActiveListener(listener);
-
-            const resolution = await supportApp.fdc3.raiseIntent(intentName, context);
-
-            const channelMeta = await resolution.getResult();
-
-            // only id and type properties are checked because getResult() method returns channelMetadata (cannot send object with methods through postMessage)
-            expect(channelMeta.id).to.eql(channelId);
-            expect(channelMeta.type).to.eql(channelType);
-        });
-        
-        it("Should not be able to retrieve the same channel metadata when getResult() is invoked in a third app after the private channel was received from an intent", async() => {
-            const getResultPromise = gtf.wrapPromise();
-
-            const intentName = "fdc3-private-channel-intent";
-            const context = gtf.fdc3.getContext();
-
-            const supportApp1 = await gtf.createApp({exposeFdc3: true});
-            const supportApp2 = await gtf.createApp({exposeFdc3: true});
-
-            const privateChannel = await fdc3.createPrivateChannel();
-        
-            const listener = await fdc3.addIntentListener(intentName, () => {
-                return privateChannel;
-            });
-
-            gtf.fdc3.addActiveListener(listener);
-
-            const resolution1 = await supportApp1.fdc3.raiseIntent(intentName, context);
-            await resolution1.getResult();
-            
-            try {
-                const resolution2 = await supportApp2.fdc3.raiseIntent(intentName, context);
-                await resolution2.getResult();
-                getResultPromise.reject("Should have thrown");
-            } catch (error) {
-                getResultPromise.resolve();
-            }
-
-            await getResultPromise.promise;
-        });
-    });
-
-    describe("integration with Glue42", function() {
-        it("Should open an instance of the app that registers an intent with such name", async() => {
-            const instanceStarted = gtf.wrapPromise();
-
-            const allIntents = await glue.intents.all();
-
-            const { name, handlers } = allIntents[0];
-
-            const context = gtf.fdc3.getContext();
-            
-            const un = glue.appManager.onInstanceStarted((inst) => {
-                const isInstanceOfIntentHandler = handlers.find(handler => handler.applicationName === inst.application.name);
-
-                if (isInstanceOfIntentHandler) {
-                    instanceStarted.resolve();
-                }
-            });
-
-            gtf.addWindowHook(un);
-
-            await fdc3.raiseIntent(name, context);
-
-            await instanceStarted.promise;
-        });
-
-        /* fdc3 specification: target provided & there is a running instance => target instance */
-        it("Should not open a new instance of the app that registers an intent with such name if there's an already running instance of that app", async() => {
-            intentName = Date.now().toString();
-            const context = gtf.fdc3.getContext();
-
-            const initInstancesCount = glue.appManager.application(supportAppName).instances.length;
-
-            await supportApp.intents.addIntentListener(intentName, context);
-
-            await fdc3.raiseIntent(intentName, context, { appId: supportAppName });
-
-            const newInstancesCount = glue.appManager.application(supportAppName).instances.length;
-
-            expect(initInstancesCount).to.eql(newInstancesCount);
-        });
-
-        it("Should not add one more element to the array returned from glue.appManager.instances() when there's no app registering an intent with that name", async() => {
-            const initInstancesCount = glue.appManager.instances().length;
-
-            const intentName = "noAppWithSuchIntent";
-            const context = gtf.fdc3.getContext();
-    
-            try {
-                await fdc3.raiseIntent(intentName, context);
-            } catch (error) { }
-
-            const newInstancesCount = glue.appManager.instances().length;
-
-            expect(initInstancesCount).to.eql(newInstancesCount);
+            // check it has always the same id
+            expect(channels[0].id).to.eql(channels[1].id);
+            expect(channels[0].id).to.eql(channels[2].id);
         });
     });
 });

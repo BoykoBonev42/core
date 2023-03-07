@@ -1,8 +1,9 @@
-import { Context, Listener, ImplementationMetadata, AppIdentifier, AppMetadata, Channel, AppIntent, IntentResolution, IntentHandler, ContextHandler, DesktopAgent as Fdc3DesktopAgent, OpenError, ChannelError } from '@finos/fdc3'
-import { IntentsController } from '../controllers/intents';
-import { ApplicationsController } from '../controllers/applications';
-import { appIdentifierDecoder, contextDecoder, optionalNonEmptyStringDecoder, nonEmptyStringDecoder, optionalAppIdentifier, optionalContextDecoder, optionalTargetApp, targetAppDecoder } from '../shared/decoder';
-import { ChannelsController } from '../channels/controller';
+import { Context, Listener, ImplementationMetadata, AppIdentifier, AppMetadata, Channel, AppIntent, IntentResolution, IntentHandler, ContextHandler, DesktopAgent as Fdc3DesktopAgent } from "@finos/fdc3";
+import { IntentsController } from "../controllers/intents";
+import { ApplicationsController } from "../controllers/applications";
+import { appIdentifierDecoder, contextDecoder, optionalNonEmptyStringDecoder, nonEmptyStringDecoder, optionalAppIdentifier, optionalContextDecoder, optionalTargetApp, targetAppDecoder } from "../shared/decoder";
+import { ChannelsController } from "../channels/controller";
+import { generateCommandId } from "../shared/utils";
 export class DesktopAgent {
     constructor(
         private readonly intentsController: IntentsController,
@@ -43,23 +44,23 @@ export class DesktopAgent {
 
         optionalContextDecoder.runWithException(context);
 
-        return this.applicationController.open(target, context);
+        return this.applicationController.open({ commandId: generateCommandId(), target, context });
     }
 
     private async findInstances(app: AppIdentifier): Promise<AppIdentifier[]> {
         appIdentifierDecoder.runWithException(app);
 
-        return this.applicationController.findInstances(app);
+        return this.applicationController.findInstances({ commandId: generateCommandId(), appIdentifier: app });
     }
 
     private async getAppMetadata(app: AppIdentifier): Promise<AppMetadata> {
         appIdentifierDecoder.runWithException(app);
 
-        return this.applicationController.getAppMetadata(app);
+        return this.applicationController.getAppMetadata({ commandId: generateCommandId(), appIdentifier: app });
     }
 
     private async getInfo(): Promise<ImplementationMetadata> {
-        return this.applicationController.getInfo();
+        return this.applicationController.getInfo({ commandId: generateCommandId() });
     }
   
     // context
@@ -67,7 +68,7 @@ export class DesktopAgent {
     private async broadcast(context: Context): Promise<void> {
         contextDecoder.runWithException(context);
 
-        return this.channelsController.broadcast(context);
+        return this.channelsController.broadcast(generateCommandId(), context);
     }
 
     private async addContextListener(contextType: string | null | ContextHandler, handler?: ContextHandler): Promise<Listener> {
@@ -77,7 +78,7 @@ export class DesktopAgent {
                 throw new Error("Please provide the handler as a function!");
             }
 
-            return this.channelsController.addContextListener(contextType);
+            return this.channelsController.addContextListener({ commandId: generateCommandId(), handler: contextType as ContextHandler });
         }
 
         const contextTypeDecoder = optionalNonEmptyStringDecoder.runWithException(contextType);
@@ -86,7 +87,7 @@ export class DesktopAgent {
             throw new Error("Please provide the handler as a function!");
         }
 
-        return this.channelsController.addContextListener(handler, contextTypeDecoder);
+        return this.channelsController.addContextListener({ commandId: generateCommandId(), handler, contextType: contextTypeDecoder });
     }
 
     // intents
@@ -102,7 +103,7 @@ export class DesktopAgent {
 
         optionalNonEmptyStringDecoder.runWithException(resultType);
 
-        return this.intentsController.findIntent(intent, contextDecoderResult.result, resultType);
+        return this.intentsController.findIntent({ commandId: generateCommandId(), intent, context: contextDecoderResult.result, resultType });
     }
 
     private async findIntentsByContext(context: Context, resultType?: string): Promise<AppIntent[]> {
@@ -114,7 +115,7 @@ export class DesktopAgent {
 
         optionalNonEmptyStringDecoder.runWithException(resultType);
 
-        return this.intentsController.findIntentsByContext(contextDecoderResult.result, resultType);
+        return this.intentsController.findIntentsByContext({ commandId: generateCommandId(), context: contextDecoderResult.result, resultType });
     }
 
     private async raiseIntent(intent: string, context: Context, app?: string | AppIdentifier): Promise<IntentResolution> {
@@ -124,14 +125,14 @@ export class DesktopAgent {
         
         optionalAppIdentifier.runWithException(app);
 
-        return this.intentsController.raiseIntent(intent, context, app);
+        return this.intentsController.raiseIntent({ commandId: generateCommandId(), intent, context, target: app });
     }
 
     private async raiseIntentForContext(context: Context, app?: string | AppIdentifier): Promise<IntentResolution> {
         contextDecoder.runWithException(context);
         optionalTargetApp.runWithException(app);
 
-        return this.intentsController.raiseIntentForContext(context, app);
+        return this.intentsController.raiseIntentForContext({ commandId: generateCommandId(), context, target: app });
     }
 
     private async addIntentListener(intent: string, handler: IntentHandler): Promise<Listener> {
@@ -141,41 +142,41 @@ export class DesktopAgent {
             throw new Error("Please provide the handler as a function!");
         }
 
-        return this.intentsController.addIntentListener(intent, handler);
+        return this.intentsController.addIntentListener({ commandId: generateCommandId(), intent, handler });
     }
 
     // channels
     private async getOrCreateChannel(channelId: string): Promise<Channel> {
         nonEmptyStringDecoder.runWithException(channelId);
 
-        return this.channelsController.getOrCreateChannel(channelId);
+        return this.channelsController.getOrCreateChannel({ commandId: generateCommandId(), channelId });
     }
 
     private async getSystemChannels(): Promise<Channel[]> {
-        return this.channelsController.getUserChannels();
+        return this.channelsController.getUserChannels(generateCommandId());
     }
 
     private async joinChannel(channelId: string): Promise<void> {
         nonEmptyStringDecoder.runWithException(channelId);
 
-        return this.channelsController.joinChannel(channelId);
+        return this.channelsController.joinUserChannel({ commandId: generateCommandId(), channelId });
     }
 
     private async joinUserChannel(channelId: string): Promise<void> {
         nonEmptyStringDecoder.runWithException(channelId);
 
-        return this.channelsController.joinUserChannel(channelId);
+        return this.channelsController.joinUserChannel({ commandId: generateCommandId(), channelId });
     }
 
     private async getCurrentChannel(): Promise<Channel | null> {
-        return this.channelsController.getCurrentChannel();
+        return this.channelsController.getCurrentChannel(generateCommandId());
     }
 
     private async leaveCurrentChannel(): Promise<void> {
-        return this.channelsController.leaveCurrentChannel();
+        return this.channelsController.leaveCurrentChannel(generateCommandId());
     }
 
     private async createPrivateChannel(): Promise<any> {
-        return this.channelsController.createPrivateChannel();
+        return this.channelsController.createPrivateChannel(generateCommandId());
     }
 }

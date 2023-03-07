@@ -1,36 +1,68 @@
 describe("findIntentsByContext()", function() {
-    const fdc3AppDefinition = {
-        name: "fdc3-support",
+    const intentName = `fdc3.intent.${Date.now()}`;
+    const intentDisplayName = `FDC3.Intent.Display.Name`;
+    const contextType1 = "fdc3.test.context.type.1";
+    const sharedContextType = "fdc3.shared.context.type";
+    const resultType = "fdc3.instrument";
+
+    const supportAppDefWithContextType = {
+        name: "supportAppDef2",
         type: "window",
         details: {
-            url: "https://google.com"
+            url: "https://github.com"
         },
         intents: [
-            {   
-                name: "fdc3.test1",
-                displayName: "fdc3.test1.displayName",
-                contexts: [ "fdc3.test1.context1", "fdc3.test1.context2" ]
-            },
             {
-                name: "fdc3.test2",
-                displayName: "fdc3.test2.displayName",
-                contexts: [ "fdc3.test2.context1", "fdc3.test2.context2" ]
+                name: intentName,
+                displayName: intentDisplayName,
+                contexts: [
+                    sharedContextType
+                ]
+            }
+        ]
+    };
+
+    const supportAppDefWithMultipleContextType = {
+        name: "supportAppDef3",
+        type: "window",
+        details: {
+            url: "https://github.com"
+        },
+        intents: [
+            {
+                name: intentName,
+                contexts: [
+                    contextType1,
+                    sharedContextType
+                ],
+                resultType
+            }
+        ]
+    };
+
+    const supportAppDefWithContextAndResultType = {
+        name: "supportAppDef4",
+        type: "window",
+        details: {
+            url: "https://github.com"
+        },
+        intents: [
+            {
+                name: intentName,
+                contexts: [
+                    sharedContextType
+                ],
+                resultType
             }
         ]
     };
 
     let definitionsOnStart;
 
-    const existingContext = { type: "test-context" };
-
     before(async() => {
         await coreReady;
 
         definitionsOnStart = await glue.appManager.inMemory.export();
-    });
-
-    beforeEach(async() => {
-        await glue.appManager.inMemory.import([fdc3AppDefinition], "merge");
     });
 
     afterEach(async() => {
@@ -60,48 +92,67 @@ describe("findIntentsByContext()", function() {
     });
 
     it("Should return an array", async() => {
-        const context = { type: "fdc3.test1.context1" };
-        const appIntents = await fdc3.findIntentsByContext(context);
+        await glue.appManager.inMemory.import([supportAppDefWithContextType], "merge");
+
+        const appIntents = await fdc3.findIntentsByContext({ type: sharedContextType });
 
         expect(appIntents).to.be.an("array");
     });
 
     it("Should return an array with the correct AppIntent", async() => {
-        const context = { type: "fdc3.test1.context1" };
-        const [ appIntent ] = await fdc3.findIntentsByContext(context);
+        await glue.appManager.inMemory.import([supportAppDefWithContextType, supportAppDefWithMultipleContextType], "merge");
+
+        const [ appIntent ] = await fdc3.findIntentsByContext({ type: sharedContextType });
 
         expect(appIntent.apps).to.be.an("array");
         expect(appIntent.intent).to.be.an("object");
     });
 
-    it("Should return the correct an array with the correct AppMetadata", async() => {
-        const context = { type: "fdc3.test1.context1" };
-        const [ appIntent ] = await fdc3.findIntentsByContext(context);
-        const [ app ] = appIntent.apps;
+    it("Should return an array with the correct Apps", async() => {
+        await glue.appManager.inMemory.import([supportAppDefWithContextType, supportAppDefWithMultipleContextType, supportAppDefWithContextAndResultType], "merge");
 
-        expect(app.name).to.eql(fdc3AppDefinition.name);
-        expect(app.displayName).to.eql(fdc3AppDefinition.displayName);
+        const [ appIntent ] = await fdc3.findIntentsByContext({ type: sharedContextType });
+        const { apps } = appIntent;
+
+        expect(apps.length).to.eql(3);
+        expect(apps.some(appDef => appDef.appId === supportAppDefWithContextType.name)).to.eql(true);
+        expect(apps.some(appDef => appDef.appId === supportAppDefWithMultipleContextType.name)).to.eql(true);
+        expect(apps.some(appDef => appDef.appId === supportAppDefWithContextAndResultType.name)).to.eql(true);
     });
 
-    it("Should return the correct an array with the correct IntentMetadata", async() => {
-        const context = { type: "fdc3.test1.context1" };
-        const [ appIntent ] = await fdc3.findIntentsByContext(context);
+    it("Should return an array with the correct IntentMetadata", async() => {
+        await glue.appManager.inMemory.import([supportAppDefWithContextType], "merge");
+
+        const [ appIntent ] = await fdc3.findIntentsByContext({ type: sharedContextType });
         const { intent } = appIntent;
 
-        expect(intent.name).to.eql("fdc3.test1");
-        expect(intent.displayName).to.eql("fdc3.test1.displayName");
+        expect(intent.name).to.eql(intentName);
+        expect(intent.displayName).to.eql(intentDisplayName);
     });
 
     it("Should return the correct array when resultType is passed as a second argument", async() => {
-        const resultType = "test-result-type";
-        const apps = await fdc3.findIntentsByContext(existingContext, resultType);
+        await glue.appManager.inMemory.import([supportAppDefWithContextType, supportAppDefWithMultipleContextType, supportAppDefWithContextAndResultType], "merge");
 
-        const localAppsWithSuchContextAndResultType = gtf.appManager.getLocalApplications().filter(localApp => localApp.intents?.some(intent => intent.contexts.some(ctx => ctx === existingContext.type) && intent.resultType === resultType));
+        const [ appIntent ] = await fdc3.findIntentsByContext({ type: sharedContextType }, resultType);
+        const { apps } = appIntent;
 
-        expect(apps.length).to.eql(localAppsWithSuchContextAndResultType.length);
+        expect(apps.length).to.eql(2);
+        expect(apps.some(appDef => appDef.appId === supportAppDefWithMultipleContextType.name)).to.eql(true);
+        expect(apps.some(appDef => appDef.appId === supportAppDefWithContextAndResultType.name)).to.eql(true);
     });
 
-    it("Should throw when there're no apps with such context and resultType", async() => {
+    it("Should throw when there're no apps with such context", async() => {
+        const methodThrown = gtf.wrapPromise();
+
+        try {
+            await fdc3.findIntentsByContext({ type: "nonExistingContext" });
+            methodThrown.reject("Should have thrown");
+        } catch (error) {
+            methodThrown.resolve();
+        }
+    });
+
+    it("Should throw when there're no apps with such context and result type", async() => {
         const methodThrown = gtf.wrapPromise();
 
         try {
@@ -110,17 +161,5 @@ describe("findIntentsByContext()", function() {
         } catch (error) {
             methodThrown.resolve();
         }
-    });
-    
-    describe("integration with glue intents", function() {
-        it("Should return an array with the same length as glue.intents.find({ contextType })", async() => {
-            const contextType = "test-context";
-
-            const fdc3AppIntentsArr = await fdc3.findIntentsByContext({ type: contextType });
-
-            const glueIntentsArr = await glue.intents.find({ contextType });
-
-            expect(fdc3AppIntentsArr.length).to.eql(glueIntentsArr.length);
-        });
     });
 });

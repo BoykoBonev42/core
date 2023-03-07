@@ -7,7 +7,7 @@ import { GlueController } from './glue';
 
 export class GlueEventsController {
     constructor(
-        private readonly glueController: GlueController, 
+        private readonly glueController: GlueController,
         private readonly channelsCallbackRegistry: ChannelsCallbackRegistry
     ) { }
 
@@ -17,19 +17,19 @@ export class GlueEventsController {
         if (isMethodRegisteredByThisApp) {
             return;
         }
-        
+
         await this.glueController.registerMethod(Glue42FDC3SystemMethod, this.handleSystemMethodInvocation.bind(this));
     }
 
     private isSysMethodRegisteredByCurrentApp(): boolean {
         const methods = this.glueController.getInteropMethods(Glue42FDC3SystemMethod);
 
-        const myId = this.glueController.getMyWindowId();
+        const myId = this.glueController.getMyInteropInstanceId();
 
         const methodsByThisInstance = methods.filter(method => {
-            const methodRegisteredByThisApp = method.getServers().find(server => server.instance === myId);
-
-            return methodRegisteredByThisApp ? method : undefined;
+            return method.getServers().find(server => server.instance === myId)
+                ? method
+                : undefined;
         });
 
         return !!methodsByThisInstance.length;
@@ -39,7 +39,7 @@ export class GlueEventsController {
         const argsDecodeResult = SystemMethodInvocationArgumentDecoder.run(argumentObj);
 
         if (!argsDecodeResult.ok) {
-            throw new Error(`Interop Method ${Glue42FDC3SystemMethod} invoked with invalid argument object - ${argsDecodeResult.error}.\n Expected ${JSON.stringify({ action: string, payload: { channelId: string, clientId: string }})}`)
+            throw new Error(`Interop Method ${Glue42FDC3SystemMethod} invoked with invalid argument object - ${argsDecodeResult.error}.\n Expected ${JSON.stringify({ action: string, payload: { channelId: string, clientId: string } })}`)
         }
 
         const { action, payload } = argsDecodeResult.result;

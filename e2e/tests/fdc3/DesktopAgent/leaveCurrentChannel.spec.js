@@ -41,20 +41,6 @@ describe("leaveCurrentChannel() ", function() {
         expect(currentChannel).to.eql(null);
     });
 
-    it("Should leave the current channel when it's an app channel", async() => {
-        const newChannelName = "TestChannel";
-
-        await fdc3.getOrCreateChannel(newChannelName);
-
-        await fdc3.joinChannel(newChannelName);
-
-        await fdc3.leaveCurrentChannel();
-
-        const currentChannel = await fdc3.getCurrentChannel();
-
-        expect(currentChannel).to.eql(null);
-    });
-
     describe("integration with glue channels", function() {
         it("should leave glue channel", async() => {
             const [channel] = await fdc3.getUserChannels();

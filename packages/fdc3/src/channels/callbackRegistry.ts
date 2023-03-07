@@ -1,16 +1,13 @@
 import { default as CallbackRegistryFactory, CallbackRegistry, UnsubscribeFunction } from "callback-registry";
-import { SystemMethodEventPayload } from '../types/glue42Types';
+import { AddCallbackInRegistryConfig } from "../types/fdc3Types";
+import { SystemMethodEventPayload } from "../types/glue42Types";
 
 
 export class ChannelsCallbackRegistry {
-    private readonly registry!: CallbackRegistry;
+    private readonly registry: CallbackRegistry = CallbackRegistryFactory();
 
-    constructor() {
-        this.registry = CallbackRegistryFactory();
-    }
-
-    public add(action: string, channelId: string, callback: (contextType?: string) => void, replayArgs?: string[]): UnsubscribeFunction {
-        return this.registry.add(`${action}-${channelId}`, callback, replayArgs);
+    public add({ action, channelId, handler , replayArgs }: AddCallbackInRegistryConfig): UnsubscribeFunction {
+        return this.registry.add(`${action}-${channelId}`, handler, replayArgs);
     }
 
     public invoke(action: string, argumentObj: SystemMethodEventPayload): void {

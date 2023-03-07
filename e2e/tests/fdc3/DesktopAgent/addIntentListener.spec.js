@@ -106,110 +106,131 @@ describe("addIntentListener()", function () {
     });
 
     it("Should invoke the callback when an intent is raised", async() => {
-        const intentListenerHeard = gtf.wrapPromise();
-        
-        const intentName = Date.now().toString();
-        const context = gtf.fdc3.getContext();
+        const intentName = `fdc3.intent.${Date.now()}`;
+        const context = { ...gtf.fdc3.getContext(), type: `fdc3.context.${Date.now()}` };
 
-        const listener = await fdc3.addIntentListener(intentName, (ctx) => {
-            if (ctx.name === context.name) {
-                intentListenerHeard.resolve();
-            }
-        });
+        const appDef = {
+            name: "fdc3SupportApp",
+            type: "window",
+            details: {
+                url: "http://localhost:4242/coreSupport/index.html"
+            },
+            intents: [
+                {
+                    name: intentName,
+                    contexts: [ context.type ]
+                }
+            ]
+        };
 
-        gtf.fdc3.addActiveListener(listener);
+        await glue.appManager.inMemory.import([appDef], "merge");
+
+        const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
+
+        await supportApp.fdc3.addIntentListener(intentName, context);
 
         await fdc3.raiseIntent(intentName, context);
 
-        await intentListenerHeard.promise;
+        const supportAppContext = await supportApp.fdc3.getIntentListenerContext(intentName);
+
+        expect(supportAppContext).to.not.be.undefined;
     });
 
     it("Should invoke the callback with the correct context when an intent is raised", async() => {
-        const intentListenerHeard = gtf.wrapPromise();
-        
-        const intentName = Date.now().toString();
-        const context = { ...gtf.fdc3.getContext(), ...gtf.contexts.generateComplexObject(10) };
+        const intentName = `fdc3.intent.${Date.now()}`;
+        const context = { ...gtf.fdc3.getContext(), type: `fdc3.context.${Date.now()}` };
 
-        const listener = await fdc3.addIntentListener(intentName, (ctx) => {
-            if (ctx.type === context.type) {
-                try {
-                    expect(ctx).to.eql(context)
-                    intentListenerHeard.resolve();
-                } catch (error) {
-                    intentListenerHeard.reject(error);
+        const appDef = {
+            name: "fdc3SupportApp",
+            type: "window",
+            details: {
+                url: "http://localhost:4242/coreSupport/index.html"
+            },
+            intents: [
+                {
+                    name: intentName,
+                    contexts: [ context.type ]
                 }
-            }
-        });
+            ]
+        };
 
-        gtf.fdc3.addActiveListener(listener);
+        await glue.appManager.inMemory.import([appDef], "merge");
+
+        const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
+
+        await supportApp.fdc3.addIntentListener(intentName, context);
 
         await fdc3.raiseIntent(intentName, context);
 
-        await intentListenerHeard.promise;
+        const supportAppContext = await supportApp.fdc3.getIntentListenerContext(intentName);
+
+        expect(supportAppContext).to.eql(context);
     });
 
-    it("Should throw when listener.unsubscribe is invoked and user tries to raise the intent", async() => {
-        const firstInvocationPromise = gtf.wrapPromise();
-        const errorThrownPromise = gtf.wrapPromise();
+    describe("integration with Glue42 Intents", function() {
+        const glueIntentsPrefix = "Tick42.FDC3.Intents.";
 
-        const intentName = Date.now().toString();
+        let definitionsOnStart;
 
-        const listener = await fdc3.addIntentListener(intentName, (ctx) => {
-            if (ctx.type === "first") {
-                firstInvocationPromise.resolve();
-            }
+        let intentName = `fdc3.intent.${Date.now()}`;
+        let contextType = `fdc3.context.${Date.now()}`;
 
-            if (ctx.type === "second") {
-                errorThrownPromise.reject("Should not have fired");
-            }
+        const appDef = {
+            name: "fdc3SupportApp",
+            type: "window",
+            details: {
+                url: "http://localhost:4242/coreSupport/index.html"
+            },
+            intents: [
+                {
+                    name: intentName,
+                    contexts: [contextType]
+                }
+            ]
+        };
+
+        before(async() => {
+            definitionsOnStart = await glue.appManager.inMemory.export();
         });
 
-        await fdc3.raiseIntent(intentName, { type: "first" });
+        beforeEach(async() => {
+            await glue.appManager.inMemory.import([appDef], "merge");
+        })
 
-        await firstInvocationPromise.promise;
+        afterEach(async() => {
+            gtf.clearWindowActiveHooks();
 
-        listener.unsubscribe();
-
-        try {
-            await fdc3.raiseIntent(intentName, { type: "second" });
-            gtf.fdc3.addActiveListener(listener);
-            errorThrownPromise.reject("Should have thrown");
-        } catch (error) {
-            errorThrownPromise.resolve();
-        }
-
-        await errorThrownPromise.promise;
-    });
-
-    it("Should not invoke the callback when listener.unsubscribe is invoked", async() => {
-        const firstInvocationPromise = gtf.wrapPromise();
-        const secondInvocationPromise = gtf.wrapPromise();
-
-        const intentName = Date.now().toString();
-
-        const listener = await fdc3.addIntentListener(intentName, (ctx) => {
-            if (ctx.type === "first") {
-                firstInvocationPromise.resolve();
-            }
-
-            if (ctx.type === "second") {
-                secondInvocationPromise.reject("Should not have fired");
-            }
+            await glue.appManager.inMemory.import(definitionsOnStart, "replace");
         });
 
-        await fdc3.raiseIntent(intentName, { type: "first" });
+        it("Should add new interop method with the passed name", async() => {
+            const methodAddedPromise = gtf.wrapPromise();
 
-        await firstInvocationPromise.promise;
+            const un = glue.interop.serverMethodAdded(({ server, method}) => {
+                if (method.name === `${glueIntentsPrefix}${intentName}` && server.applicationName === appDef.name) {
+                    methodAddedPromise.resolve();
+                }
+            });
 
-        listener.unsubscribe();
+            gtf.addWindowHook(un);
 
-        try {
-            await fdc3.raiseIntent(intentName, { type: "second" });
-            secondInvocationPromise.reject("Should have thrown");
-        } catch (error) { }
+            const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
 
-        gtf.wait(3000, secondInvocationPromise.resolve);
+            await supportApp.fdc3.addIntentListener(intentName);
 
-        await secondInvocationPromise.promise;
+            await methodAddedPromise.promise;
+        });
+
+        it("Should invoke the callback when glue.intents.raise() is invoked", async() => {
+            const contextToReturn = { ...gtf.fdc3.getContext(), type: contextType };
+            
+            const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
+
+            await supportApp.fdc3.addIntentListener(intentName, { context: contextToReturn });
+
+            const { result } = await glue.intents.raise({ intent: intentName, target: { instance: supportApp.agm.instance.instance }});
+
+            expect(result).to.eql(contextToReturn);
+        });
     });
 });

@@ -9,6 +9,17 @@ const intentToUnsubObj = {};
 let privateChannel;
 let privateChannelListener;
 
+/* whenever FDC3 intent listener is added or invoked, add its listener and context in this dictionary */
+/*
+    {
+        intentName: {
+            context: Context;
+            listener: Listener;
+        }
+    }
+*/
+const fdc3IntentContextAndListener = {};
+
 const setContext = async ({ name, data }, success, error) => {
     if (!name) {
         return error(`Context name is not provided to operation setContext!`);
@@ -59,7 +70,7 @@ const destroyContext = async({ name }, success, error) => {
     await glue.contexts.destroy(name);
 
     success();
-}
+};
 
 const setPathContext = async({ name, path, data }, success, error) => {
     if (!name) {
@@ -69,7 +80,7 @@ const setPathContext = async({ name, path, data }, success, error) => {
     await glue.contexts.setPath(name, path, data);
 
     success();
-}
+};
 
 const setPathsContext = async({ name, paths }, success, error) => {
     if (!name) {
@@ -79,7 +90,7 @@ const setPathsContext = async({ name, paths }, success, error) => {
     await glue.contexts.setPaths(name, paths);
 
     success();
-}
+};
 
 const register = async ({ methodDefinition }, success) => {
     await glue.interop.register(methodDefinition, (args) => {
@@ -288,18 +299,6 @@ const publish = async ({ data, name }, success) => {
     success();
 };
 
-const initFdc3 = async(_, success) => {
-    const fdc3Ready = new Promise((resolve) => {
-        window.addEventListener("fdc3Ready", resolve);
-    });
-
-    await import("../libs/fdc3.umd.js");
-
-    await fdc3Ready;
-
-    success();
-};
-
 const fdc3JoinUserChannel = async({ channelId }, success, error) => {
     try {
         await fdc3.joinUserChannel(channelId);
@@ -344,9 +343,9 @@ const fdc3RaiseIntent = async(params, success, error) => {
     } catch (err) {
         error(err);
     }
-}
+};
 
-const fdc3BroadcastOnChannel = async({ channelId, context }, success, error) => {
+const fdc3BroadcastOnAppChannel = async({ channelId, context }, success, error) => {
     const channel = await fdc3.getOrCreateChannel(channelId);
 
     if (!channel) {
@@ -355,6 +354,15 @@ const fdc3BroadcastOnChannel = async({ channelId, context }, success, error) => 
 
     try {
         await channel.broadcast(context);
+        success();
+    } catch (err) {
+        error(err);
+    }
+};
+
+const fdc3BroadcastOnPrivateChannel = async({ context }, success, error) => {
+    try {
+        await privateChannel.broadcast(context);
         success();
     } catch (err) {
         error(err);
@@ -370,7 +378,7 @@ const fdc3AddContextListenerOnPrivateChannel = async({ contextType }, success, e
     } catch (err) {
         error(err);
     }
-}
+};
 
 const fdc3UnsubscribeFromPrivateChannelListener = async(_, success, error) => {
     try {
@@ -379,7 +387,78 @@ const fdc3UnsubscribeFromPrivateChannelListener = async(_, success, error) => {
     } catch (err) {
         error(err);
     }
-}
+};
+
+const fdc3AddIntentListener = async({ intent, returnValue }, success, error) => {
+    try {
+        const listener = await fdc3.addIntentListener(intent, async(context) => {
+            fdc3IntentContextAndListener[intent] = { ...fdc3IntentContextAndListener[intent], context };
+
+            if (!returnValue) {
+                return;
+            }
+
+            if (returnValue.context) {
+                return returnValue.context;
+            }
+
+            if (returnValue.privateChannel) {
+                return privateChannel;
+            }
+        });
+        fdc3IntentContextAndListener[intent] = { ...fdc3IntentContextAndListener[intent], listener };
+        success();
+    } catch (err) {
+        error(err);
+    }
+};
+
+const fdc3UnsubscribeIntentListener = async ({ intent }, success, error) => {
+    const intentListenerAndContext = fdc3IntentContextAndListener[intent];
+
+    if (!intentListenerAndContext) {
+        error(`No handler registered for passed intent ${intent}`);
+    }
+
+    intentListenerAndContext.listener.unsubscribe();
+
+    delete fdc3IntentContextAndListener[intent];
+
+    success();
+};
+
+const fdc3GetIntentListenerContext = async({ intent }, success, error) => {
+    const intentListenerAndContext = fdc3IntentContextAndListener[intent];
+
+    if (!intentListenerAndContext) {
+        error(`No handler registered for passed intent ${intent}`);
+    }
+
+    const { context } = intentListenerAndContext;
+
+    success({ result: context });
+};
+
+const fdc3CreatePrivateChannel = async(_, success, error) => {
+    try {
+        privateChannel = await fdc3.createPrivateChannel();
+        success();
+    } catch (err) {
+        error(err);
+    }
+} 
+
+const initFdc3 = async(_, success, error) => {
+    const fdc3Ready = new Promise((resolve) => {
+        window.addEventListener("fdc3Ready", resolve);
+    });
+
+    await import("../libs/fdc3.umd.js");
+
+    await fdc3Ready;
+
+    success();
+};
 
 const fdc3DisconnectFromPrivateChannel = async(_, success, error) => {
     try {
@@ -388,7 +467,7 @@ const fdc3DisconnectFromPrivateChannel = async(_, success, error) => {
     } catch (err) {
         error(err);
     }
-}
+};
 
 const operations = [
     { name: 'setContext', execute: setContext },
@@ -414,10 +493,15 @@ const operations = [
     { name: 'fdc3JoinUserChannel', execute: fdc3JoinUserChannel },
     { name: 'fdc3Broadcast', execute: fdc3Broadcast },
     { name: 'fdc3RaiseIntent', execute: fdc3RaiseIntent },
-    { name: 'fdc3BroadcastOnChannel', execute: fdc3BroadcastOnChannel },
+    { name: 'fdc3BroadcastOnAppChannel', execute: fdc3BroadcastOnAppChannel },
+    { name: 'fdc3BroadcastOnPrivateChannel', execute: fdc3BroadcastOnPrivateChannel },
     { name: 'fdc3AddContextListenerOnPrivateChannel', execute: fdc3AddContextListenerOnPrivateChannel },
     { name: 'fdc3UnsubscribeFromPrivateChannelListener', execute: fdc3UnsubscribeFromPrivateChannelListener },
-    { name: 'fdc3DisconnectFromPrivateChannel', execute: fdc3DisconnectFromPrivateChannel }
+    { name: 'fdc3DisconnectFromPrivateChannel', execute: fdc3DisconnectFromPrivateChannel },
+    { name: 'fdc3AddIntentListener', execute: fdc3AddIntentListener },
+    { name: 'fdc3UnsubscribeIntentListener', execute: fdc3UnsubscribeIntentListener },
+    { name: 'fdc3GetIntentListenerContext', execute: fdc3GetIntentListenerContext },
+    { name: "fdc3CreatePrivateChannel", execute: fdc3CreatePrivateChannel },
 ];
 
 const handleControl = (args, _, success, error) => {

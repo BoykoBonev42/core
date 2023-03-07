@@ -1,7 +1,7 @@
-import { Channel } from '@finos/fdc3';
-import { ChannelMetadata } from '../types/fdc3Types';
-import { ChannelContext } from '../types/glue42Types';
-import { ChannelTypes } from './privateChannelConstants';
+import { Channel } from "@finos/fdc3";
+import { ChannelTypes } from "../shared/constants";
+import { ChannelMetadata } from "../types/fdc3Types";
+import { ChannelContext } from "../types/glue42Types";
 
 export class ChannelsFactory {
     constructor(

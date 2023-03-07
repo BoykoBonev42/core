@@ -7,6 +7,7 @@ import { channelsConfig, remoteStoreConfig } from "./config";
 export class GtfCore implements Gtf.Core {
     private readonly controlMethodName = "G42Core.E2E.Control";
     private readonly defaultSupportAppName = "coreSupport";
+    private readonly defaultSupportAppUrl = "http://localhost:4242/coreSupport/index.html";
     private windowNameCounter = 0;
     private counter = 0;
     private activeWindowHooks: (() => void | Promise<void>)[] = [];
@@ -150,10 +151,6 @@ export class GtfCore implements Gtf.Core {
             throw new Error("GTF cannot create an app, because it is running in Puppet mode, please use the gtf.puppet API");
         }
 
-        if (typeof appConfig === "object" && appConfig.exposeFdc3 && appName !== this.defaultSupportAppName) {
-            throw new Error(`GTF does not support exposing FDC3 in ${appName} app. Use coreSupport app instead`);
-        }
-
         const foundApp = this.glue.appManager.application(appName);
 
         if (!foundApp) {
@@ -161,6 +158,10 @@ export class GtfCore implements Gtf.Core {
         }
 
         const supportInstance = await foundApp.start();
+
+        if (typeof appConfig === "object" && appConfig.exposeFdc3 && foundApp.userProperties.details.url !== this.defaultSupportAppUrl) {
+            throw new Error(`GTF does not support exposing FDC3 in ${appName} app. Use coreSupport app instead`);
+        }
 
         return new GtfApp(this.glue, supportInstance, this.controlMethodName, typeof appConfig === "object" ? appConfig : {});
     }

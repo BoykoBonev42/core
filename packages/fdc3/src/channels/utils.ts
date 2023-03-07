@@ -1,6 +1,6 @@
-import { Channel, ContextHandler } from '@finos/fdc3';
-import { defaultChannelsProps, defaultContextProps } from '../shared/constants';
-import { ChannelMetadata } from '../types/fdc3Types';
+import { Channel, ContextHandler } from "@finos/fdc3";
+import { defaultChannelsProps, defaultContextProps } from "../shared/constants";
+import { ChannelMetadata } from "../types/fdc3Types";
 
 export const isChannel = (data: any): boolean => {
     return defaultChannelsProps.every(prop => Object.keys(data).includes(prop));
@@ -35,4 +35,4 @@ export const parseContextHandler = (handler: ContextHandler, contextType?: strin
     };
 
     return subHandler;
-}
+};

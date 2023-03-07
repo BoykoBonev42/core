@@ -308,6 +308,24 @@ describe("Channel's addContextListener()", function() {
 
                 await metadataHeard.promise;
             });
+
+            it("Should invoke the callback immediately after adding a context listener when there's an already broadcasted FDC3 compliant data on the channel", async() => {
+                const broadcastedContextHeard = gtf.wrapPromise();
+        
+                const fdc3Context = gtf.fdc3.getContext();
+        
+                await supportApp.fdc3.broadcast(fdc3Context);
+
+                const listener = await currentChannel.addContextListener((ctx) => {
+                    if (ctx.type === fdc3Context.type) {
+                        broadcastedContextHeard.resolve();
+                    }
+                });
+        
+                gtf.fdc3.addActiveListener(listener);
+        
+                await broadcastedContextHeard.promise;
+            });
         });
     
         describe("using addContextListener(null, handler)", function() {
@@ -573,6 +591,24 @@ describe("Channel's addContextListener()", function() {
                 await supportApp.fdc3.broadcast(fdc3Context);
 
                 await metadataHeard.promise;
+            });
+
+            it("Should invoke the callback immediately after adding a context listener when there's an already broadcasted FDC3 compliant data on the channel", async() => {
+                const broadcastedContextHeard = gtf.wrapPromise();
+        
+                const fdc3Context = gtf.fdc3.getContext();
+        
+                await supportApp.fdc3.broadcast(fdc3Context);
+
+                const listener = await currentChannel.addContextListener(null, (ctx) => {
+                    if (ctx.type === fdc3Context.type) {
+                        broadcastedContextHeard.resolve();
+                    }
+                });
+        
+                gtf.fdc3.addActiveListener(listener);
+        
+                await broadcastedContextHeard.promise;
             });
         });
     
@@ -841,6 +877,24 @@ describe("Channel's addContextListener()", function() {
                 await supportApp.fdc3.broadcast(fdc3Context);
 
                 await metadataHeard.promise;
+            });
+
+            it("Should invoke the callback immediately after adding a context listener when there's an already broadcasted FDC3 compliant data on the channel", async() => {
+                const broadcastedContextHeard = gtf.wrapPromise();
+        
+                const fdc3Context = { type: CONTEXT_TYPE, name: "fdc3.context.name.1", ...gtf.contexts.generateComplexObject(10) };
+        
+                await supportApp.fdc3.broadcast(fdc3Context);
+
+                const listener = await currentChannel.addContextListener(CONTEXT_TYPE, (ctx) => {
+                    if (ctx.type === fdc3Context.type) {
+                        broadcastedContextHeard.resolve();
+                    }
+                });
+        
+                gtf.fdc3.addActiveListener(listener);
+        
+                await broadcastedContextHeard.promise;
             });
         });
     });
@@ -934,7 +988,7 @@ describe("Channel's addContextListener()", function() {
         
                 gtf.fdc3.addActiveListener(listener);
         
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
         
                 await broadcastedContextHeard.promise;
             });
@@ -957,7 +1011,7 @@ describe("Channel's addContextListener()", function() {
         
                 gtf.fdc3.addActiveListener(listener);
         
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
         
                 await broadcastedContextHeard.promise;
             });
@@ -985,7 +1039,7 @@ describe("Channel's addContextListener()", function() {
                 gtf.fdc3.addActiveListener(listener);
     
                 // support app broadcasts a context on the app channel
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3ContextFirstChannel);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3ContextFirstChannel);
     
                 await currentChannelContextHeard.promise;
     
@@ -1020,13 +1074,13 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, firstContextToBroadcast);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, firstContextToBroadcast);
     
                 await broadcastedContextHeard.promise;
     
                 listener.unsubscribe();
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, secondContextToBroadcast);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, secondContextToBroadcast);
     
                 gtf.wait(3000, broadcastedContextNotHeard.resolve);
     
@@ -1052,11 +1106,11 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, firstContext);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, firstContext);
     
                 await firstContextHeard.promise;
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, secondContext);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, secondContext);
     
                 await secondContextHeard.promise;
             });
@@ -1079,7 +1133,7 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
 
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
 
                 await metadataHeard.promise;
             });
@@ -1103,7 +1157,7 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
 
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
 
                 await metadataHeard.promise;
             });
@@ -1127,9 +1181,29 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
 
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
 
                 await metadataHeard.promise;
+            });
+
+            it("Should not invoke the callback when there's an already broadcasted FDC3 compliant data on the channel", async() => {
+                const broadcastedContextNotHeard = gtf.wrapPromise();
+        
+                const fdc3Context = gtf.fdc3.getContext();
+        
+                await supportApp.fdc3.broadcast(fdc3Context);
+
+                const listener = await currentChannel.addContextListener((ctx) => {
+                    if (ctx.type === fdc3Context.type) {
+                        broadcastedContextNotHeard.reject("Should not have been invoked");
+                    }
+                });
+        
+                gtf.fdc3.addActiveListener(listener);
+
+                gtf.wait(3000, broadcastedContextNotHeard.resolve);
+        
+                await broadcastedContextNotHeard.promise;
             });
         });
     
@@ -1200,7 +1274,7 @@ describe("Channel's addContextListener()", function() {
         
                 gtf.fdc3.addActiveListener(listener);
         
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
         
                 await broadcastedContextHeard.promise;
             });
@@ -1223,7 +1297,7 @@ describe("Channel's addContextListener()", function() {
         
                 gtf.fdc3.addActiveListener(listener);
         
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
 
                 await broadcastedContextHeard.promise;
             });
@@ -1251,7 +1325,7 @@ describe("Channel's addContextListener()", function() {
                 gtf.fdc3.addActiveListener(listener);
     
                 // support app broadcasts a context on the current channel with the subscription
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3ContextFirstChannel);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3ContextFirstChannel);
                  
                 await currentChannelContextHeard.promise;
     
@@ -1286,13 +1360,13 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, firstContextToBroadcast);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, firstContextToBroadcast);
 
                 await broadcastedContextHeard.promise;
     
                 listener.unsubscribe();
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, secondContextToBroadcast);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, secondContextToBroadcast);
     
                 gtf.wait(3000, broadcastedContextNotHeard.resolve);
     
@@ -1318,11 +1392,11 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, firstContext);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, firstContext);
     
                 await firstContextHeard.promise;
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, secondContext);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, secondContext);
     
                 await secondContextHeard.promise;
             });
@@ -1345,7 +1419,7 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
 
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
 
                 await metadataHeard.promise;
             });
@@ -1369,7 +1443,7 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
 
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
 
                 await metadataHeard.promise;
             });
@@ -1393,9 +1467,29 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
 
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
 
                 await metadataHeard.promise;
+            });
+
+            it("Should not invoke the callback when there's an already broadcasted FDC3 compliant data on the channel", async() => {
+                const broadcastedContextNotHeard = gtf.wrapPromise();
+        
+                const fdc3Context = gtf.fdc3.getContext();
+        
+                await supportApp.fdc3.broadcast(fdc3Context);
+
+                const listener = await currentChannel.addContextListener(null, (ctx) => {
+                    if (ctx.type === fdc3Context.type) {
+                        broadcastedContextNotHeard.reject("Should not have been invoked");
+                    }
+                });
+        
+                gtf.fdc3.addActiveListener(listener);
+
+                gtf.wait(3000, broadcastedContextNotHeard.resolve);
+        
+                await broadcastedContextNotHeard.promise;
             });
         });
     
@@ -1468,7 +1562,7 @@ describe("Channel's addContextListener()", function() {
         
                 gtf.fdc3.addActiveListener(listener);
         
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
         
                 await broadcastedContextHeard.promise;
             });
@@ -1491,7 +1585,7 @@ describe("Channel's addContextListener()", function() {
         
                 gtf.fdc3.addActiveListener(listener);
         
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
         
                 await broadcastedContextHeard.promise;
             });
@@ -1516,7 +1610,7 @@ describe("Channel's addContextListener()", function() {
                 gtf.fdc3.addActiveListener(listener);
     
                 // support app broadcasts a context on the current channel with the subscription
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3ContextFirstChannel);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3ContextFirstChannel);
     
                 await currentChannelContextHeard.promise;
     
@@ -1551,13 +1645,13 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, firstContextToBroadcast);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, firstContextToBroadcast);
     
                 await broadcastedContextHeard.promise;
     
                 listener.unsubscribe();
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, secondContextToBroadcast);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, secondContextToBroadcast);
     
                 gtf.wait(3000, broadcastedContextNotHeard.resolve);
     
@@ -1583,11 +1677,11 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, firstContext);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, firstContext);
     
                 await firstContextHeard.promise;
     
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, secondContext);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, secondContext);
     
                 gtf.wait(3000, secondContextNotHeard.resolve);
     
@@ -1612,7 +1706,7 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
 
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
 
                 await metadataHeard.promise;
             });
@@ -1636,7 +1730,7 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
 
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
 
                 await metadataHeard.promise;
             });
@@ -1660,10 +1754,34 @@ describe("Channel's addContextListener()", function() {
     
                 gtf.fdc3.addActiveListener(listener);
 
-                await supportApp.fdc3.broadcastOnChannel(appChannelName, fdc3Context);
+                await supportApp.fdc3.broadcastOnAppChannel(appChannelName, fdc3Context);
 
                 await metadataHeard.promise;
             });
+
+            it("Should not invoke the callback when there's an already broadcasted FDC3 compliant data on the channel", async() => {
+                const broadcastedContextNotHeard = gtf.wrapPromise();
+        
+                const fdc3Context = gtf.fdc3.getContext();
+        
+                await supportApp.fdc3.broadcast(fdc3Context);
+
+                const listener = await currentChannel.addContextListener(fdc3Context.type, (ctx) => {
+                    if (ctx.type === fdc3Context.type) {
+                        broadcastedContextNotHeard.reject("Should not have been invoked");
+                    }
+                });
+        
+                gtf.fdc3.addActiveListener(listener);
+
+                gtf.wait(3000, broadcastedContextNotHeard.resolve);
+        
+                await broadcastedContextNotHeard.promise;
+            });
         });
+    });
+
+    describe("invoked on a private channel", function() {
+        
     });
 });

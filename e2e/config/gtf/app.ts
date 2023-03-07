@@ -1,6 +1,6 @@
 import { Glue42Web } from "../../../packages/web/web";
 import { Fdc3IntentResolution, AppIdentifier, Context, IntentResolution } from './fdc3/types';
-import { Gtf, ControlArgs, SubscriptionFacade, StreamFacade, CreateAppConfig } from "./gtf";
+import { Gtf, ControlArgs, SubscriptionFacade, StreamFacade, CreateAppConfig, Fdc3AddIntentListenerReturnValue } from "./gtf";
 
 export class GtfApp implements Gtf.App {
     private registerResponseCounter = 0;
@@ -311,10 +311,20 @@ export class GtfApp implements Gtf.App {
 
                 return this.sendControl<void>(controlArgs);
             },
-            broadcastOnChannel: async(channelId: string, context: Context): Promise<void> => {
+            broadcastOnAppChannel: async(channelId: string, context: Context): Promise<void> => {
                 const controlArgs: ControlArgs = {
-                    operation: "fdc3BroadcastOnChannel",
+                    operation: "fdc3BroadcastOnAppChannel",
                     params: { channelId, context }
+                }
+
+                await this.fdc3Ready;
+
+                return this.sendControl<void>(controlArgs);
+            },
+            broadcastOnPrivateChannel: async(context: Context): Promise<void> => {
+                const controlArgs = {
+                    operation: "fdc3BroadcastOnPrivateChannel",
+                    params: { context }
                 }
 
                 await this.fdc3Ready;
@@ -369,6 +379,46 @@ export class GtfApp implements Gtf.App {
                 await this.fdc3Ready;
 
                 return this.sendControl<void>(controlArgs); 
+            },
+            addIntentListener: async(intent: string, returnValue?: Fdc3AddIntentListenerReturnValue): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: 'fdc3AddIntentListener',
+                    params: { intent, returnValue }
+                };
+
+                await this.fdc3Ready;
+
+                return this.sendControl<void>(controlArgs);
+            },
+            unsubscribeIntentListener: async(intent: string): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: 'fdc3UnsubscribeIntentListener',
+                    params: { intent }
+                };
+
+                await this.fdc3Ready;
+
+                return this.sendControl<void>(controlArgs);
+            },
+            getIntentListenerContext: async(intent: string): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: 'fdc3GetIntentListenerContext',
+                    params: { intent }
+                };
+
+                await this.fdc3Ready;
+
+                return this.sendControl<void>(controlArgs);
+            },
+            createPrivateChannel: async(): Promise<void> => {
+                const controlArgs: ControlArgs = {
+                    operation: 'fdc3CreatePrivateChannel',
+                    params: {}
+                };
+
+                await this.fdc3Ready;
+
+                return this.sendControl<void>(controlArgs);
             }
         };
     }

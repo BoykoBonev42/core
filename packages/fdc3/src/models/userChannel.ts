@@ -1,8 +1,9 @@
-import { Context, DisplayMetadata, Listener, Channel, ContextHandler } from '@finos/fdc3';
-import { ChannelTypes } from '../channels/privateChannelConstants';
-import { ChannelsController } from '../channels/controller';
-import { contextDecoder, optionalNonEmptyStringDecoder, nonEmptyStringDecoder } from '../shared/decoder';
-import { ChannelContext } from '../types/glue42Types';
+import { Context, DisplayMetadata, Listener, Channel, ContextHandler } from "@finos/fdc3";
+import { ChannelsController } from "../channels/controller";
+import { contextDecoder, optionalNonEmptyStringDecoder, nonEmptyStringDecoder } from "../shared/decoder";
+import { ChannelContext } from "../types/glue42Types";
+import { generateCommandId } from "../shared/utils";
+import { ChannelTypes } from "../shared/constants";
 
 export class UserChannel {
     private id!: string;
@@ -35,13 +36,13 @@ export class UserChannel {
     private async broadcast(context: Context): Promise<void> {
         contextDecoder.runWithException(context);
 
-        return this.channelsController.broadcast(context, this.id);
+        return this.channelsController.broadcast(generateCommandId(), context, this.id);
     }
 
     private async getCurrentContext(contextType?: string): Promise<Context | null> {
         nonEmptyStringDecoder.run(contextType);
 
-        return this.channelsController.getContextForChannel(this.id, contextType);
+        return this.channelsController.getContextForChannel({ commandId: generateCommandId(), channelId: this.id, contextType });
     }
 
     private async addContextListener(handler: ContextHandler): Promise<Listener | void>;
@@ -51,7 +52,7 @@ export class UserChannel {
                 throw new Error("Please provide the handler as a function!");
             }
 
-            return this.channelsController.addContextListener(contextType as ContextHandler, undefined, this.id);
+            return this.channelsController.addContextListener({ commandId: generateCommandId(), handler: contextType, channelId: this.id });
         }
 
         const contextTypeDecoder = optionalNonEmptyStringDecoder.runWithException(contextType);
@@ -60,6 +61,6 @@ export class UserChannel {
             throw new Error("Please provide the handler as a function!");
         }
 
-        return this.channelsController.addContextListener(handler, contextTypeDecoder, this.id);
+        return this.channelsController.addContextListener({ commandId: generateCommandId(), handler, contextType: contextTypeDecoder, channelId: this.id });
     }
 }

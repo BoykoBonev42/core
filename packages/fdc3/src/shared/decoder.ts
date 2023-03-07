@@ -1,7 +1,7 @@
-import { AppMetadata, Context, Icon, Image, AppIdentifier } from '@finos/fdc3';
-import { Decoder, string, object, optional, array, anyJson, number, DecoderError, oneOf, constant } from "decoder-validate";
-import { PrivateChannelEventMethods } from '../channels/privateChannelConstants';
-import { SystemMethodEventArgument, SystemMethodEventPayload } from '../types/glue42Types';
+import { AppMetadata, Context, Icon, Image, AppIdentifier } from "@finos/fdc3";
+import { Decoder, string, object, optional, array, anyJson, number, DecoderError, oneOf, constant, boolean } from "decoder-validate";
+import { PrivateChannelEventMethods } from "../channels/privateChannelConstants";
+import { SystemMethodEventArgument, SystemMethodEventPayload } from "../types/glue42Types";
 
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
 
@@ -18,7 +18,7 @@ export const imageDecoder: Decoder<Image> = object({
     size: optional(string()),
     type: optional(string()),
     label: optional(string())
-})
+});
 
 export type decodeResult = { 
     ok: boolean,
@@ -78,4 +78,15 @@ export const SystemMethodEventPayloadDecoder: Decoder<SystemMethodEventPayload> 
 export const SystemMethodInvocationArgumentDecoder: Decoder<SystemMethodEventArgument> = object({
     action: SystemMethodActionDecider,
     payload: SystemMethodEventPayloadDecoder
+});
+
+export const ContextListenerResponseDecoder = object({
+    listenerInvoked: optional(boolean())
+});
+
+export const StartUpContextDecoder = object({
+    meta: object({
+        responseMethodName: nonEmptyStringDecoder
+    }),
+    context: contextDecoder
 });

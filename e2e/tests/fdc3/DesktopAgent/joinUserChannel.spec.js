@@ -30,7 +30,7 @@ describe("joinUserChannel() ", function () {
     });
 
     it("Should join the passed system channel", async() => {
-        const [ channel ] = await fdc3.getSystemChannels();
+        const [ channel ] = await fdc3.getUserChannels();
         const channelName = channel.id;
 
         await fdc3.joinUserChannel(channelName);
@@ -57,9 +57,25 @@ describe("joinUserChannel() ", function () {
         expect(current).to.eql(null);
     });
 
+    it("Should throw when passing an app channel", async() => {
+        const errorThrownPromise = gtf.wrapPromise();
+
+        const appChannelId = `app.channel.${Date.now()}`;
+        await fdc3.getOrCreateChannel(appChannelId);
+
+        try {
+            await fdc3.joinUserChannel(appChannelId);
+            errorThrownPromise.reject("Should have thrown");
+        } catch (error) {
+            errorThrownPromise.resolve();
+        }
+
+        await errorThrownPromise.promise;
+    });
+
     describe("integration with glue channels", function() {
         it("Should join the passed glue channel", async() => {
-            const [channel] = await fdc3.getSystemChannels();
+            const [channel] = await fdc3.getUserChannels();
             const fdc3ChannelName = channel.id;
 
             const glueChannels = await glue.channels.list();

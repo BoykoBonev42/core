@@ -1,3 +1,5 @@
+import { ContextMetadata } from "@finos/fdc3";
+
 type ApplicationStartOptions = {
     waitForAGMReady?: boolean;
     ignoreSavedLayout?: boolean;
@@ -9,24 +11,40 @@ type ChannelContext = {
     data: any;
 }
 
-type Intent = {
+export type GlueIntent = {
     name: string;
-    handlers:  IntentHandler[];
+    handlers: GlueIntentHandler[];
+}
+
+export type GlueIntentContext = {
+    type: string;
+    data: any;
+}
+
+export type didCallbackReplayed = { replayed: boolean };
+
+export type SubscriptionConfig = {
+    isUserChannel: boolean;
+    callback: (contextData: any, contextMetadata?: ContextMetadata) => void;
+    didReplay: didCallbackReplayed;
+    contextData: any;
+    addedData?: any;
 }
 
 type IntentContext = {
-    readonly type?: string;
-    readonly data?: { [key: string]: any };
+    type?: string;
+    data?: { [key: string]: any };
 }
 
-type IntentRequest = {
-    readonly intent: string;
-    readonly target?: "startNew" | "reuse" | { app?: string; instance?: string };
-    readonly context?: IntentContext;
-    readonly options?: ApplicationStartOptions;
+export type GlueIntentRequest = {
+    intent: string;
+    target?: "startNew" | "reuse" | { app?: string; instance?: string };
+    context?: IntentContext;
+    options?: ApplicationStartOptions;
+    handlers?: GlueIntentHandler[];
 }
 
-type IntentHandler = {
+export type GlueIntentHandler = {
     applicationName: string;
     applicationTitle: string;
     applicationDescription?: string;
@@ -36,11 +54,12 @@ type IntentHandler = {
     contextTypes?: string[];
     instanceId?: string;
     instanceTitle?: string;
+    resultType?: string;
 }
 
 type IntentResult = {
-    request: IntentRequest;
-    handler: IntentHandler;
+    request: GlueIntentRequest;
+    handler: GlueIntentHandler;
     result?: any;
 }
 
@@ -73,6 +92,7 @@ type Application = {
     start(context?: object, options?: ApplicationStartOptions): Promise<Instance>;
     onInstanceStarted(callback: (instance: Instance) => any): void;
     onInstanceStopped(callback: (instance: Instance) => any): void;
+    getConfiguration(): Promise<any>;
 }
 
 type Instance = {
@@ -111,7 +131,7 @@ type GDWindow = {
     getContext(): Promise<any>;
 }
 
-type InstanceTarget = "best" | "all" | "skipMine" | { windowId: string } | ServerInstance[];
+type InstanceTarget = "best" | "all" | "skipMine" | { instance: string } | ServerInstance[];
 
 interface ChannelsAPI {
     subscribe(callback: (data: any, context: ChannelContext, updaterId: string) => void): () => void;
@@ -131,10 +151,11 @@ interface ChannelsAPI {
 }
 
 interface IntentsAPI {
-    raise(request: string | IntentRequest): Promise<IntentResult>;
-    all(): Promise<Intent[]>;
+    raise(request: string | GlueIntentRequest): Promise<IntentResult>;
+    all(): Promise<GlueIntent[]>;
     addIntentListener(intent: string | AddIntentListenerRequest, handler: (context: IntentContext) => any): { unsubscribe: UnsubscribeFunction };
-    find(intentFilter?: string | IntentFilter): Promise<Intent[]>;
+    register?(intent: string | AddIntentListenerRequest, handler: (context: IntentContext) => any): { unsubscribe: UnsubscribeFunction };
+    find(intentFilter?: string | IntentFilter): Promise<GlueIntent[]>;
 }
 
 interface AppManagerAPI {
@@ -158,11 +179,21 @@ interface WindowsAPI {
     my(): GDWindow;
 }
 
-interface ServerInstance {
+export interface ServerMethodFilter {
+    accepts?: string;
+    description?: string;
+    displayName?: string;
+    name?: string;
+    objectTypes?: string[];
+    returns?: string;
+}
+
+export interface ServerInstance {
     peerId: string;
     instance: string;
     applicationName: string;
     windowId: string;
+    getMethods(): InteropMethod[]
 }
 
 interface InteropMethodDefinition {
@@ -210,11 +241,11 @@ export interface InvocationResult<T> {
 
 interface InteropAPI {
     instance: ServerInstance;
-    servers(): ServerInstance[];
-    register<T=any, R=any>(name: string, handler: (args: T, caller: ServerInstance) => void | R | Promise<R>): Promise<void>;
-    unregister(name: string): void;
+    servers(methodFilter?: ServerMethodFilter): ServerInstance[];
+    register<T = any, R = any>(name: string, handler: (args: T, caller: ServerInstance) => void | R | Promise<R>): Promise<void>;
+    unregister(name: string): Promise<void>;
     invoke<T>(methodName: string, argumentObj: any, target?: InstanceTarget): Promise<InvocationResult<T>>;
-    methods(filter?: string | InteropMethodFilter ): InteropMethod[]
+    methods(filter?: string | InteropMethodFilter): InteropMethod[]
 }
 
 interface ContextsAPI {
@@ -243,7 +274,7 @@ export type Definition = {
     customProperties?: any;
     icon?: string;
     caption?: string;
-    intents?: Intent[];
+    intents?: GlueIntent[];
     allowCapture?: boolean;
 }
 
@@ -262,7 +293,7 @@ export type FDC3Definition = {
     images?: any[];
     icons?: any[];
     customConfig?: any;
-    intents?: Intent[];
+    intents?: GlueIntent[];
 }
 
 export type InMemoryStore = {
@@ -280,7 +311,7 @@ export type Config = {
     customLogger?: any;
 }
 
-export type Glue42GD =  {
+export type Glue42GD = {
     fdc3InitsGlue: boolean;
     originalGlue?: any;
 };
@@ -301,6 +332,84 @@ export interface SystemMethodEventArgument {
     payload: SystemMethodEventPayload
 }
 
+export interface ContextListenerInvokedArgument {
+    listenerInvoked: boolean;
+}
+
+export type LogLevel = "off" | "trace" | "debug" | "info" | "warn" | "error";
+
+export interface Logger {
+
+    /** Name of the logger. */
+    name: string;
+
+    /** Version of the Logging API. */
+    version?: string;
+
+    /**
+     * Creates a new logger which is a sub-logger of the current one.
+     * @param name Name for the sub-logger.
+     */
+    subLogger(name: string): Logger;
+
+    /**
+     * Sets or gets the current threshold level for publishing to a file.
+     * @param level Logger level.
+     */
+    publishLevel(level?: LogLevel): LogLevel | undefined;
+
+    /**
+     * Sets or gets the current threshold level for writing to the console.
+     * @param level Logger level.
+     */
+    consoleLevel(level?: LogLevel): LogLevel | undefined;
+
+    /**
+     * Logging method.
+     * @param message Message to log.
+     * @param level Logging level for the message.
+     */
+    log(message: string, level?: LogLevel): void;
+
+    /**
+     * Method for logging messages at "trace" level.
+     * @param message Message to log.
+     */
+    trace(message: string): void;
+
+    /**
+     * Method for logging messages at "debug" level.
+     * @param message Message to log.
+     */
+    debug(message: string): void;
+
+    /**
+     * Method for logging messages at "info" level.
+     * @param message Message to log.
+     */
+    info(message: string): void;
+
+    /**
+     * Method for logging messages at "warn" level.
+     * @param message Message to log.
+     */
+    warn(message: string): void;
+
+    /**
+     * Method for logging messages at "error" level.
+     * @param message Message to log.
+     */
+    error(message: string, err?: Error): void;
+
+    /**
+     * Checks if the logger can publish a log level
+     * @param level
+     */
+    canPublish(level: LogLevel): boolean;
+}
+
+
+
 export interface Glue42 {
     contexts: ContextsAPI
     channels: ChannelsAPI;
@@ -309,4 +418,5 @@ export interface Glue42 {
     appManager: AppManagerAPI;
     windows: any;
     version?: string;
+    logger: Logger;
 }

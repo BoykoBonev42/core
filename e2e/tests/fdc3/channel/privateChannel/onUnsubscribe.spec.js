@@ -1,8 +1,5 @@
 describe("onUnsubscribe", function() {
     let currentChannel;
-    let supportApp;
-
-    const supportAppName = 'coreSupport';
 
     before(async() => {
         await coreReady;
@@ -10,8 +7,6 @@ describe("onUnsubscribe", function() {
 
     beforeEach(async() => {
         currentChannel = await fdc3.createPrivateChannel();
-
-        supportApp = await gtf.createApp({ exposeFdc3: true, name: supportAppName });
     });
 
     afterEach(async() => {
@@ -21,7 +16,7 @@ describe("onUnsubscribe", function() {
 
         await gtf.fdc3.removeCreatedChannels();
 
-        await supportApp.stop();
+        await Promise.all(glue.appManager.instances().map(inst => inst.stop()));
     });
 
     [undefined, null, true, false, "", 42, { test: 42 }, [], [ { test: 42 }]].forEach(invalidArg => {
@@ -80,21 +75,39 @@ describe("onUnsubscribe", function() {
             const intentName = Date.now().toString();
             const context = gtf.fdc3.getContext();
 
-            const onUnsubscribeListener = await currentChannel.onUnsubscribe((contextType) => {
+            const appDef = {
+                name: "fdc3SupportApp",
+                type: "window",
+                details: {
+                    url: "http://localhost:4242/coreSupport/index.html"
+                },
+                intents: [
+                    {
+                        name: intentName,
+                        contexts: [context.type]
+                    }
+                ]
+            };
+
+            await glue.appManager.inMemory.import([appDef], "merge");
+
+            const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
+
+            await supportApp.fdc3.createPrivateChannel();
+
+            await supportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+
+            const intentRes = await fdc3.raiseIntent(intentName, context);
+
+            const privateChannel = await intentRes.getResult();
+
+            const onUnsubscribeListener = await privateChannel.onUnsubscribe((contextType) => {
                 if (contextType === context.type) {
                     handlerInvokedPromise.resolve();
                 }
             });
 
             gtf.fdc3.addActiveListener(onUnsubscribeListener);
-
-            const intentListener = await fdc3.addIntentListener(intentName, () => {
-                return currentChannel;
-            });
-
-            gtf.fdc3.addActiveListener(intentListener);
-
-            await supportApp.fdc3.raiseIntent(intentName, context);
 
             await supportApp.fdc3.addContextListenerOnPrivateChannel(context.type);
 
@@ -113,17 +126,35 @@ describe("onUnsubscribe", function() {
             const fdc3Context3 = gtf.fdc3.getContext();
 
             const intentName = Date.now().toString();
-    
-            const listener1 = await currentChannel.addContextListener(fdc3Context1.type, () => {});
-            gtf.fdc3.addActiveListener(listener1);
-    
-            const listener2 = await currentChannel.addContextListener(fdc3Context2.type, () => {});
-            gtf.fdc3.addActiveListener(listener2);
-    
-            const listener3 = await currentChannel.addContextListener(fdc3Context3.type, () => {});
-            gtf.fdc3.addActiveListener(listener3);
-            
-            const onUnsubscribeListener = await currentChannel.onUnsubscribe((contextType) => {
+            const context = gtf.fdc3.getContext();
+
+            const appDef = {
+                name: "fdc3SupportApp",
+                type: "window",
+                details: {
+                    url: "http://localhost:4242/coreSupport/index.html"
+                },
+                intents: [
+                    {
+                        name: intentName,
+                        contexts: [context.type]
+                    }
+                ]
+            };
+
+            await glue.appManager.inMemory.import([appDef], "merge");
+
+            const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
+
+            await supportApp.fdc3.createPrivateChannel();
+
+            await supportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+
+            const intentRes = await fdc3.raiseIntent(intentName, context);
+
+            const privateChannel = await intentRes.getResult();
+
+            const onUnsubscribeListener = await privateChannel.onUnsubscribe((contextType) => {
                 if (contextType === fdc3Context1.type) {
                     handlerInvokedPromise1.resolve();
                 }
@@ -138,17 +169,9 @@ describe("onUnsubscribe", function() {
             });
     
             gtf.fdc3.addActiveListener(onUnsubscribeListener);
-    
-            const intentListener = await fdc3.addIntentListener(intentName, () => {
-                return currentChannel;
-            });
-
-            gtf.fdc3.addActiveListener(intentListener);
-
-            await supportApp.fdc3.raiseIntent(intentName, fdc3Context1);
 
             await supportApp.fdc3.addContextListenerOnPrivateChannel(fdc3Context1.type);
-            
+
             await supportApp.fdc3.unsubscribeFromPrivateChannelListener();
 
             await supportApp.fdc3.addContextListenerOnPrivateChannel(fdc3Context2.type);
@@ -160,27 +183,46 @@ describe("onUnsubscribe", function() {
             await supportApp.fdc3.unsubscribeFromPrivateChannelListener();
 
             await Promise.all([handlerInvokedPromise1.promise, handlerInvokedPromise2.promise, handlerInvokedPromise3.promise]);
+
         });
 
-        it("Should not invoke the callback when a listener is added > unsubscribe from context listener > add onUnsubscribe handler", async() => {
+        it("Should not invoke the callback when a listener is added > unsubscribe from context listener > onUnsubscribe handler is added", async() => {
             const handlerNotInvokedPromise = gtf.wrapPromise();
 
             const intentName = Date.now().toString();
             const context = gtf.fdc3.getContext();
 
-            const intentListener = await fdc3.addIntentListener(intentName, () => {
-                return currentChannel;
-            });
+            const appDef = {
+                name: "fdc3SupportApp",
+                type: "window",
+                details: {
+                    url: "http://localhost:4242/coreSupport/index.html"
+                },
+                intents: [
+                    {
+                        name: intentName,
+                        contexts: [context.type]
+                    }
+                ]
+            };
 
-            gtf.fdc3.addActiveListener(intentListener);
-            
-            await supportApp.fdc3.raiseIntent(intentName, context);
+            await glue.appManager.inMemory.import([appDef], "merge");
+
+            const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
+
+            await supportApp.fdc3.createPrivateChannel();
+
+            await supportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+
+            const intentRes = await fdc3.raiseIntent(intentName, context);
+
+            const privateChannel = await intentRes.getResult();
 
             await supportApp.fdc3.addContextListenerOnPrivateChannel(context.type);
 
             await supportApp.fdc3.unsubscribeFromPrivateChannelListener();
 
-            const onUnsubscribeListener = await currentChannel.onUnsubscribe((contextType) => {
+            const onUnsubscribeListener = await privateChannel.onUnsubscribe(() => {
                 handlerNotInvokedPromise.reject("Should not have fired the event");
             });
 

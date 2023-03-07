@@ -17,17 +17,19 @@ describe("getOrCreateChannel()", function() {
             .catch(() => done());
     });
 
-    it("Should return a valid fdc3 system channel when invoked with a system channel id", async() => {
+    it("Should throw when invoked with id of a system channel", async() => {
+        const errorThrownPromise = gtf.wrapPromise();
+
         const [channel] = await fdc3.getUserChannels();
        
-        const systemChannel = await fdc3.getOrCreateChannel(channel.id);
-
-        const glueChannel = (await glue.channels.list()).find(ch => ch.meta.fdc3.id === channel.id);
-
-        expect(systemChannel.id).to.eql(channel.id);
-        expect(systemChannel.type).to.eql("user");
-        expect(systemChannel.displayMetadata.name).to.eql(glueChannel.name);
-        expect(systemChannel.displayMetadata.color).to.eql(glueChannel.meta.color);
+        try {
+            await fdc3.getOrCreateChannel(channel.id);
+            errorThrownPromise.reject("Should have thrown");
+        } catch (error) {
+            errorThrownPromise.resolve();
+        }
+        
+        await errorThrownPromise.promise;
     });
 
     it("Should return a valid fdc3 app channel when invoked with already existing app channel id", async() => {
@@ -46,16 +48,6 @@ describe("getOrCreateChannel()", function() {
             .then(channel => fdc3.getOrCreateChannel(channel.id))
             .then(() => done("Should have thrown"))
             .catch(() => done());
-    });
-
-    it("Should return a valid fdc3 system channel object with addContextListener, broadcast an getCurrentContext methods", async() => {
-        const [channel] = await fdc3.getUserChannels();
-        
-        const systemChannel = await fdc3.getOrCreateChannel(channel.id);
-        
-        expect(systemChannel.addContextListener).to.be.a("function");
-        expect(systemChannel.broadcast).to.be.a("function");
-        expect(systemChannel.getCurrentContext).to.be.a("function");
     });
 
     it("Should return a valid fdc3 app channel object with addContextListener, broadcast an getCurrentContext methods", async() => {

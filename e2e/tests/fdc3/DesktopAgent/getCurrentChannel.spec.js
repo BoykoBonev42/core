@@ -42,20 +42,6 @@ describe('getCurrentChannel()', function () {
         expect(fdc3Channel.displayMetadata.color).to.eql(glueChannel.meta.color);
     });
 
-    it("Should return the correct app channel object props", async() => {
-        const appChannelName = "AppChannel";
-
-        await fdc3.getOrCreateChannel(appChannelName);
-
-        await fdc3.joinChannel(appChannelName);
-
-        const fdc3Channel = await fdc3.getCurrentChannel();
-
-        expect(fdc3Channel).to.be.an("object");
-        expect(fdc3Channel.type).to.eql('app');
-        expect(fdc3Channel.displayMetadata).to.be.undefined;
-    });
-
     it("Should return the correct channel with expected methods when joined on a system channel", async() => {
         const [channel] = await fdc3.getUserChannels();
     
@@ -63,21 +49,6 @@ describe('getCurrentChannel()', function () {
 
         const currentChannel = await fdc3.getCurrentChannel();
         const channelKeys = Object.keys(currentChannel);
-
-        expect(channelKeys.includes("broadcast")).to.eql(true);
-        expect(channelKeys.includes("getCurrentContext")).to.eql(true);
-        expect(channelKeys.includes("addContextListener")).to.eql(true);
-    });
-
-    it("Should return the correct channel with expected methods when joined on an app channel", async() => {
-        const appChannelName = "AppChannel";
-
-        await fdc3.getOrCreateChannel(appChannelName);
-
-        await fdc3.joinChannel(appChannelName);
-
-        const channel = await fdc3.getCurrentChannel();
-        const channelKeys = Object.keys(channel);
 
         expect(channelKeys.includes("broadcast")).to.eql(true);
         expect(channelKeys.includes("getCurrentContext")).to.eql(true);

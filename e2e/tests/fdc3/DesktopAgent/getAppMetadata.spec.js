@@ -75,5 +75,26 @@ describe("getAppMetadata()", function() {
         expect(appMetadata.instanceId).to.eql(inst.id);
     });
 
+    it("Should return correct AppMetadata with description, icons and screenshots properties", async() => {
+        const appDef = {
+            name: `test-app-${Date.now()}`,
+            type: "window",
+            details: {
+                url: "test"
+            },
+            icon: "ICON",
+            customProperties: {
+                screenshots: [`screenshot-1`, `screenshot-2`],
+                description: "Some Description"
+            }
+        };
 
+        await glue.appManager.inMemory.import([appDef], "merge");
+
+        const appMetadata = await fdc3.getAppMetadata({ appId: appDef.name });
+
+        expect(appMetadata.appId).to.eql(appDef.name);
+        expect(appMetadata.icons[0].src).to.eql(appDef.icon);
+        expect(appMetadata.description).to.eql(appDef.customProperties.description);
+    })
 });

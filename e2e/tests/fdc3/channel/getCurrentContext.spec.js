@@ -118,8 +118,6 @@ describe("Channels getCurrentContext()", function() {
 
         beforeEach(async() => {
             currentChannel = await fdc3.getOrCreateChannel(appChannelName);
-
-            await fdc3.joinChannel(currentChannel.id);
         });
 
         afterEach(async() => {

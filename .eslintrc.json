@@ -80,10 +80,13 @@
                     "double"
                 ],
                 "@typescript-eslint/no-explicit-any": [
-                    "error"
+                    "warn"
                 ],
                 "@typescript-eslint/no-unused-vars": [
                     "error"
+                ],
+                "@typescript-eslint/no-empty-function": [
+                    "warn"
                 ]
             }
         }

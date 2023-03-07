@@ -53,6 +53,23 @@ describe("joinChannel() ", function () {
             .catch(done);
     });
 
+    it("Should throw when passing an app channel", async() => {
+        const errorThrownPromise = gtf.wrapPromise();
+
+        const appChannelId = `app.channel.${Date.now()}`;
+        await fdc3.getOrCreateChannel(appChannelId);
+
+        try {
+            await fdc3.joinChannel(appChannelId);
+            errorThrownPromise.reject("Should have thrown");
+        } catch (error) {
+            errorThrownPromise.resolve();
+        }
+
+        await errorThrownPromise.promise;
+    });
+
+
     describe("integration with glue channels", function() {
         it("Should join the passed glue channel", async() => {
             const [channel] = await fdc3.getSystemChannels();

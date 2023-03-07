@@ -3,6 +3,17 @@ const controlMethodName = 'G42Core.E2E.Lightweight.Control';
 /* { [intentName: string]: Listener } */
 let intentListeners = {};
 
+const fdc3AddContextListener = async({ contextType }, success, error) => {
+    try {
+        await fdc3.addContextListener(contextType, (context) => {
+            return context;
+        });
+        success();
+    } catch (err) {
+        error(err);
+    }
+};
+
 const raiseIntent = async ({ intent }, success, error) => {
     try {
         await glue.intents.raise(intent);
@@ -56,6 +67,7 @@ const unregisterIntent = async({ intent }, success, error) => {
 };
 
 const operations = [
+    { name: "fdc3AddContextListener", execute: fdc3AddContextListener },
     { name: "raiseIntent", execute: raiseIntent },
     { name: "addIntentListener", execute: addIntentListener },
     { name: "registerIntent", execute: registerIntent },

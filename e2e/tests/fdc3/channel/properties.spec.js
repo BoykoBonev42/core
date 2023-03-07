@@ -1,12 +1,12 @@
 describe("Channel's properties", function() {
     let currentChannel;
 
-    let systemChannels;
+    let userChannels;
 
     before(async() => {
         await coreReady;
 
-        systemChannels = await fdc3.getSystemChannels();
+        userChannels = await fdc3.getUserChannels();
     });
 
     afterEach(() => {
@@ -15,7 +15,7 @@ describe("Channel's properties", function() {
 
     describe("invoked on a system channel", function() {
         beforeEach(async() => {
-            currentChannel = systemChannels[0];
+            currentChannel = userChannels[0];
 
             await fdc3.joinUserChannel(currentChannel.id);
         });
@@ -68,8 +68,6 @@ describe("Channel's properties", function() {
 
         beforeEach(async() => {
             currentChannel = await fdc3.getOrCreateChannel(appChannelName);
-
-            await fdc3.joinChannel(currentChannel.id);
         });
 
         afterEach(async() => {
@@ -104,12 +102,8 @@ describe("Channel's properties", function() {
     });
 
     describe("invoked on a private channel", function() {
-        let creatorId;
-
         beforeEach(async() => {
             currentChannel = await fdc3.createPrivateChannel();
-
-            creatorId = glue.windows.my().id;
         });
 
         afterEach(async() => {

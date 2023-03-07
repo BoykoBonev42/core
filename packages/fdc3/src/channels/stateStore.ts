@@ -21,10 +21,6 @@ export class ChannelsStateStore {
         this._userChannels[channel.id] = channel;
     }
 
-    public getUserChannelById(channelId: string): Channel | undefined {
-        return this._userChannels[channelId];
-    }
-
     public addFdc3IdToGlueChannelName(fdc3Id: string, glueChannelName: string): void {
         this._fdc3ChannelIdsToGlueChannelNames[fdc3Id] = glueChannelName;
     }

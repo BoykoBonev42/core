@@ -1,8 +1,5 @@
 describe("disconnect()", function() {
     let currentChannel;
-    let supportApp;
-
-    const supportAppName = 'coreSupport';
 
     before(async() => {
         await coreReady;
@@ -10,8 +7,6 @@ describe("disconnect()", function() {
 
     beforeEach(async() => {
         currentChannel = await fdc3.createPrivateChannel();
-
-        supportApp = await gtf.createApp({ name: supportAppName, exposeFdc3: true });
     });
 
     afterEach(async() => {
@@ -72,26 +67,44 @@ describe("disconnect()", function() {
         it("Should trigger onUnsubscribe handlers", async() => {
             const onUnsubscribeHeard = gtf.wrapPromise();
 
-            const intentName = "fdc3.intent.private.channel.disconnect";
+            const intentName = Date.now().toString();
             const context = gtf.fdc3.getContext();
 
-            const intentListener = await fdc3.addIntentListener(intentName, () => {
-                return currentChannel;
-            });
+            const appDef = {
+                name: "fdc3SupportApp",
+                type: "window",
+                details: {
+                    url: "http://localhost:4242/coreSupport/index.html"
+                },
+                intents: [
+                    {
+                        name: intentName,
+                        contexts: [context.type]
+                    }
+                ]
+            };
 
-            gtf.fdc3.addActiveListener(intentListener);
+            await glue.appManager.inMemory.import([appDef], "merge");
 
-            const onUnsubscribeListener = await currentChannel.onUnsubscribe(() => {
+            const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
+
+            await supportApp.fdc3.createPrivateChannel();
+
+            await supportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+
+            const intentRes = await fdc3.raiseIntent(intentName, context);
+
+            const privateChannel = await intentRes.getResult();
+
+            const onUnsubscribeListener = await privateChannel.onUnsubscribe(() => {
                 onUnsubscribeHeard.resolve();
             });
 
             gtf.fdc3.addActiveListener(onUnsubscribeListener);
 
-            await supportApp.fdc3.raiseIntent(intentName, context);
-
             await supportApp.fdc3.addContextListenerOnPrivateChannel(context.type);
 
-            await supportApp.stop();
+            await supportApp.fdc3.disconnectFromPrivateChannel();
 
             await onUnsubscribeHeard.promise;
         });

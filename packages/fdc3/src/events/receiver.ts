@@ -67,6 +67,8 @@ export class EventReceiver {
         
         await this.eventsController.initialize();
 
+        this.eventDispatcher.fireFdc3Ready();
+
         this.glueInitialized = true;
     }
 }

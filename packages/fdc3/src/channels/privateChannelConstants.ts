@@ -6,10 +6,4 @@ export enum PrivateChannelEventMethods {
     OnAddContextListener = "onAddContextListener",
     OnUnsubscribe = "onUnsubscribe",
     OnDisconnect = "onDisconnect"
-};
-
-export enum ChannelTypes {
-    User = "user",
-    App = "app",
-    Private = "private",
-};
+}

@@ -15,6 +15,7 @@ import { PrivateChannel } from '../models/privateChannel';
 import { ChannelsFactory } from '../channels/factory';
 import { ChannelsCallbackRegistry } from '../channels/callbackRegistry';
 import { GlueEventsController } from '../controllers/glueEvents';
+import { ChannelsPendingListenersStore } from '../channels/pendingListenersStore';
 
 export class IoC {
     private _eventDispatcher!: EventDispatcher;
@@ -29,18 +30,11 @@ export class IoC {
     private _channelsFactory!: ChannelsFactory;
     private _fdc3!: Fdc3DesktopAgent;
     private _channelsCallbackRegistry!: ChannelsCallbackRegistry;
+    private _channelsPendingListenersStore!: ChannelsPendingListenersStore;
     private _eventsController!: GlueEventsController;
     
     public get ioc(): IoC {
         return this;
-    }
-
-    public get eventDispatcher(): EventDispatcher {
-        if (!this._eventDispatcher) {
-            this._eventDispatcher = new EventDispatcher();
-        }
-
-        return this._eventDispatcher;
     }
 
     public get eventReceiver(): EventReceiver {
@@ -53,7 +47,7 @@ export class IoC {
 
     public get glueController(): GlueController {
         if (!this._glueController) {
-            this._glueController = new GlueController(this.channelsParser, this.eventDispatcher.fireFdc3Ready.bind(this));
+            this._glueController = new GlueController(this.channelsParser);
         }
         
         return this._glueController;
@@ -67,7 +61,15 @@ export class IoC {
         return this._fdc3;
     }
 
-    public get channelsFactory(): ChannelsFactory {
+    private get eventDispatcher(): EventDispatcher {
+        if (!this._eventDispatcher) {
+            this._eventDispatcher = new EventDispatcher();
+        }
+
+        return this._eventDispatcher;
+    }
+
+    private get channelsFactory(): ChannelsFactory {
         if (!this._channelsFactory) {
             this._channelsFactory = new ChannelsFactory(this.createUserChannel.bind(this), this.createAppChannel.bind(this), this.createPrivateChannel.bind(this));
         }
@@ -126,7 +128,8 @@ export class IoC {
                 this.channelsStateStore, 
                 this.channelsParser,
                 this.channelsFactory,
-                this.channelsCallbackRegistry
+                this.channelsCallbackRegistry,
+                this.channelsPendingListenersStore
             );
         }
 
@@ -139,6 +142,14 @@ export class IoC {
         }
 
         return this._channelsStateStore;
+    }
+
+    private get channelsPendingListenersStore(): ChannelsPendingListenersStore {
+        if (!this._channelsPendingListenersStore) {
+            this._channelsPendingListenersStore = new ChannelsPendingListenersStore();
+        }
+
+        return this._channelsPendingListenersStore;
     }
 
     private get channelsCallbackRegistry(): ChannelsCallbackRegistry {

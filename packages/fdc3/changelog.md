@@ -1,3 +1,15 @@
+3.1.1.
+bugfix: findIntent filters handlers by contextType
+bugfix: findIntentsByContext filter handlers by contextType
+bugfix: raiseIntent opens Intents Resolver UI
+bugfix: addIntentListener uses glue.intents.register if present
+bugfix: open resolves when the opened app launches and adds a context listener for the passed contextType
+bugfix: getAppMetadata returns correct properties
+bugfix: getOrCreateChannel throws if user channel is passed
+bugfix: joinUserChannel throws if trying to join an  app channel
+bugfix: addContextListener handler is not invoked if another app broadcasts non fdc3 data
+bugfix: addContextListener adds a pending listener when invoked while not joined on a channel
+bugfix: channel's addContextListener does not replay when there's an existent fdc3 data on the app channel
 3.1.0
 feat: updated all dependencies to the latest major versions
 3.0.1
