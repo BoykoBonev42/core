@@ -8,7 +8,8 @@
     "*.md",
     "*.txt",
     "**/workspaces-react/**",
-    "**/package-lock.json"
+    "**/package-lock.json",
+    "**/sonar-project.properties"
   ],
   "changelog": {
     "repo": "Glue42/Core",
