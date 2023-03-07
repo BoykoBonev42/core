@@ -1,6 +1,6 @@
 {
     "name": "@glue42/workspaces-ui-react",
-    "version": "2.2.4",
+    "version": "2.3.0",
     "description": "React version of the workspaces ui component.",
     "author": "",
     "license": "MIT",
@@ -23,7 +23,7 @@
         "access": "public"
     },
     "dependencies": {
-        "@glue42/workspaces-ui-core": "^1.13.4",
+        "@glue42/workspaces-ui-core": "^1.14.0",
         "reactjs-popup": "^2.0.5",
         "use-sync-external-store": "^1.2.0"
     },
