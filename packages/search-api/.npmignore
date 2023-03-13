@@ -1,0 +1,7 @@
+*
+!dist/**/*.js
+!dist/**/*.map
+!package.json
+!*.md
+!search.d.ts
+!/src/**/*.ts

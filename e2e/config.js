@@ -30,6 +30,9 @@ module.exports = {
             groupName: 'themes'
         },
         {
+            groupName: 'search',
+        },
+        {
             groupName: 'appManager'
         },
         {

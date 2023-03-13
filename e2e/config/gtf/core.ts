@@ -2,6 +2,7 @@ import { Glue42Web } from "../../../packages/web/web.d";
 import { GtfApp } from "./app";
 import { CancellablePromise, CreateAppConfig, Gtf } from "./gtf";
 import { Glue42WebPlatform } from "../../../packages/web-platform/platform.d";
+import { Glue42Search } from "../../../packages/search-api/search.d";
 import { channelsConfig, remoteStoreConfig } from "./config";
 
 export class GtfCore implements Gtf.Core {
@@ -11,6 +12,7 @@ export class GtfCore implements Gtf.Core {
     private windowNameCounter = 0;
     private counter = 0;
     private activeWindowHooks: (() => void | Promise<void>)[] = [];
+    private unsubFuncs: (() => void)[] = [];
 
     constructor(private readonly glue?: Glue42Web.API) {
         console.log("GTF CREATED");
@@ -43,6 +45,31 @@ export class GtfCore implements Gtf.Core {
     public getName(): string {
         this.counter++;
         return `core.e2e.name.${Date.now()}.${this.counter}`;
+    }
+
+    public addUnsubFunc(hook: () => void): void {
+        if (typeof hook !== "function") {
+            throw new Error('Tried to add a non-function hook.');
+        }
+
+        this.unsubFuncs.push(hook);
+    }
+
+    public async withUnsub(unsub: () => void | Promise<() => void>): Promise<void> {
+
+        const un = await unsub;
+
+        if (typeof un !== "function") {
+            throw new Error('Tried to add a non-function hook.');
+        }
+
+        this.unsubFuncs.push(un);
+    }
+
+    public clearAllUnsubFuncs(): void {
+        this.unsubFuncs.forEach((unsub) => unsub());
+
+        this.unsubFuncs = [];
     }
 
     public addWindowHook(hook: () => void | Promise<void>): void {
@@ -141,10 +168,10 @@ export class GtfCore implements Gtf.Core {
     }
 
     public async createApp(appConfig?: string | CreateAppConfig): Promise<Gtf.App> {
-        const appName = typeof appConfig === "string" 
-            ? appConfig 
-            : appConfig && appConfig.name 
-                ? appConfig.name 
+        const appName = typeof appConfig === "string"
+            ? appConfig
+            : appConfig && appConfig.name
+                ? appConfig.name
                 : this.defaultSupportAppName;
 
         if (!this.glue) {
@@ -177,4 +204,15 @@ export class GtfCore implements Gtf.Core {
 
         return fetch(url, init);
     }
+
+    public compareSearchResult(sent: Glue42Search.QueryResult, received: Glue42Search.QueryResult, expect: Chai.ExpectStatic): void {
+        expect(sent.type).to.eql(received.type);
+        expect(sent.action).to.eql(received.action);
+        expect(sent.description).to.eql(received.description);
+        expect(sent.displayName).to.eql(received.displayName);
+        expect(sent.id).to.eql(received.id);
+        expect(sent.id).to.eql(received.id);
+        expect(sent.secondaryActions).to.eql(received.secondaryActions);
+    }
+
 }

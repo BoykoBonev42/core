@@ -1,0 +1,48 @@
+{
+    "name": "@glue42/search-api",
+    "version": "0.0.0",
+    "description": "Glue42 Search API",
+    "main": "./dist/search-api.umd.js",
+    "module": "./dist/search-api.es.js",
+    "types": "./search.d.ts",
+    "keywords": [
+        "glue",
+        "glue42",
+        "resolver",
+        "desktop",
+        "intents",
+        "search"
+    ],
+    "homepage": "https://glue42.com/",
+    "scripts": {
+        "build": "rollup -c",
+        "test": "echo no tests found",
+        "audit": "echo no audit found",
+        "audit:V1": "node ../../scripts/audit/index.js",
+        "preversion": "npm run build && npm run test && npm run audit",
+        "version": "npm run build"
+    },
+    "author": {
+        "name": "Glue42",
+        "url": "https://glue42.com"
+    },
+    "license": "MIT",
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^23.0.5",
+        "@rollup/plugin-json": "^5.0.2",
+        "@rollup/plugin-node-resolve": "^15.0.1",
+        "rollup": "^3.7.4",
+        "rollup-plugin-delete": "^2.0.0",
+        "rollup-plugin-typescript2": "^0.34.1",
+        "typescript": "^4.9.4"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "dependencies": {
+        "@glue42/core": "^5.9.0",
+        "callback-registry": "^2.5.2",
+        "decoder-validate": "0.0.2",
+        "nanoid": "^4.0.0"
+    }
+}

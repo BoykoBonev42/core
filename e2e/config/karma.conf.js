@@ -24,6 +24,9 @@ module.exports = (config) => {
                 pattern: 'packages/workspaces-api/dist/workspaces.umd.js'
             },
             {
+                pattern: 'packages/search-api/dist/search-api.umd.js'
+            },
+            {
                 pattern: 'e2e/config/gtf.js'
             },
             `e2e/tests/temp-test-collection/**/*.spec.js`
@@ -35,6 +38,9 @@ module.exports = (config) => {
             },
             {
                 pattern: 'packages/workspaces-api/dist/workspaces.umd.js'
+            },
+            {
+                pattern: 'packages/search-api/dist/search-api.umd.js'
             },
             {
                 pattern: 'e2e/config/gtf.js'

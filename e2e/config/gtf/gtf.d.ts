@@ -1,5 +1,6 @@
 import { Glue42Web } from "../../../packages/web/web";
 import { Glue42WebPlatform } from "../../../packages/web-platform/platform";
+import { Glue42Search } from "../../../packages/search-api/search.d";
 import { Glue42Core } from "../../../packages/core/glue";
 import { UnsubscribeFunction } from "callback-registry";
 import { AppIdentifier, Context, IntentResolution, Listener } from '../gtf/fdc3/types';
@@ -93,6 +94,12 @@ export namespace Gtf {
     }
 
     export interface Core {
+        withUnsub(unsub: () => void | Promise<() => void>): Promise<void>;
+
+        addUnsubFunc(hook: () => void): void;
+
+        clearAllUnsubFuncs(): void;
+
         clearNullUndefined(obj: any): void;
 
         getName(): string;
@@ -116,6 +123,8 @@ export namespace Gtf {
         createApp(config?: string | CreateAppConfig): Promise<App>;
 
         post(url: string, body: string): Promise<Response>;
+
+        compareSearchResult(sent: Glue42Search.QueryResult, received: Glue42Search.QueryResult, expect: Chai.ExpectStatic): void
     }
 
     export interface Channels {
