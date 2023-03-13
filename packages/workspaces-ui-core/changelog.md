@@ -1,3 +1,5 @@
+1.14.1
+chore: bump due to dependencies update
 1.14.0
 feat: added themes support
 1.13.4
