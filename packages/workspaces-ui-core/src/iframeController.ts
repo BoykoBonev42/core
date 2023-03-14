@@ -4,8 +4,6 @@ import { Glue42Web } from "@glue42/web";
 import { generateWindowId } from "./utils";
 import { PlatformCommunicator } from "./interop/platformCommunicator";
 
-declare var window: Window & { glue42core: { platformVersion: string } };
-
 export class IFrameController {
     private readonly _registry = callbackRegistry();
     private _idToFrame: { [k: string]: HTMLIFrameElement } = {};

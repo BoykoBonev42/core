@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { WorkspaceLayoutsListProps } from "../../../types/internal";
+import { WorkspaceLayoutsListProps } from "../../../types/defaultComponents";
 import WorkspaceLayoutItem from "./WorkspaceLayoutItem";
 
 const WorkspaceLayoutsList: React.FC<WorkspaceLayoutsListProps> = ({ glue, frameId, showFeedback, hidePopup, resizePopup, filterLayouts }) => {

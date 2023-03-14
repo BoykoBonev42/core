@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { WorkspaceContentsProps } from "../../types/internal";
+import { WorkspaceContentsProps } from "../../types/shared";
 
 const WorkspaceContents: React.FC<WorkspaceContentsProps> = ({ workspaceId, containerElement, frameId, ...props }) => {
     const containerRef = React.createRef<HTMLDivElement>();

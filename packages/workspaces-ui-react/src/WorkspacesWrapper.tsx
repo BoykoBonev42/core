@@ -38,22 +38,28 @@ const WorkspacesWrapper: React.FC<WorkspacesWrapperProps> = ({ shouldInit, glue,
             createWorkspaceTabs: props.onCreateWorkspaceTabRequested,
             createAddWorkspace: props.onCreateAddWorkspaceRequested,
             createSystemButtons: props.onCreateSystemButtonsRequested,
+
             createWorkspaceContents: props.onCreateWorkspaceContentsRequested,
+
             createBeforeGroupTabs: props.onCreateBeforeGroupTabsRequested,
-            createGroupTabs: props.onCreateGroupTabRequested,
+            createWorkspaceWindowTabs: props.onCreateWorkspaceWindowTabRequested,
             createAfterGroupTabs: props.onCreateAfterGroupTabsRequested,
             createGroupHeaderButtons: props.onCreateGroupHeaderButtonsRequested,
+
             createSaveWorkspacePopup: props.onCreateSaveWorkspacePopupRequested,
             createAddApplicationPopup: props.onCreateAddApplicationPopupRequested,
             createAddWorkspacePopup: props.onCreateAddWorkspacePopupRequested,
+
             createWorkspaceLoadingAnimation: props.onCreateWorkspaceLoadingAnimationRequested,
             // Update
             updateWorkspaceTabs: props.onUpdateWorkspaceTabsRequested,
+            updateWorkspaceWindowTabs: props.onUpdateWorkspaceWindowTabsRequested,
+            updateGroupHeaderButtons: props.onUpdateGroupHeaderButtonsRequested,
             // Remove
             removeWorkspaceTabs: props.onRemoveWorkspaceTabsRequested,
             removeWorkspaceContents: props.onRemoveWorkspaceContentsRequested,
             removeBeforeGroupTabs: props.onRemoveBeforeGroupTabsRequested,
-            removeGroupTab: props.onRemoveGroupTabRequested,
+            removeWorkspaceWindowTab: props.onRemoveWorkspaceWindowTabRequested,
             removeAfterGroupTabs: props.onRemoveAfterGroupTabsRequested,
             removeGroupHeaderButtons: props.onRemoveGroupHeaderButtonsRequested,
             removeWorkspaceLoadingAnimation: props.onRemoveWorkspaceLoadingAnimationRequested,

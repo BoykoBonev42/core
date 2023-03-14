@@ -1,5 +1,5 @@
 import React from "react";
-import { MinimizeFrameButtonProps } from "../types/internal";
+import { MinimizeFrameButtonProps } from "../types/defaultComponents";
 import HeaderButton from "./HeaderButton";
 
 const MinimizeFrameButton: React.FC<MinimizeFrameButtonProps> = ({ title, children, ...props }) => {

@@ -1,69 +1,12 @@
-import React, { CSSProperties, RefObject } from "react";
-import { PopupActions, PopupProps } from "reactjs-popup/dist/types";
+import React from "react";
 
-export interface ElementCreationWrapperState {
-  logo?: CreateElementRequestOptions;
-  workspaceTabs: { [elementId: string]: CreateWorkspaceTabRequestOptions };
-  addWorkspace?: CreateElementRequestOptions;
-  systemButtons?: CreateElementRequestOptions;
-  workspaceContents: CreateWorkspaceContentsRequestOptions[];
-  beforeGroupTabsZones: { [elementId: string]: CreateGroupRequestOptions };
-  afterGroupTabsZones: { [elementId: string]: CreateGroupRequestOptions };
-  saveWorkspacePopup?: SaveWorkspacePopupComponentProps & CreateElementRequestOptions;
-  addApplicationPopup?: AddApplicationPopupComponentProps & CreateElementRequestOptions;
-  addWorkspacePopup?: AddWorkspacePopupComponentProps & CreateElementRequestOptions;
-  workspaceLoadingAnimations: { [workspaceId: string]: CreateWorkspaceLoadingAnimationOptions };
-}
+//#region CreateElementOptions
 
-export interface WorkspacesWrapperProps {
-  onCreateLogoRequested?: (options: CreateElementRequestOptions) => void;
-  onCreateWorkspaceTabRequested?: (options: CreateWorkspaceTabRequestOptions) => void;
-  onCreateAddWorkspaceRequested?: (options: CreateElementRequestOptions) => void;
-  onCreateSystemButtonsRequested?: (options: CreateElementRequestOptions) => void;
-  onCreateWorkspaceContentsRequested?: (options: CreateElementRequestOptions) => void;
-  onCreateBeforeGroupTabsRequested?: (options: CreateGroupRequestOptions) => void;
-  onCreateGroupTabRequested?: (options: CreateGroupTabRequestOptions) => void;
-  onCreateAfterGroupTabsRequested?: (options: CreateGroupRequestOptions) => void;
-  onCreateGroupHeaderButtonsRequested?: (options: CreateGroupRequestOptions) => void;
-  onCreateSaveWorkspacePopupRequested?: (options: SaveWorkspacePopupComponentProps & CreateElementRequestOptions) => void;
-  onCreateAddApplicationPopupRequested?: (options: AddApplicationPopupComponentProps & CreateElementRequestOptions) => void;
-  onCreateAddWorkspacePopupRequested?: (options: AddWorkspacePopupComponentProps & CreateElementRequestOptions) => void;
-  onCreateWorkspaceLoadingAnimationRequested?: (options: CreateWorkspaceLoadingAnimationOptions) => void;
-  onHideSystemPopupsRequested?: (cb: () => void) => void;
-  onUpdateWorkspaceTabsRequested?: (options: CreateWorkspaceTabRequestOptions) => void;
-  onRemoveWorkspaceTabsRequested?: (options: RemoveRequestOptions) => void;
-  onRemoveWorkspaceContentsRequested?: (options: RemoveWorkspaceContentsRequestOptions) => void;
-  onRemoveBeforeGroupTabsRequested?: (options: RemoveRequestOptions) => void;
-  onRemoveGroupTabRequested?: (options: RemoveRequestOptions) => void;
-  onRemoveAfterGroupTabsRequested?: (options: RemoveRequestOptions) => void;
-  onRemoveGroupHeaderButtonsRequested?: (options: RemoveRequestOptions) => void;
-  onRemoveWorkspaceLoadingAnimationRequested?: (options: RemoveRequestOptions) => void;
-  externalPopupApplications: {
-    addApplication: string | undefined;
-    saveWorkspace: string | undefined;
-    addWorkspace: string | undefined;
-  }
-  glue?: any;
-  shouldInit: boolean;
-}
-
-export interface WorkspaceContentsProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  workspaceId: string;
-  frameId?: string;
-  containerElement?: HTMLElement;
-}
-
-export interface GroupHeaderComponentProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  groupId: string;
-  workspaceId: string;
-}
-
-export interface GroupTabComponentProps extends GroupHeaderComponentProps {
-  windowId: string;
-}
-
-export interface CreateWorkspaceContentsRequestOptions extends CreateElementRequestOptions {
-  workspaceId: string
+export interface CreateElementRequestOptions {
+  domNode: HTMLElement;
+  callback?: () => void;
+  frameId: string;
+  [k: string]: any;
 }
 
 export interface CreateWorkspaceTabRequestOptions extends CreateElementRequestOptions {
@@ -77,8 +20,8 @@ export interface CreateWorkspaceTabRequestOptions extends CreateElementRequestOp
   layoutName: string;
 }
 
-export interface CreateWorkspaceLoadingAnimationOptions extends CreateElementRequestOptions {
-  workspaceId: string;
+export interface CreateWorkspaceContentsRequestOptions extends CreateElementRequestOptions {
+  workspaceId: string
 }
 
 export interface CreateGroupRequestOptions extends CreateElementRequestOptions {
@@ -86,10 +29,67 @@ export interface CreateGroupRequestOptions extends CreateElementRequestOptions {
   workspaceId: string;
 }
 
-export interface CreateGroupTabRequestOptions extends CreateGroupRequestOptions {
+export interface CreateWorkspaceWindowTabRequestOptions extends CreateGroupRequestOptions {
+  isSelected: boolean;
   windowId: string;
+  elementId: string;
+  title: string;
+  channels: {
+    color: string;
+    visible: boolean;
+    title: string;
+  };
+  close: {
+    visible: boolean;
+    title: string;
+  };
 }
 
+export interface CreateGroupHeaderButtonsRequestOptions extends CreateGroupRequestOptions {
+  addWindow: {
+    visible: boolean;
+    title: string;
+  };
+  maximize: {
+    visible: boolean;
+    title: string;
+  };
+  restore: {
+    visible: boolean;
+    title: string;
+  };
+  eject: {
+    visible: boolean;
+    title: string;
+  };
+}
+
+export interface CreatePopupRequestOptions extends CreateElementRequestOptions {
+  resizePopup: (s: Size) => void;
+  hidePopup: () => void;
+  glue?: any;
+}
+
+export interface CreateSaveWorkspacePopupRequestOptions extends CreatePopupRequestOptions {
+  workspaceId: string;
+}
+
+export interface CreateAddApplicationPopupRequestOptions extends CreatePopupRequestOptions {
+  workspaceId: string;
+  boxId: string;
+}
+
+export interface CreateAddWorkspacePopupRequestOptions extends CreatePopupRequestOptions {
+  frameId: string;
+}
+
+export interface CreateWorkspaceLoadingAnimationRequestOptions extends CreateElementRequestOptions {
+  workspaceId: string;
+}
+
+//#endregion
+
+//#region RemoveOptions
 export interface RemoveWorkspaceContentsRequestOptions {
   workspaceId: string;
 }
@@ -97,14 +97,71 @@ export interface RemoveWorkspaceContentsRequestOptions {
 export interface RemoveRequestOptions {
   elementId: string;
 }
+//#endregion
 
-export interface CreateElementRequestOptions {
-  domNode: HTMLElement;
-  callback?: () => void;
-  frameId: string;
-  [k: string]: any;
+export interface ElementCreationWrapperState {
+  logo?: CreateElementRequestOptions;
+  workspaceTabs: { [elementId: string]: CreateWorkspaceTabRequestOptions };
+  addWorkspace?: CreateElementRequestOptions;
+  systemButtons?: CreateElementRequestOptions;
+
+  workspaceContents: CreateWorkspaceContentsRequestOptions[];
+
+  beforeGroupTabsZones: { [elementId: string]: CreateGroupRequestOptions };
+  workspaceWindowTabsZones: { [elementId: string]: CreateWorkspaceWindowTabRequestOptions };
+  afterGroupTabsZones: { [elementId: string]: CreateGroupRequestOptions };
+  groupHeaderButtonsZones: { [elementId: string]: CreateGroupHeaderButtonsRequestOptions };
+
+  saveWorkspacePopup?: CreateSaveWorkspacePopupRequestOptions;
+  addApplicationPopup?: CreateAddApplicationPopupRequestOptions;
+  addWorkspacePopup?: CreateAddWorkspacePopupRequestOptions;
+
+  workspaceLoadingAnimations: { [workspaceId: string]: CreateWorkspaceLoadingAnimationRequestOptions };
 }
 
+export interface WorkspacesWrapperProps {
+  onCreateLogoRequested?: (options: CreateElementRequestOptions) => void;
+  onCreateWorkspaceTabRequested?: (options: CreateWorkspaceTabRequestOptions) => void;
+  onCreateAddWorkspaceRequested?: (options: CreateElementRequestOptions) => void;
+  onCreateSystemButtonsRequested?: (options: CreateElementRequestOptions) => void;
+
+  onCreateWorkspaceContentsRequested?: (options: CreateElementRequestOptions) => void;
+
+  onCreateBeforeGroupTabsRequested?: (options: CreateGroupRequestOptions) => void;
+  onCreateWorkspaceWindowTabRequested?: (options: CreateWorkspaceWindowTabRequestOptions) => void;
+  onCreateAfterGroupTabsRequested?: (options: CreateGroupRequestOptions) => void;
+  onCreateGroupHeaderButtonsRequested?: (options: CreateGroupRequestOptions) => void;
+
+  onCreateSaveWorkspacePopupRequested?: (options: CreateSaveWorkspacePopupRequestOptions) => void;
+  onCreateAddApplicationPopupRequested?: (options: CreateAddApplicationPopupRequestOptions) => void;
+  onCreateAddWorkspacePopupRequested?: (options: CreateAddWorkspacePopupRequestOptions) => void;
+
+  onCreateWorkspaceLoadingAnimationRequested?: (options: CreateWorkspaceLoadingAnimationRequestOptions) => void;
+
+  onUpdateWorkspaceTabsRequested?: (options: CreateWorkspaceTabRequestOptions) => void;
+  onUpdateWorkspaceWindowTabsRequested?: (options: CreateWorkspaceWindowTabRequestOptions) => void;
+  onUpdateGroupHeaderButtonsRequested?: (options: CreateGroupHeaderButtonsRequestOptions) => void;
+
+  onRemoveWorkspaceTabsRequested?: (options: RemoveRequestOptions) => void;
+
+  onRemoveWorkspaceContentsRequested?: (options: RemoveWorkspaceContentsRequestOptions) => void;
+
+  onRemoveBeforeGroupTabsRequested?: (options: RemoveRequestOptions) => void;
+  onRemoveWorkspaceWindowTabRequested?: (options: RemoveRequestOptions) => void;
+  onRemoveAfterGroupTabsRequested?: (options: RemoveRequestOptions) => void;
+  onRemoveGroupHeaderButtonsRequested?: (options: RemoveRequestOptions) => void;
+
+  onRemoveWorkspaceLoadingAnimationRequested?: (options: RemoveRequestOptions) => void;
+
+  onHideSystemPopupsRequested?: (cb: () => void) => void;
+  externalPopupApplications: {
+    addApplication: string | undefined;
+    saveWorkspace: string | undefined;
+    addWorkspace: string | undefined;
+  }
+  glue?: any;
+  shouldInit: boolean;
+}
 
 export interface PortalProps {
   domNode: HTMLElement;
@@ -125,54 +182,12 @@ export interface WorkspacesManager {
   requestFocus(): void;
   showSaveWorkspacePopup(workspaceId: string, bounds: Bounds): void;
   closeWorkspace(workspaceId: string): void;
-}
-
-export interface HeaderComponentProps {
-  frameId: string;
-  [k: string]: any;
-}
-
-export interface WorkspaceTabComponentProps {
-  workspaceId: string;
-  isSelected: boolean;
-  isPinned: boolean;
-  title: string;
-  icon: string;
-  showSaveButton: boolean;
-  showCloseButton: boolean;
-  layoutName: string;
-  onCloseClick: () => void;
-  onSaveClick: (bounds: Bounds) => void;
-}
-
-
-export interface WorkspacesProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  components?: {
-    header?: {
-      LogoComponent?: React.ComponentType<HeaderComponentProps>;
-      WorkspaceTabComponent?: React.ComponentType<WorkspaceTabComponentProps>;
-      AddWorkspaceComponent?: React.ComponentType<HeaderComponentProps>;
-      SystemButtonsComponent?: React.ComponentType<HeaderComponentProps>;
-    };
-    WorkspaceContents?: React.ComponentType<WorkspaceContentsProps>;
-    containers?: {
-      group?: {
-        header?: {
-          BeforeTabs?: React.ComponentType<GroupHeaderComponentProps>;
-          AfterTabs?: React.ComponentType<GroupHeaderComponentProps>;
-        };
-      };
-    };
-    popups?: {
-      SaveWorkspaceComponent?: React.ComponentType<SaveWorkspacePopupComponentProps> | string;
-      AddApplicationComponent?: React.ComponentType<AddApplicationPopupComponentProps> | string;
-      AddWorkspaceComponent?: React.ComponentType<AddWorkspacePopupComponentProps> | string;
-    };
-    loadingAnimation?: {
-      Workspace?: React.ComponentType<WorkspaceLoadingAnimationProps>;
-    }
-  };
-  glue?: any;
+  closeWindow(id: string): Promise<void>;
+  maximizeGroup(id: string): Promise<void>;
+  restoreGroup(id: string): Promise<void>;
+  ejectActiveWindow(groupId: string): Promise<void>;
+  showChannelsSelector(placementId: string, bounds: Bounds): Promise<void>;
+  showAddApplicationPopup(workspaceId: string, groupId: string, bounds: Bounds): Promise<void>;
 }
 
 export interface Bounds {
@@ -182,162 +197,7 @@ export interface Bounds {
   height: number;
 }
 
-interface ButtonProps extends React.DetailedHTMLProps<React.HtmlHTMLAttributes<HTMLLIElement>, HTMLLIElement> {
-  title?: string;
-  frameId?: string;
-}
-
-export type AddWorkspaceButtonProps = ButtonProps;
-export type CloseFrameButtonProps = ButtonProps;
-export type MinimizeFrameButtonProps = ButtonProps;
-export type MaximizeFrameButtonProps = ButtonProps;
-export type MaximizeGroupButtonProps = ButtonProps;
-export type EjectButtonProps = ButtonProps;
-export type AddWindowButtonProps = ButtonProps;
-
-
-export interface WorkspacePopupProps extends Omit<PopupProps, "ref"> {
-  // bounds: Bounds;
-  innerContentStyle?: CSSProperties;
-  popupRef?: RefObject<PopupActions>;
-}
-
-export interface GlueLogoProps extends React.DetailedHTMLProps<React.HtmlHTMLAttributes<HTMLSpanElement>, HTMLSpanElement> {
-  frameId?: string;
-}
-
-export interface GlueWorkspaceLoadingAnimationProps {
-  workspaceId: string;
-}
-
-export interface SaveWorkspacePopupProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  workspaceId: string,
-  glue?: any,
-  resizePopup: (s: Size) => void,
-  hidePopup: () => void,
-  buildMode?: boolean,
-}
-
-export interface AddApplicationPopupProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  workspaceId: string;
-  glue?: any;
-  resizePopup: (s: Size) => void;
-  hidePopup: () => void;
-  boxId: string;
-  frameId?: string;
-  filterApps?: (glueApp: any) => boolean;
-}
-
-export interface AddWorkspacePopupProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
-  frameId: string,
-  glue?: any,
-  filterLayouts?: (layouts: any) => boolean;
-  resizePopup: (s: Size) => void,
-  hidePopup: () => void
-}
-
 export interface Size {
   width?: number;
   height?: number;
 }
-
-export interface AddWorkspacePopupComponentProps {
-  frameId: string;
-  resizePopup: (s: Size) => void;
-  hidePopup: () => void;
-  glue?: any;
-}
-
-export interface AddApplicationPopupComponentProps {
-  workspaceId: string;
-  boxId: string;
-  resizePopup: (s: Size) => void;
-  hidePopup: () => void;
-  glue?: any;
-}
-
-export interface SaveWorkspacePopupComponentProps {
-  workspaceId: string;
-  resizePopup: (s: Size) => void;
-  hidePopup: () => void;
-  glue?: any;
-}
-
-export interface ApplicationItemProps {
-  appName: string;
-  onClick?: (e: React.MouseEvent) => void;
-}
-
-export interface ApplicationListProps {
-  glue: any;
-  inLane: boolean;
-  parent: any;
-  hidePopup: () => void;
-  searchTerm: string;
-  updatePopupHeight: () => void;
-  filterApps?: (glueApplication: any) => boolean;
-}
-
-export interface ContainerSwitchProps {
-  inLane: boolean;
-  setInLane: (b: boolean) => void;
-  parent: any;
-}
-
-export interface WorkspaceLayoutItemProps {
-  name: string,
-  onClick: (e: React.MouseEvent) => void,
-  onCloseClick: (e: React.MouseEvent) => void
-}
-
-export interface WorkspaceLayoutsListProps {
-  glue: any;
-  frameId: string;
-  showFeedback: (errMsg: string) => void;
-  hidePopup: () => void;
-  resizePopup: () => void;
-  filterLayouts?: (layout: any) => boolean;
-}
-
-export interface SaveContextCheckboxProps {
-  changeChecked: (value: boolean) => void;
-  refreshHeight: () => void;
-}
-
-export interface SaveWorkspaceButtonProps {
-  workspaceId: string;
-  inputValue: string;
-  clearInput: () => void;
-  showFeedback: (errorMsg: string) => void;
-  shouldSaveContext: boolean;
-  hideFeedback: () => void;
-  glue: any;
-  hidePopup: () => void;
-  buildMode?: boolean;
-}
-
-export interface WorkspaceContentsProps {
-  workspaceId: string;
-}
-
-export interface SaveButtonProps {
-  showSavePopup: (bounds: Bounds) => void;
-}
-
-export interface WorkspaceIconButtonProps {
-  icon: string;
-}
-
-export interface WorkspaceTabCloseButtonProps {
-  close: () => void;
-}
-
-export interface WorkspaceTitleProps {
-  title: string;
-}
-
-export interface WorkspaceLoadingAnimationProps {
-  workspaceId: string;
-}
-
-export type MoveAreaProps = React.DetailedHTMLProps<React.HtmlHTMLAttributes<HTMLDivElement>, HTMLDivElement>;

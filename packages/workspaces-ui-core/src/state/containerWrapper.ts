@@ -6,6 +6,7 @@ import { DefaultMaxSize, DefaultMinSize } from "../utils/constants";
 import store from "./store";
 import { WorkspacesWrapperFactory } from "./factory";
 import { LayoutEventEmitter } from "../layout/eventEmitter";
+import componentStateMonitor from "../componentStateMonitor";
 
 export class WorkspaceContainerWrapper {
     constructor(
@@ -14,6 +15,10 @@ export class WorkspaceContainerWrapper {
         private readonly containerContentItem: GoldenLayout.Row | GoldenLayout.Stack | GoldenLayout.Column,
         private readonly frameId: string,
         private readonly workspaceId?: string) {
+    }
+
+    public get id(): string {
+        return idAsString(this.containerContentItem?.config.id);
     }
 
     public get minWidth(): number {
@@ -137,21 +142,21 @@ export class WorkspaceContainerWrapper {
     }
 
     public set allowReorder(value: boolean | undefined) {
-        this.setLockPropertyFromConfig("allowReorder", value); 
+        this.setLockPropertyFromConfig("allowReorder", value);
 
         this.populateChildrenAllowReorder(value);
     }
 
     public get allowSplitters(): boolean {
         if (this.containerContentItem.config.type === "stack") {
-            throw new Error(`Accessing allowSplitters of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for rows and columns`);
+            throw new Error(`Accessing allowSplitters of container ${this.containerContentItem.type} ${this.id} the property is available only for rows and columns`);
         }
         return this.getLockPropertyFromConfig("allowSplitters");
     }
 
     public set allowSplitters(value: boolean | undefined) {
         if (this.containerContentItem.config.type === "stack") {
-            throw new Error(`Setting allowSplitters of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for rows and columns`);
+            throw new Error(`Setting allowSplitters of container ${this.containerContentItem.type} ${this.id} the property is available only for rows and columns`);
         }
         this.setLockPropertyFromConfig("allowSplitters", value);
 
@@ -160,44 +165,46 @@ export class WorkspaceContainerWrapper {
 
     public get showMaximizeButton(): boolean {
         if (this.containerContentItem.config.type !== "stack") {
-            throw new Error(`Accessing showMaximizeButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
+            throw new Error(`Accessing showMaximizeButton of container ${this.containerContentItem.type} ${this.id} the property is available only for stacks`);
         }
         return this.getLockPropertyFromConfig("showMaximizeButton");
     }
 
     public set showMaximizeButton(value: boolean | undefined) {
         if (this.containerContentItem.config.type !== "stack") {
-            throw new Error(`Setting showMaximizeButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
+            throw new Error(`Setting showMaximizeButton of container ${this.containerContentItem.type} ${this.id} the property is available only for stacks`);
         }
         this.setLockPropertyFromConfig("showMaximizeButton", value);
     }
 
     public get showEjectButton(): boolean {
         if (this.containerContentItem.config.type !== "stack") {
-            throw new Error(`Accessing showEjectButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
+            throw new Error(`Accessing showEjectButton of container ${this.containerContentItem.type} ${this.id} the property is available only for stacks`);
         }
         return this.getLockPropertyFromConfig("showEjectButton");
     }
 
     public set showEjectButton(value: boolean | undefined) {
         if (this.containerContentItem.config.type !== "stack") {
-            throw new Error(`Setting showEjectButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
+            throw new Error(`Setting showEjectButton of container ${this.containerContentItem.type} ${this.id} the property is available only for stacks`);
         }
         this.setLockPropertyFromConfig("showEjectButton", value);
+        componentStateMonitor.decoratedFactory.updateGroupHeaderButtons({ groupId: this.id, eject: { visible: value } });
     }
 
     public get showAddWindowButton(): boolean {
         if (this.containerContentItem.config.type !== "stack") {
-            throw new Error(`Accessing showAddWindowButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
+            throw new Error(`Accessing showAddWindowButton of container ${this.containerContentItem.type} ${this.id} the property is available only for stacks`);
         }
         return this.getLockPropertyFromConfig("showAddWindowButton");
     }
 
     public set showAddWindowButton(value: boolean | undefined) {
         if (this.containerContentItem.config.type !== "stack") {
-            throw new Error(`Setting showAddWindowButton of container ${this.containerContentItem.type} ${this.containerContentItem.config.id} the property is available only for stacks`);
+            throw new Error(`Setting showAddWindowButton of container ${this.containerContentItem.type} ${this.id} the property is available only for stacks`);
         }
         this.setLockPropertyFromConfig("showAddWindowButton", value);
+        componentStateMonitor.decoratedFactory.updateGroupHeaderButtons({ groupId: this.id, addWindow: { visible: value } });
     }
 
     public get positionIndex(): number {
@@ -213,7 +220,7 @@ export class WorkspaceContainerWrapper {
             this.containerContentItem.config.workspacesConfig = {};
         }
 
-        const workspaceId = this.workspaceId ?? store.getByContainerId(idAsString(this.containerContentItem.config.id))?.id;
+        const workspaceId = this.workspaceId ?? store.getByContainerId(this.id)?.id;
         if (workspaceId && this.isWorkspaceSelected(workspaceId)) {
             const bounds = getElementBounds(this.containerContentItem.element);
             (this.containerContentItem.config.workspacesConfig as any).cachedBounds = bounds;
@@ -234,7 +241,7 @@ export class WorkspaceContainerWrapper {
         return this.containerContentItem.config.workspacesConfig.isPinned ?? false;
     }
 
-    public get maximizationBoundary() {
+    public get maximizationBoundary(): boolean {
         return this.containerContentItem.config.workspacesConfig.maximizationBoundary ?? false;
     }
 
@@ -242,8 +249,16 @@ export class WorkspaceContainerWrapper {
         this.containerContentItem.config.workspacesConfig.maximizationBoundary = value;
     }
 
+    public get activeItemId(): string {
+        if (this.containerContentItem.type !== "stack") {
+            return;
+        }
+
+        return idAsString(this.containerContentItem.getActiveContentItem().config.id);
+    }
+
     public get summary(): ContainerSummary {
-        const workspaceId = this.workspaceId ?? store.getByContainerId(idAsString(this.containerContentItem.config.id))?.id;
+        const workspaceId = this.workspaceId ?? store.getByContainerId(this.id)?.id;
         const userFriendlyType = this.getUserFriendlyType(this.containerContentItem?.type || "workspace");
 
         let config: ContainerSummary["config"] = {
@@ -285,7 +300,7 @@ export class WorkspaceContainerWrapper {
             };
         }
         return {
-            itemId: idAsString(this.containerContentItem.config.id),
+            itemId: this.id,
             type: userFriendlyType === "window" ? undefined : userFriendlyType,
             config
         };
@@ -293,11 +308,11 @@ export class WorkspaceContainerWrapper {
 
     public get config(): GoldenLayout.ItemConfig {
         const workspace = store.getByContainerId(this.containerContentItem.config.id) ||
-            store.getByWindowId(idAsString(this.containerContentItem.config.id));
+            store.getByWindowId(this.id);
 
         const workspaceConfig = workspace.layout.toConfig();
 
-        const containerConfig = this.findElementInConfig(idAsString(this.containerContentItem.config.id), workspaceConfig);
+        const containerConfig = this.findElementInConfig(this.id, workspaceConfig);
         containerConfig.workspacesConfig.isPinned = containerConfig.workspacesConfig.isPinned ?? false;
 
         return containerConfig;

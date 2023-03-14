@@ -56,8 +56,32 @@ class WorkspacesManagerDecorator {
         return (window.workspacesManager || workspacesManager).showSaveWorkspacePopup(workspaceId, bounds);
     }
 
-    public closeWorkspace(workspaceId:string):void{
+    public closeWorkspace(workspaceId: string): void {
         return (window.workspacesManager || workspacesManager).closeWorkspace(workspaceId);
+    }
+
+    public closeWindow(placementId: string): void {
+        (window.workspacesManager || workspacesManager).closeWindow(placementId);
+    }
+
+    public ejectActiveWindow(groupId: string): void {
+        (window.workspacesManager || workspacesManager).ejectActiveWindow(groupId);
+    }
+
+    public maximizeGroup(groupId: string): void {
+        (window.workspacesManager || workspacesManager).maximizeGroup(groupId);
+    }
+
+    public restoreGroup(groupId: string): void {
+        (window.workspacesManager || workspacesManager).restoreGroup(groupId);
+    }
+
+    public showChannelsSelector(placementId: string, bounds: Bounds): void {
+        (window.workspacesManager || workspacesManager).showChannelsSelector(placementId, bounds);
+    }
+
+    public showAddApplicationPopup(workspaceId: string, groupId: string, bounds: Bounds): void {
+        (window.workspacesManager || workspacesManager).showAddApplicationPopup(workspaceId, groupId, bounds);
     }
 }
 

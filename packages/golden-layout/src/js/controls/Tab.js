@@ -12,7 +12,8 @@ lm.controls.Tab = function (header, contentItem) {
 	this._layoutManager = this.contentItem.layoutManager;
 	const isWorkspaceTab = this._layoutManager.config.settings.mode === "workspace";
 	const isCustomWorkspaceTab = lm.utils.isCustomWorkspaceTab(this);
-	this.element = isCustomWorkspaceTab ? $(lm.controls.Tab._customTabTemplate) : $(lm.controls.Tab._template);
+	const isCustomWorkspaceWindowTab = lm.utils.isCustomWorkspaceWindowTab(this);
+	this.element = isCustomWorkspaceTab || isCustomWorkspaceWindowTab ? $(lm.controls.Tab._customTabTemplate) : $(lm.controls.Tab._template);
 
 	this._elementOffset = 0;
 	this._xOfLastReorder = 0;
@@ -64,6 +65,11 @@ lm.controls.Tab = function (header, contentItem) {
 	if (isCustomWorkspaceTab) {
 		const workspaceTabOptions = this._layoutManager._componentFactory.createWorkspaceTabsOptions({ element: this.element[0], contentItem })
 		this._layoutManager._componentFactory.createWorkspaceTabs(workspaceTabOptions);
+	}
+
+	if (isCustomWorkspaceWindowTab) {
+		const workspaceWindowTabOptions = this._layoutManager._componentFactory.createWorkspaceWindowTabsOptions({ element: this.element[0], contentItem });
+		this._layoutManager._componentFactory.createWorkspaceWindowTabs(workspaceWindowTabOptions);
 	}
 };
 
@@ -230,9 +236,9 @@ lm.utils.copy(lm.controls.Tab.prototype, {
 
 		const isWorkspaceTab = this._layoutManager.config.settings.mode === "workspace";
 		const isWorkspaceTabReorderLocked = isWorkspaceTab && this.contentItem.config.workspacesConfig.allowWorkspaceTabReorder === false;
-		const isWindowTabReorderLocked =  !isWorkspaceTab && this.contentItem.config.workspacesConfig.allowReorder === false;
+		const isWindowTabReorderLocked = !isWorkspaceTab && this.contentItem.config.workspacesConfig.allowReorder === false;
 
-		if (isWorkspaceTabReorderLocked|| isWindowTabReorderLocked) {
+		if (isWorkspaceTabReorderLocked || isWindowTabReorderLocked) {
 			return;
 		}
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { SaveWorkspaceButtonProps } from "../../../types/internal";
+import { SaveWorkspaceButtonProps } from "../../../types/defaultComponents";
 
 const SaveWorkspaceButton: React.FC<SaveWorkspaceButtonProps> = ({ workspaceId,
     inputValue,

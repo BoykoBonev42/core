@@ -1,3 +1,5 @@
+2.5.0
+feat: added support for more customization zones
 2.4.0
 feat: updated all dependencies to the latest major versions
 2.3.8

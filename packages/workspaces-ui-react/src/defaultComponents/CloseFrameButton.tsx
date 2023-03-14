@@ -1,5 +1,5 @@
 import React from "react";
-import { CloseFrameButtonProps } from "../types/internal";
+import { CloseFrameButtonProps } from "../types/defaultComponents";
 import HeaderButton from "./HeaderButton";
 
 const CloseFrameButton: React.FC<CloseFrameButtonProps> = ({ title, children, ...props }) => {

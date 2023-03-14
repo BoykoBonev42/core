@@ -1,5 +1,5 @@
 import React from "react";
-import { ApplicationItemProps } from "../../../types/internal";
+import { ApplicationItemProps } from "../../../types/defaultComponents";
 
 const ApplicationItem: React.FC<ApplicationItemProps> = ({ appName, onClick }) => {
     return (

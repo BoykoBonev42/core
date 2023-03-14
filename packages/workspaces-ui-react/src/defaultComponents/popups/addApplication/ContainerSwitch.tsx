@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { ContainerSwitchProps } from "../../../types/internal";
+import { ContainerSwitchProps } from "../../../types/defaultComponents";
 
 const ContainerSwitch: React.FC<ContainerSwitchProps> = ({ inLane, setInLane, parent }) => {
     let wordInLabel = "";

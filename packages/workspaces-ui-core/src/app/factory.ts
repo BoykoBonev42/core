@@ -12,6 +12,7 @@ import { DelayedExecutor } from "../utils/delayedExecutor";
 import { WorkspacesSystemSettingsProvider } from "../config/system";
 import { RestoreWorkspaceConfig } from "../interop/types";
 import { PlatformCommunicator } from "../interop/platformCommunicator";
+import componentStateMonitor from "../componentStateMonitor";
 
 export class ApplicationFactory {
     private readonly registry = createRegistry();
@@ -256,6 +257,7 @@ export class ApplicationFactory {
         component.config.componentState.url = url;
         if (windowTitle) {
             component.setTitle(windowTitle);
+            componentStateMonitor.decoratedFactory.updateWorkspaceWindowTabs({ placementId: componentId, title: windowTitle });
         }
         if (isNewWindow && !isHibernatedWindow) {
             const windowSummary = this._stateResolver.getWindowSummarySync(component.config.id, component);
@@ -285,11 +287,13 @@ export class ApplicationFactory {
 
             component.config.componentState.windowId = windowId;
             newlyAddedWindow.windowId = windowId;
+            componentStateMonitor.decoratedFactory.updateWorkspaceWindowTabs({ placementId: componentId, windowId });
 
             const newlyOpenedWindow = this._glue.windows.findById(windowId);
             newlyOpenedWindow.getTitle().then((winTitle) => {
                 if (this.validateTitle(windowTitle)) {
                     component.setTitle(winTitle);
+                    componentStateMonitor.decoratedFactory.updateWorkspaceWindowTabs({ placementId: componentId, title: windowTitle });
                 }
             }).catch((e) => {
                 console.warn("Failed while setting the window title", e);

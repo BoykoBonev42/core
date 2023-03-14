@@ -219,3 +219,10 @@ lm.utils.isCustomWorkspaceTab = function (tab) {
 
 	return isCustomWorkspaceTab;
 }
+
+lm.utils.isCustomWorkspaceWindowTab =  function (tab){
+	const isWindowTab = tab._layoutManager.config.settings.mode !== "workspace";
+	const isCustomWorkspaceWindowTab = isWindowTab && tab._layoutManager._componentFactory && tab._layoutManager._componentFactory.createWorkspaceWindowTabs;
+
+	return isCustomWorkspaceWindowTab;
+}

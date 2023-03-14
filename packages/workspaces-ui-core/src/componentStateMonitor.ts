@@ -1,33 +1,39 @@
-import { ComponentFactory, CreateWorkspaceTabsOptions, DecoratedFactory, VisibilityState } from "./types/componentFactory";
-import createRegistry from "callback-registry";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 //tslint:disable-next-line:no-var-requires
+import { ComponentFactory, CreateGroupHeaderButtonsOptions, CreateWorkspaceTabsOptions, CreateWorkspaceWindowTabsOptions, DecoratedFactory, VisibilityState } from "./types/componentFactory";
+import createRegistry from "callback-registry";
 const shortid = require("shortid");
 import { idAsString } from "./utils";
+import { AddWindowButtonLabel, EjectButtonLabel, GroupHeaderMaximizeLabel, GroupHeaderRestoreLabel, WorkspaceWindowCloseButtonLabel } from "./utils/constants";
+import uiExecutor from "./uiExecutor";
 
 class ComponentStateMonitor {
-    private readonly visibilityState: VisibilityState = {
+    private readonly _visibilityState: VisibilityState = {
         logo: undefined,
         workspaceTabs: {},
         addWorkspace: undefined,
         systemButtons: undefined,
-        workspaceContents: [],
-        beforeGroupTabs: [],
-        afterGroupTabs: [],
+        workspaceContents: {},
+        beforeGroupTabs: {},
+        workspaceWindowTabs: {},
+        afterGroupTabs: {},
+        groupHeaderButtons: {},
     };
 
-    private lastSelectedWorkspaceTab: CreateWorkspaceTabsOptions;
+    private _lastSelectedWorkspaceTab: CreateWorkspaceTabsOptions;
+    private _lastSelectedWorkspaceWindowTab: { [groupId: string]: CreateWorkspaceWindowTabsOptions } = {};
 
-    private callbackRegistry = createRegistry();
+    private _callbackRegistry = createRegistry();
 
-    private componentsFactory: ComponentFactory = {};
+    private _componentsFactory: ComponentFactory = {};
     private readonly _decoratedFactory: DecoratedFactory = {};
-    private readonly observer = new MutationObserver((mutations) => {
+    private readonly _observer = new MutationObserver((mutations) => {
         Array.from(mutations).forEach((m) => {
             const targetDiv = m.target as HTMLDivElement;
 
             const workspaceId = this.getWorkspaceIdFromContents(targetDiv);
             const action = targetDiv.style.display === "none" ? "workspace-contents-hidden" : "workspace-contents-shown";
-            this.callbackRegistry.execute(action, workspaceId);
+            this._callbackRegistry.execute(action, workspaceId);
         });
     });
 
@@ -36,137 +42,167 @@ class ComponentStateMonitor {
     }
 
     public init(frameId: string, componentsFactory?: ComponentFactory): void {
-        this.componentsFactory = componentsFactory;
+        this._componentsFactory = componentsFactory;
         if (componentsFactory?.createAddWorkspace) {
-            this.decoratedFactory.createAddWorkspace = (...args) => {
-                args[0].frameId = frameId;
-                this.visibilityState.addWorkspace = [...args];
+            this.decoratedFactory.createAddWorkspace = (args) => {
+                args.frameId = frameId;
+                this._visibilityState.addWorkspace = args;
 
-                return this.componentsFactory.createAddWorkspace(...args);
+                return this._componentsFactory.createAddWorkspace(args);
             };
         }
 
         if (componentsFactory?.createWorkspaceTabs) {
             this.decoratedFactory.createWorkspaceTabs = (args) => {
                 if (args.isSelected === true) {
-                    this.changeSelectedState(args);
+                    this.changeSelectedWorkspaceState(args);
                 }
 
-                const previousEntry = this.visibilityState.workspaceTabs[args.workspaceId] ?? {};
-                this.visibilityState.workspaceTabs[args.workspaceId] = { ...previousEntry, ...args };
+                const previousEntry = this._visibilityState.workspaceTabs[args.workspaceId] ?? {};
+                this._visibilityState.workspaceTabs[args.workspaceId] = { ...previousEntry, ...args };
 
-                let workspaceUnsub = () => {
-                    // do nothing
-                };
-                const cleanUp = () => {
-                    if (this.componentsFactory.removeWorkspaceTabs) {
-                        this.componentsFactory.removeWorkspaceTabs({ elementId: args?.workspaceId });
-                    }
-                    delete this.visibilityState.workspaceTabs[args.workspaceId];
-                    workspaceUnsub();
-                };
-                workspaceUnsub = this.onWorkspaceClosed(args.workspaceId, cleanUp);
+                this.setupCleanup(this._componentsFactory.removeWorkspaceTabs, "workspaceTabs", args.workspaceId, undefined, undefined, args.workspaceId);
                 return componentsFactory.createWorkspaceTabs(args);
             };
         }
 
         if (componentsFactory?.createLogo) {
-            this.decoratedFactory.createLogo = (...args) => {
-                args[0].frameId = frameId;
-                this.visibilityState.logo = [...args];
+            this.decoratedFactory.createLogo = (args) => {
+                args.frameId = frameId;
+                this._visibilityState.logo = args;
 
-                return this.componentsFactory.createLogo(...args);
+                return this._componentsFactory.createLogo(args);
             };
         }
 
         if (componentsFactory?.createSystemButtons) {
-            this.decoratedFactory.createSystemButtons = (...args) => {
-                args[0].frameId = frameId;
-                this.visibilityState.systemButtons = [...args];
+            this.decoratedFactory.createSystemButtons = (args) => {
+                args.frameId = frameId;
+                this._visibilityState.systemButtons = args;
 
-                return componentsFactory.createSystemButtons(...args);
+                return componentsFactory.createSystemButtons(args);
             };
         }
 
         if (componentsFactory?.createWorkspaceContents) {
-            this.decoratedFactory.createWorkspaceContents = (...args) => {
+            this.decoratedFactory.createWorkspaceContents = (args) => {
                 const visibilityStateEntry = args;
-                this.visibilityState.workspaceContents.push(visibilityStateEntry);
+                this._visibilityState.workspaceContents[args.workspaceId] = (visibilityStateEntry);
 
-                const unsub = this.onWorkspaceClosed(args[0]?.workspaceId, () => {
-                    this.componentsFactory.removeWorkspaceContents({ workspaceId: args[0]?.workspaceId });
-                    this.visibilityState.workspaceContents = this.visibilityState.workspaceContents.filter((entry) => entry !== visibilityStateEntry);
+                const unsub = this.onWorkspaceClosed(args.workspaceId, () => {
+                    this.cleanupWorkspaceContents(args.workspaceId);
                     unsub();
                 });
 
-                this.subscribeForWorkspaceContentsVisibility(args[0]?.workspaceId);
-                return componentsFactory.createWorkspaceContents(...args);
+                this.subscribeForWorkspaceContentsVisibility(args.workspaceId);
+                return componentsFactory.createWorkspaceContents(args);
             };
         }
 
         if (componentsFactory?.createBeforeGroupTabs) {
-            this.decoratedFactory.createBeforeGroupTabs = (...args) => {
-                const visibilityStateEntry = args;
-                this.visibilityState.beforeGroupTabs.push(visibilityStateEntry);
-                let groupUnsub = () => {
-                    // do nothing
-                };
-                let workspaceUnsub = () => {
-                    // do nothing
-                };
-                const cleanUp = () => {
-                    if (this.componentsFactory.removeBeforeGroupTabs) {
-                        this.componentsFactory.removeBeforeGroupTabs({ elementId: args[0]?.elementId });
-                    }
-                    this.visibilityState.beforeGroupTabs = this.visibilityState.beforeGroupTabs.filter((entry) => entry !== visibilityStateEntry);
-                    groupUnsub();
-                    workspaceUnsub();
-                };
-                groupUnsub = this.onGroupClosed(args[0]?.groupId, cleanUp);
-                workspaceUnsub = this.onWorkspaceClosed(args[0]?.workspaceId, cleanUp);
-                return componentsFactory.createBeforeGroupTabs(...args);
+            this.decoratedFactory.createBeforeGroupTabs = (args) => {
+                this._visibilityState.beforeGroupTabs[args.groupId] = args;
+                this.setupCleanup(this._componentsFactory.removeBeforeGroupTabs, "beforeGroupTabs", args.groupId, undefined, args.groupId, args.workspaceId);
+
+                return componentsFactory.createBeforeGroupTabs(args);
+            };
+        }
+
+        if (componentsFactory?.createWorkspaceWindowTabs) {
+            this.decoratedFactory.createWorkspaceWindowTabs = (args) => {
+                if (args.isSelected === true) {
+                    this.changeSelectedWorkspaceWindowState(args);
+                }
+                this._visibilityState.workspaceWindowTabs[args.placementId] = args;
+                this.setupCleanup(this._componentsFactory.removeWorkspaceWindowTabs, "workspaceWindowTabs", args.placementId, args.placementId, args.groupId, args.workspaceId);
+
+                return componentsFactory.createWorkspaceWindowTabs(args);
             };
         }
 
         if (componentsFactory?.createAfterGroupTabs) {
-            this.decoratedFactory.createAfterGroupTabs = (...args) => {
-                const visibilityStateEntry = args;
-                this.visibilityState.afterGroupTabs.push(visibilityStateEntry);
-                let groupUnsub = () => {
-                    // do nothing
-                };
-                let workspaceUnsub = () => {
-                    // do nothing
-                };
-                const cleanUp = () => {
-                    if (this.componentsFactory.removeAfterGroupTabs) {
-                        this.componentsFactory.removeAfterGroupTabs({ elementId: args[0]?.elementId });
-                    }
-                    this.visibilityState.afterGroupTabs = this.visibilityState.afterGroupTabs.filter((entry: any[]) => entry !== visibilityStateEntry);
-                    groupUnsub();
-                    workspaceUnsub();
-                };
-                groupUnsub = this.onGroupClosed(args[0]?.groupId, cleanUp);
-                workspaceUnsub = this.onWorkspaceClosed(args[0]?.workspaceId, cleanUp);
-                return componentsFactory.createAfterGroupTabs(...args);
+            this.decoratedFactory.createAfterGroupTabs = (args) => {
+                this._visibilityState.afterGroupTabs[args.groupId] = args;
+                this.setupCleanup(this._componentsFactory.removeAfterGroupTabs, "afterGroupTabs", args.groupId, undefined, args.groupId, args.workspaceId);
+                return componentsFactory.createAfterGroupTabs(args);
             };
         }
 
         if (componentsFactory?.updateWorkspaceTabs) {
             this.decoratedFactory.updateWorkspaceTabs = (args) => {
-                if (!this.visibilityState.workspaceTabs[args.workspaceId]) {
+                if (!this._visibilityState.workspaceTabs[args.workspaceId]) {
                     return;
                 }
                 if (args.isSelected === true) {
-                    this.changeSelectedState(args as CreateWorkspaceTabsOptions);
+                    this.changeSelectedWorkspaceState(args as CreateWorkspaceTabsOptions);
                 }
 
-                const previousEntry = this.visibilityState.workspaceTabs[args.workspaceId] ?? {};
-                this.visibilityState.workspaceTabs[args.workspaceId] = { ...previousEntry, ...args } as CreateWorkspaceTabsOptions;
+                const previousEntry = this._visibilityState.workspaceTabs[args.workspaceId] ?? {};
+                this._visibilityState.workspaceTabs[args.workspaceId] = { ...previousEntry, ...args } as CreateWorkspaceTabsOptions;
                 componentsFactory.updateWorkspaceTabs(args as CreateWorkspaceTabsOptions);
             };
         } else {
             this.decoratedFactory.updateWorkspaceTabs = () => {
+                // do nothing
+            };
+        }
+
+        if (componentsFactory?.createWorkspaceWindowTabs) {
+            this.decoratedFactory.updateWorkspaceWindowTabs = (args) => {
+                if (!this._visibilityState.workspaceWindowTabs[args.placementId]) {
+                    return;
+                }
+                if (args.isSelected === true) {
+                    this.changeSelectedWorkspaceWindowState(args as CreateWorkspaceWindowTabsOptions);
+                }
+
+                const previousEntry = this._visibilityState.workspaceTabs[args.placementId] ?? {};
+                args.channels = {
+                    ...this._visibilityState.workspaceWindowTabs[args.placementId].channels,
+                    ...args.channels
+                };
+                args.close = {
+                    ...this._visibilityState.workspaceWindowTabs[args.placementId].close,
+                    ...args.close
+                };
+                this._visibilityState.workspaceWindowTabs[args.placementId] = { ...previousEntry, ...args } as CreateWorkspaceWindowTabsOptions;
+
+                componentsFactory.updateWorkspaceWindowTabs(args as CreateWorkspaceWindowTabsOptions);
+            };
+        } else {
+            this.decoratedFactory.updateWorkspaceWindowTabs = () => {
+                // do nothing
+            };
+        }
+
+        if (componentsFactory?.createGroupHeaderButtons) {
+            this.decoratedFactory.updateGroupHeaderButtons = (args) => {
+                if (!this._visibilityState.groupHeaderButtons[args.groupId]) {
+                    return;
+                }
+
+                const previousEntry = this._visibilityState.groupHeaderButtons[args.groupId] ?? {};
+                args.addWindow = {
+                    ...this._visibilityState.groupHeaderButtons[args.groupId].addWindow,
+                    ...args.addWindow
+                };
+                args.maximize = {
+                    ...this._visibilityState.groupHeaderButtons[args.groupId].maximize,
+                    ...args.maximize
+                };
+                args.restore = {
+                    ...this._visibilityState.groupHeaderButtons[args.groupId].restore,
+                    ...args.restore
+                };
+                args.eject = {
+                    ...this._visibilityState.groupHeaderButtons[args.groupId].eject,
+                    ...args.eject
+                };
+                this._visibilityState.groupHeaderButtons[args.groupId] = { ...previousEntry, ...args } as CreateGroupHeaderButtonsOptions;
+                componentsFactory.updateGroupHeaderButtons(args as CreateGroupHeaderButtonsOptions);
+            };
+        } else {
+            this.decoratedFactory.updateGroupHeaderButtons = () => {
                 // do nothing
             };
         }
@@ -191,71 +227,137 @@ class ComponentStateMonitor {
                     layoutName: contentItem.config.workspacesConfig.layoutName
                 };
             };
+
+            this.decoratedFactory.createWorkspaceWindowTabsOptions = ({ element, contentItem }) => {
+                const itemIndex = contentItem.parent.contentItems.indexOf(contentItem);
+                const isSelected = itemIndex === ((contentItem.parent.config as any).activeItemIndex || 0); // copied from the stack init in GL
+                return {
+                    domNode: element,
+                    groupId: idAsString(contentItem.parent.config.id),
+                    placementId: idAsString(contentItem.config.id),
+                    windowId: contentItem.config.componentState?.windowId,
+                    workspaceId: idAsString(contentItem.layoutManager.root.config.id),
+                    title: contentItem.config.title,
+                    isSelected,
+                    channels: {
+                        color: "transparent",
+                        visible: false
+                    },
+                    close: {
+                        title: WorkspaceWindowCloseButtonLabel,
+                        visible: contentItem.config.workspacesConfig.showCloseButton ?? true
+                    }
+                };
+            };
+
+            this.decoratedFactory.createGroupHeaderButtonsOptions = ({ element, contentItem }) => {
+                return {
+                    domNode: element,
+                    groupId: idAsString(contentItem.config.id),
+                    workspaceId: contentItem.layoutManager.config.workspacesOptions.workspaceId,
+                    addWindow: {
+                        visible: true,
+                        title: AddWindowButtonLabel
+                    },
+                    eject: {
+                        visible: true,
+                        title: EjectButtonLabel
+                    },
+                    maximize: {
+                        visible: !contentItem.isMaximized,
+                        title: GroupHeaderMaximizeLabel
+                    },
+                    restore: {
+                        visible: contentItem.isMaximized,
+                        title: GroupHeaderRestoreLabel
+                    }
+                };
+            };
         }
     }
 
     public reInitialize(incomingFactory?: ComponentFactory) {
-        if (incomingFactory?.createAddWorkspace && this.visibilityState.addWorkspace) {
-            incomingFactory.createAddWorkspace(...this.visibilityState.addWorkspace);
+        if (incomingFactory?.createLogo && this._visibilityState.logo) {
+            incomingFactory.createLogo(this._visibilityState.logo);
+        }
+
+        if (incomingFactory?.createAddWorkspace && this._visibilityState.addWorkspace) {
+            incomingFactory.createAddWorkspace(this._visibilityState.addWorkspace);
         }
 
         if (incomingFactory?.createWorkspaceTabs) {
-            Object.values(this.visibilityState.workspaceTabs).forEach((wt) => {
+            Object.values(this._visibilityState.workspaceTabs).forEach((wt) => {
                 incomingFactory.createWorkspaceTabs(wt);
             });
         }
 
-        if (incomingFactory?.createLogo && this.visibilityState.logo) {
-            incomingFactory.createLogo(...this.visibilityState.logo);
-        }
-
-        if (incomingFactory?.createSystemButtons && this.visibilityState.systemButtons) {
-            incomingFactory.createSystemButtons(...this.visibilityState.systemButtons);
+        if (incomingFactory?.createSystemButtons && this._visibilityState.systemButtons) {
+            incomingFactory.createSystemButtons(this._visibilityState.systemButtons);
         }
 
         if (incomingFactory?.createWorkspaceContents) {
-            this.visibilityState.workspaceContents.forEach((wc) => {
-                incomingFactory.createWorkspaceContents(...wc);
+            Object.values(this._visibilityState.workspaceContents).forEach((wc) => {
+                incomingFactory.createWorkspaceContents(wc);
             });
         }
 
         if (incomingFactory?.createBeforeGroupTabs) {
-            this.visibilityState.beforeGroupTabs.forEach((g) => {
-                incomingFactory.createBeforeGroupTabs(...g);
+            Object.values(this._visibilityState.beforeGroupTabs).forEach((bgt) => {
+                incomingFactory.createBeforeGroupTabs(bgt);
+            });
+        }
+
+        if (incomingFactory?.createWorkspaceWindowTabs) {
+            Object.values(this._visibilityState.workspaceWindowTabs).forEach((wwt) => {
+                incomingFactory.createWorkspaceWindowTabs(wwt);
             });
         }
 
         if (incomingFactory?.createAfterGroupTabs) {
-            this.visibilityState.afterGroupTabs.forEach((g) => {
-                incomingFactory.createAfterGroupTabs(...g);
+            Object.values(this._visibilityState.afterGroupTabs).forEach((agt) => {
+                incomingFactory.createAfterGroupTabs(agt);
             });
         }
 
-        this.componentsFactory = incomingFactory;
+        if (incomingFactory?.createGroupHeaderButtons) {
+            Object.values(this._visibilityState.groupHeaderButtons).forEach((ghb) => {
+                incomingFactory.createGroupHeaderButtons(ghb);
+            });
+        }
+
+        this._componentsFactory = incomingFactory;
     }
 
     public onWorkspaceContentsShown(callback: (workspaceId: string) => void) {
-        this.callbackRegistry.add("workspace-contents-shown", callback);
+        this._callbackRegistry.add("workspace-contents-shown", callback);
     }
 
     public onWorkspaceContentsHidden(callback: (workspaceId: string) => void) {
-        this.callbackRegistry.add("workspace-contents-hidden", callback);
+        this._callbackRegistry.add("workspace-contents-hidden", callback);
     }
 
     public notifyWorkspaceClosed(workspaceId: string) {
-        this.callbackRegistry.execute(`workspace-closed-${workspaceId}`, workspaceId);
+        this._callbackRegistry.execute(`workspace-closed-${workspaceId}`, workspaceId);
     }
 
     public notifyGroupClosed(groupId: string) {
-        this.callbackRegistry.execute(`group-closed-${groupId}`, groupId);
+        this._callbackRegistry.execute(`group-closed-${groupId}`, groupId);
+    }
+
+    public notifyWindowClosed(placementId: string) {
+        this._callbackRegistry.execute(`window-closed-${placementId}`, placementId);
     }
 
     private onWorkspaceClosed(workspaceId: string, callback: (workspaceId: string) => void) {
-        return this.callbackRegistry.add(`workspace-closed-${workspaceId}`, callback);
+        return this._callbackRegistry.add(`workspace-closed-${workspaceId}`, callback);
     }
 
     private onGroupClosed(groupId: string, callback: (groupId: string) => void) {
-        return this.callbackRegistry.add(`group-closed-${groupId}`, callback);
+        return this._callbackRegistry.add(`group-closed-${groupId}`, callback);
+    }
+
+    private onWindowClosed(placementId: string, callback: (placementId: string) => void) {
+        return this._callbackRegistry.add(`window-closed-${placementId}`, callback);
     }
 
     private subscribeForWorkspaceContentsVisibility(workspaceId: string) {
@@ -263,7 +365,7 @@ class ComponentStateMonitor {
         if (!contentsElement) {
             return;
         }
-        this.observer.observe(contentsElement, {
+        this._observer.observe(contentsElement, {
             attributes: true,
             attributeFilter: ["style"]
         });
@@ -273,14 +375,67 @@ class ComponentStateMonitor {
         return element.id.split("nestHere")[1];
     }
 
-    private changeSelectedState(args: CreateWorkspaceTabsOptions) {
-        const previouslySelected = this.lastSelectedWorkspaceTab;
+    private changeSelectedWorkspaceState(args: CreateWorkspaceTabsOptions) {
+        const previouslySelected = this._lastSelectedWorkspaceTab;
 
         if (previouslySelected) {
             this.decoratedFactory.updateWorkspaceTabs({ workspaceId: previouslySelected.workspaceId, isSelected: false });
         }
 
-        this.lastSelectedWorkspaceTab = args as CreateWorkspaceTabsOptions;
+        this._lastSelectedWorkspaceTab = args;
+    }
+
+    private changeSelectedWorkspaceWindowState(args: CreateWorkspaceWindowTabsOptions) {
+        const previouslySelected = this._lastSelectedWorkspaceWindowTab[args.groupId];
+
+        if (previouslySelected) {
+            this.decoratedFactory.updateWorkspaceWindowTabs({ placementId: previouslySelected.placementId, isSelected: false });
+        }
+
+        this._lastSelectedWorkspaceWindowTab[args.groupId] = args;
+    }
+
+    private cleanupWorkspaceContents(workspaceId: string) {
+        if (!workspaceId) {
+            return;
+        }
+        this._componentsFactory.removeWorkspaceContents({ workspaceId });
+        delete this._visibilityState.workspaceContents[workspaceId];
+        const workspaceLayoutContainer = document.getElementById(uiExecutor.getWorkspaceLayoutContainerId(workspaceId));
+        if (workspaceLayoutContainer) {
+            workspaceLayoutContainer.remove();
+        }
+    }
+
+    private setupCleanup(removeFactoryFunction: (removeOptions: { elementId: string }) => void, stateKey: keyof VisibilityState, elementId: string, placementId?: string, groupId?: string, workspaceId?: string) {
+        let windowUnsub = () => {
+            // do nothing
+        };
+        let groupUnsub = () => {
+            // do nothing
+        };
+        let workspaceUnsub = () => {
+            // do nothing
+        };
+        const cleanUp = () => {
+            if (removeFactoryFunction) {
+                removeFactoryFunction({ elementId });
+            }
+
+            delete (this._visibilityState[stateKey] as any)[elementId];
+            windowUnsub();
+            groupUnsub();
+            workspaceUnsub();
+        };
+        if (placementId) {
+            windowUnsub = this.onWindowClosed(placementId, cleanUp);
+        }
+        if (groupId) {
+            groupUnsub = this.onGroupClosed(groupId, cleanUp);
+        }
+        if (workspaceId) {
+            workspaceUnsub = this.onWorkspaceClosed(workspaceId, cleanUp);
+        }
     }
 }
 

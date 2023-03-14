@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AddWorkspacePopupProps } from "../../../types/internal";
+import { AddWorkspacePopupProps } from "../../../types/defaultComponents";
 import Feedback from "../Feedback";
 import WorkspaceLayoutsList from "./WorkspaceLayoutsList";
 import withGlueInstance from "../../../withGlueInstance";

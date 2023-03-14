@@ -77,8 +77,26 @@ const workspacesManagerAPI: WorkspacesManager = {
     closeWorkspace: (id: string) => {
         manager.closeItem(id);
     },
-    showSaveWorkspacePopup:(workspaceId: string, bounds: Bounds) => {
+    showSaveWorkspacePopup: (workspaceId: string, bounds: Bounds) => {
         manager.showSaveWorkspacePopup(workspaceId, bounds);
+    },
+    closeWindow: (id: string) => {
+        manager.closeItem(id);
+    },
+    restoreGroup: (id: string) => {
+        manager.restoreItem(id);
+    },
+    maximizeGroup: (id: string) => {
+        manager.maximizeItem(id);
+    },
+    ejectActiveWindow: (id: string) => {
+        manager.ejectActiveWindow(id);
+    },
+    showChannelsSelector: (placementId: string, bounds: Bounds) => {
+        manager.showChannelsSelector(placementId, bounds);
+    },
+    showAddApplicationPopup: (groupId: string, bounds: Bounds) => {
+        manager.showAddWindowPopup(groupId, bounds);
     }
 };
 

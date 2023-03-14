@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AddApplicationPopupProps } from "../../../types/internal";
+import { AddApplicationPopupProps } from "../../../types/defaultComponents";
 import ApplicationsList from "./ApplicationsList";
 import ContainerSwitch from "./ContainerSwitch";
 import withGlueInstance from "../../../withGlueInstance";

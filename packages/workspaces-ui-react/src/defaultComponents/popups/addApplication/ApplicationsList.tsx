@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { ApplicationListProps } from "../../../types/internal";
+import { ApplicationListProps } from "../../../types/defaultComponents";
 import ApplicationItem from "./ApplicationItem";
 
 const ApplicationsList: React.FC<ApplicationListProps> = ({ glue, inLane, parent, hidePopup, searchTerm, updatePopupHeight, filterApps }) => {

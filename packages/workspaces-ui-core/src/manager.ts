@@ -32,6 +32,7 @@ import { PlatformCommunicator } from "./interop/platformCommunicator";
 import { WorkspacesWrapperFactory } from "./state/factory";
 import { WorkspacesEventBundler } from "./utils/eventBundler";
 import { LayoutComponentsFactory } from "./layout/componentsFactory";
+import { WorkspacesLayoutLockingController } from "./layout/locking";
 import { ThemeController } from "./layout/themeController";
 
 export class WorkspacesManager {
@@ -53,6 +54,7 @@ export class WorkspacesManager {
     private _systemSettings: WorkspacesSystemSettingsProvider;
     private _platformCommunicator: PlatformCommunicator;
     private _wrapperFactory: WorkspacesWrapperFactory;
+    private _layoutLockingController: WorkspacesLayoutLockingController;
     private _themeController: ThemeController;
 
     public get stateResolver(): LayoutStateResolver {
@@ -98,6 +100,7 @@ export class WorkspacesManager {
         this._frameController = new IFrameController(glue, this._platformCommunicator);
         const eventEmitter = new LayoutEventEmitter(registryFactory());
         this._wrapperFactory = new WorkspacesWrapperFactory(eventEmitter, this.frameId);
+        this._layoutLockingController = new WorkspacesLayoutLockingController(this._wrapperFactory);
         this._stateResolver = new LayoutStateResolver(this._frameId, eventEmitter, this._frameController, converter, this._wrapperFactory);
         const layoutComponentsFactory = new LayoutComponentsFactory(eventEmitter, this._configFactory);
         this._controller = new LayoutController(eventEmitter, this._stateResolver, startupConfig, this._configFactory, this._wrapperFactory, layoutComponentsFactory);
@@ -363,7 +366,11 @@ export class WorkspacesManager {
         }
     }
 
-    public async eject(item: GoldenLayout.Component): Promise<{ windowId: string }> {
+    public async eject(itemId: string): Promise<{ windowId: string }> {
+        const item = store.getWindowContentItem(itemId);
+        if (!item) {
+            throw new Error(`Could not find item ${itemId}`);
+        }
         const { appName, url, windowId } = item.config.componentState;
         const workspaceContext = store.getWorkspaceContext(store.getByWindowId(item.config.id).id);
         const webWindow = this._glue.windows.findById(windowId);
@@ -383,6 +390,12 @@ export class WorkspacesManager {
         const ejectedWindow = await this._glue.windows.open(`${appName}_${windowId}`, ejectedWindowUrl, { context, windowId } as Glue42Web.Windows.Settings);
 
         return { windowId: ejectedWindow.id };
+    }
+
+    public ejectActiveWindow(groupId: string): Promise<{ windowId: string }> {
+        const groupWrapper = this._wrapperFactory.getContainerWrapper({ itemId: groupId });
+
+        return this.eject(groupWrapper.activeItemId);
     }
 
     public async createWorkspace(config: GoldenLayout.Config): Promise<string> {
@@ -651,66 +664,64 @@ export class WorkspacesManager {
             this.workspacesEventEmitter.startWindowLockConfigurationChangedGrouping();
 
             if (allowDrop === false) {
-                this._controller.disableWorkspaceDrop(workspaceId, lockConfig.config);
+                this._layoutLockingController.disableWorkspaceDrop(workspaceId, lockConfig.config);
             } else {
-                this._controller.enableWorkspaceDrop(workspaceId, lockConfig.config);
+                this._layoutLockingController.enableWorkspaceDrop(workspaceId, lockConfig.config);
             }
 
             if (allowExtract === false) {
-                this._controller.disableWorkspaceExtract(workspaceId);
+                this._layoutLockingController.disableWorkspaceExtract(workspaceId);
             } else {
-                this._controller.enableWorkspaceExtract(workspaceId);
+                this._layoutLockingController.enableWorkspaceExtract(workspaceId);
             }
 
             if (allowWindowReorder === false) {
-                this._controller.disableWorkspaceWindowReorder(workspaceId);
+                this._layoutLockingController.disableWorkspaceWindowReorder(workspaceId);
             } else {
-                this._controller.enableWorkspaceWindowReorder(workspaceId);
+                this._layoutLockingController.enableWorkspaceWindowReorder(workspaceId);
             }
 
             if (allowSplitters === false) {
-                this._controller.disableSplitters(workspaceId);
+                this._layoutLockingController.disableSplitters(workspaceId);
             } else {
-                this._controller.enableSplitters(workspaceId);
+                this._layoutLockingController.enableSplitters(workspaceId);
             }
 
             if (showCloseButton === false) {
-                this._controller.disableWorkspaceCloseButton(workspaceId);
+                this._layoutLockingController.disableWorkspaceCloseButton(workspaceId);
             } else {
-                this._controller.enableWorkspaceCloseButton(workspaceId);
+                this._layoutLockingController.enableWorkspaceCloseButton(workspaceId);
             }
 
             if (showSaveButton === false) {
-                this._controller.disableWorkspaceSaveButton(workspaceId);
+                this._layoutLockingController.disableWorkspaceSaveButton(workspaceId);
             } else {
-                this._controller.enableWorkspaceSaveButton(workspaceId);
+                this._layoutLockingController.enableWorkspaceSaveButton(workspaceId);
             }
 
             if (allowWorkspaceTabReorder === false) {
-                this._controller.disableWorkspaceReorder(workspaceId);
+                this._layoutLockingController.disableWorkspaceReorder(workspaceId);
             } else {
-                this._controller.enableWorkspaceReorder(workspaceId);
+                this._layoutLockingController.enableWorkspaceReorder(workspaceId);
             }
 
             if (showAddWindowButtons === false) {
-                this._controller.disableWorkspaceAddWindowButtons(workspaceId);
+                this._layoutLockingController.disableWorkspaceAddWindowButtons(workspaceId);
             } else {
-                this._controller.enableWorkspaceAddWindowButtons(workspaceId);
+                this._layoutLockingController.enableWorkspaceAddWindowButtons(workspaceId);
             }
 
             if (showEjectButtons === false) {
-                this._controller.disableWorkspaceEjectButtons(workspaceId);
+                this._layoutLockingController.disableWorkspaceEjectButtons(workspaceId);
             } else {
-                this._controller.enableWorkspaceEjectButtons(workspaceId);
+                this._layoutLockingController.enableWorkspaceEjectButtons(workspaceId);
             }
 
             if (showWindowCloseButtons === false) {
-                this._controller.disableWorkspaceWindowCloseButtons(workspaceId);
+                this._layoutLockingController.disableWorkspaceWindowCloseButtons(workspaceId);
             } else {
-                this._controller.enableWorkspaceWindowCloseButtons(workspaceId);
+                this._layoutLockingController.enableWorkspaceWindowCloseButtons(workspaceId);
             }
-        } catch (error) {
-            throw error;
         } finally {
             this.workspacesEventEmitter.endWorkspaceLockConfigurationChangedGrouping();
             this.workspacesEventEmitter.endContainerLockConfigurationChangedGrouping();
@@ -777,8 +788,6 @@ export class WorkspacesManager {
                     this.handleGroupLockRequested(lockConfig);
                     break;
             }
-        } catch (error) {
-            throw error;
         } finally {
             this.workspacesEventEmitter.endContainerLockConfigurationChangedGrouping();
             this.workspacesEventEmitter.endWindowLockConfigurationChangedGrouping();
@@ -809,25 +818,23 @@ export class WorkspacesManager {
             this.workspacesEventEmitter.startWindowLockConfigurationChangedGrouping();
 
             if (allowExtract === false) {
-                this._controller.disableWindowExtract(windowPlacementId);
+                this._layoutLockingController.disableWindowExtract(windowPlacementId);
             } else {
-                this._controller.enableWindowExtract(windowPlacementId, allowExtract);
+                this._layoutLockingController.enableWindowExtract(windowPlacementId, allowExtract);
             }
 
             if (allowReorder === false) {
-                this._controller.disableWindowReorder(windowPlacementId);
+                this._layoutLockingController.disableWindowReorder(windowPlacementId);
             } else {
-                this._controller.enableWindowReorder(windowPlacementId, allowReorder);
+                this._layoutLockingController.enableWindowReorder(windowPlacementId, allowReorder);
             }
 
             if (showCloseButton === false) {
-                this._controller.disableWindowCloseButton(windowPlacementId);
+                this._layoutLockingController.disableWindowCloseButton(windowPlacementId);
             } else {
-                this._controller.enableWindowCloseButton(windowPlacementId, showCloseButton);
+                this._layoutLockingController.enableWindowCloseButton(windowPlacementId, showCloseButton);
             }
 
-        } catch (error) {
-            throw error;
         } finally {
             this.workspacesEventEmitter.endWindowLockConfigurationChangedGrouping();
         }
@@ -975,6 +982,20 @@ export class WorkspacesManager {
         const wrapper = this._wrapperFactory.getContainerWrapper({ containerContentItem: container });
 
         wrapper.maximizationBoundary = value;
+    }
+
+    public showChannelsSelector(placementId: string, bounds: Bounds) {
+        // TODO
+    }
+
+    public showAddWindowPopup(groupId: string, bounds: Bounds) {
+        this._popupManager.showAddWindowPopup(bounds, {
+            boxId: groupId,
+            parentType: "group",
+            frameId: this.frameId,
+            peerId: this._glue.agm.instance.peerId,
+            workspaceId: store.getActiveWorkspace().id
+        });
     }
 
     private resizeWorkspaceItem(args: ResizeItemArguments): void {
@@ -1198,6 +1219,14 @@ export class WorkspacesManager {
             this._frameController.selectionChanged(toFront.map((tf) => tf.id), toBack.map((t) => t.id));
         });
 
+        this._controller.emitter.onTabSelectionChanged(async (item) => {
+            componentStateMonitor.decoratedFactory.updateWorkspaceWindowTabs({
+                placementId: idAsString(item.config.id),
+                groupId: idAsString(item.parent.config.id),
+                isSelected: true
+            });
+        });
+
         this._controller.emitter.onWorkspaceAdded((workspace) => {
             this.handleOnWorkspaceAdded(workspace);
         });
@@ -1374,7 +1403,7 @@ export class WorkspacesManager {
             if (!item.isComponent) {
                 throw new Error(`Can't eject item of type ${item.type}`);
             }
-            return this.eject(item);
+            return this.eject(idAsString(item.config.id));
         });
 
         this._controller.emitter.onComponentSelectedInWorkspace((component, workspaceId) => {
@@ -1690,39 +1719,39 @@ export class WorkspacesManager {
     private handleGroupLockRequested(data: LockGroupArguments): void {
         const { allowExtract, allowReorder, showAddWindowButton, showEjectButton, showMaximizeButton, allowDrop } = data.config;
         if (allowExtract === false) {
-            this._controller.disableGroupExtract(data.itemId);
+            this._layoutLockingController.disableGroupExtract(data.itemId);
         } else {
-            this._controller.enableGroupExtract(data.itemId, allowExtract);
+            this._layoutLockingController.enableGroupExtract(data.itemId, allowExtract);
         }
 
         if (allowReorder === false) {
-            this._controller.disableGroupReorder(data.itemId);
+            this._layoutLockingController.disableGroupReorder(data.itemId);
         } else {
-            this._controller.enableGroupReorder(data.itemId, allowReorder);
+            this._layoutLockingController.enableGroupReorder(data.itemId, allowReorder);
         }
 
         if (showAddWindowButton === false) {
-            this._controller.disableGroupAddWindowButton(data.itemId);
+            this._layoutLockingController.disableGroupAddWindowButton(data.itemId);
         } else {
-            this._controller.enableGroupAddWindowButton(data.itemId, showAddWindowButton);
+            this._layoutLockingController.enableGroupAddWindowButton(data.itemId, showAddWindowButton);
         }
 
         if (showEjectButton === false) {
-            this._controller.disableGroupEjectButton(data.itemId);
+            this._layoutLockingController.disableGroupEjectButton(data.itemId);
         } else {
-            this._controller.enableGroupEjectButton(data.itemId, showEjectButton);
+            this._layoutLockingController.enableGroupEjectButton(data.itemId, showEjectButton);
         }
 
         if (showMaximizeButton === false) {
-            this._controller.disableGroupMaximizeButton(data.itemId);
+            this._layoutLockingController.disableGroupMaximizeButton(data.itemId);
         } else {
-            this._controller.enableGroupMaximizeButton(data.itemId, showMaximizeButton);
+            this._layoutLockingController.enableGroupMaximizeButton(data.itemId, showMaximizeButton);
         }
 
         if (allowDrop === false) {
-            this._controller.disableGroupDrop(data.itemId, data.config);
+            this._layoutLockingController.disableGroupDrop(data.itemId, data.config);
         } else {
-            this._controller.enableGroupDrop(data.itemId, data.config);
+            this._layoutLockingController.enableGroupDrop(data.itemId, data.config);
         }
 
         const workspace = store.getByContainerId(data.itemId);
@@ -1734,15 +1763,15 @@ export class WorkspacesManager {
     private handleRowLockRequested(data: LockRowArguments): void {
         const { allowDrop, allowSplitters } = data.config;
         if (allowDrop === false) {
-            this._controller.disableRowDrop(data.itemId);
+            this._layoutLockingController.disableRowDrop(data.itemId);
         } else {
-            this._controller.enableRowDrop(data.itemId, allowDrop);
+            this._layoutLockingController.enableRowDrop(data.itemId, allowDrop);
         }
 
         if (allowSplitters === false) {
-            this._controller.disableRowSplitters(data.itemId);
+            this._layoutLockingController.disableRowSplitters(data.itemId);
         } else {
-            this._controller.enableRowSplitters(data.itemId, allowSplitters);
+            this._layoutLockingController.enableRowSplitters(data.itemId, allowSplitters);
         }
     }
 
@@ -1750,15 +1779,15 @@ export class WorkspacesManager {
         const { allowDrop, allowSplitters } = data.config;
 
         if (allowDrop === false) {
-            this._controller.disableColumnDrop(data.itemId);
+            this._layoutLockingController.disableColumnDrop(data.itemId);
         } else {
-            this._controller.enableColumnDrop(data.itemId, allowDrop);
+            this._layoutLockingController.enableColumnDrop(data.itemId, allowDrop);
         }
 
         if (allowSplitters === false) {
-            this._controller.disableColumnSplitters(data.itemId);
+            this._layoutLockingController.disableColumnSplitters(data.itemId);
         } else {
-            this._controller.enableColumnSplitters(data.itemId, allowSplitters);
+            this._layoutLockingController.enableColumnSplitters(data.itemId, allowSplitters);
         }
     }
 

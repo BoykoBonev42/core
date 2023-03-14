@@ -1,3 +1,5 @@
+2.4.0
+feat: added group header customization zones
 2.3.1
 chore: bump due to dependencies update
 2.3.0

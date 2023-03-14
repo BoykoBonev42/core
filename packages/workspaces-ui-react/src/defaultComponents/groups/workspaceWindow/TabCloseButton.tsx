@@ -1,13 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
-import { WorkspaceTabCloseButtonProps } from "../../types/defaultComponents";
+import React, { useEffect, useRef } from "react";
+import { WorkspaceWindowTabCloseButtonProps } from "../../../types/defaultComponents";
 
-const WorkspaceTabCloseButton: React.FC<WorkspaceTabCloseButtonProps> = ({ close }) => {
-
+const WorkspaceWindowTabCloseButton: React.FC<WorkspaceWindowTabCloseButtonProps> = ({ title, close }) => {
     const closeBtn = useRef<HTMLDivElement>(null);
     useEffect(() => {
         if (closeBtn.current) {
             const listener = (e: Event) => {
-                e.stopImmediatePropagation();
                 e.stopPropagation();
                 close();
             };
@@ -16,7 +14,7 @@ const WorkspaceTabCloseButton: React.FC<WorkspaceTabCloseButtonProps> = ({ close
         }
     }, [closeBtn]);
 
-    return <div title="close" ref={closeBtn} className="lm_close_tab"></div>
-};
+    return <div title={title} ref={closeBtn} className="lm_close_tab"></div>
+}
 
-export default WorkspaceTabCloseButton;
+export default WorkspaceWindowTabCloseButton;

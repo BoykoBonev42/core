@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { WorkspacePopupProps } from "./types/internal";
+import { WorkspacePopupProps } from "./types/api";
 import Popup from "reactjs-popup";
 import WorkspacePopupContent from "./WorkspaceContentPopup";
 import { PopupActions } from "reactjs-popup/dist/types";

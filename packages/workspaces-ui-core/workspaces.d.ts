@@ -15,6 +15,12 @@ export interface WorkspacesManager {
     requestFocus: () => void;
     closeWorkspace: (workspaceId: string) => void;
     showSaveWorkspacePopup: (workspaceId: string, bounds: Bounds) => void;
+    closeWindow: (id: string) => void;
+    maximizeGroup: (id: string) => void;
+    restoreGroup: (id: string) => void;
+    ejectActiveWindow: (groupId: string) => void;
+    showChannelsSelector: (placementId: string, bounds: Bounds) => void;
+    showAddApplicationPopup:(groupId:string, bounds:Bounds)=>void;
 }
 
 declare const WorkspacesManagerAPI: WorkspacesManager;

@@ -432,11 +432,7 @@ export class GlueFacade {
     }
 
     private async handleEject(operationArguments: ItemSelector) {
-        const item = store.getWindowContentItem(operationArguments.itemId);
-        if (!item) {
-            throw new Error(`Could not find item ${operationArguments.itemId}`);
-        }
-        return await manager.eject(item);
+        return await manager.eject(operationArguments.itemId);
     }
 
     private async handleCreateWorkspace(operationArguments: CreateWorkspaceArguments) {

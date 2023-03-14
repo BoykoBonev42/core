@@ -269,6 +269,13 @@ lm.utils.copy(lm.controls.Header.prototype, {
 	 * @returns {void}
 	 */
 	_createControls: function () {
+		const isGroupHeader = this.layoutManager.config.settings.mode !== "workspace";
+		if (isGroupHeader && this.layoutManager._componentFactory.createGroupHeaderButtons) {
+			const workspaceWindowTabOptions = this.layoutManager._componentFactory.createGroupHeaderButtonsOptions({ element: this.controlsContainer[0], contentItem: this.parent });
+			this.layoutManager._componentFactory.createGroupHeaderButtons(workspaceWindowTabOptions);
+			return;
+		}
+
 		var closeStack,
 			popout,
 			label,
@@ -495,7 +502,7 @@ lm.utils.copy(lm.controls.Header.prototype, {
 	 *
 	 * @returns {void}
 	 */
-	 _updateTabSizesWithoutDropdown: function (showTabMenu) {
+	_updateTabSizesWithoutDropdown: function (showTabMenu) {
 		if (this.tabs.length === 0) {
 			return;
 		}

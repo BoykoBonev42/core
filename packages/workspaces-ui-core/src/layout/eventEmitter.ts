@@ -157,6 +157,11 @@ export class LayoutEventEmitter {
         return this._registry.add("workspace-tab-destroyed", callback);
     }
 
+    public onTabSelectionChanged(callback: (item: GoldenLayout.Component) => void): UnsubscribeFunction {
+        return this._registry.add("tab-selection-changed", callback);
+    }
+
+    public raiseEvent(name: "tab-selection-changed", data: { item: GoldenLayout.Component }): Promise<void> | Array<Promise<void>>;
     public raiseEvent(name: "workspace-tab-destroyed", data: { workspaceId: string }): Promise<void> | Array<Promise<void>>;
     public raiseEvent(name: "window-lock-configuration-changed", data: { item: GoldenLayout.Component }): Promise<void> | Array<Promise<void>>;
     public raiseEvent(name: "container-lock-configuration-changed", data: { item: GoldenLayout.ContentItem }): Promise<void> | Array<Promise<void>>;

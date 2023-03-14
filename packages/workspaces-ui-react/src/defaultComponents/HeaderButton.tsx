@@ -1,11 +1,12 @@
 import React from "react";
+import { ButtonProps } from "../types/defaultComponents";
 
-const HeaderButton: React.FC<{ title: string, className: string, children: React.ReactNode, id?: string }> = ({ title, className, children, id, ...props }) => {
+const HeaderButton: React.FC<ButtonProps> = React.forwardRef(({ children, ...props }, ref) => {
     return (
-        <li {...props} title={title} className={className} id={id}>
+        <li ref={ref} {...props}>
             {children}
         </li>
     )
-};
+});
 
 export default HeaderButton;

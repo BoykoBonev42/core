@@ -2,7 +2,7 @@ import React, { Fragment, useCallback, useContext, useEffect, useState } from "r
 import WorkspaceTabOptionsButton from "./OptionsButton";
 import LockedIcon from "./LockedIcon";
 import { Workspace, WorkspaceLockConfig } from "./types";
-import { WorkspaceTabComponentProps } from "../../../types/internal";
+import { WorkspaceTabComponentProps } from "../../../types/api";
 import WorkspaceIconButton from "../WorkspaceIconButton";
 import WorkspaceTitle from "../WorkspaceTitle";
 import WorkspaceTabCloseButton from "../WorkspaceTabCloseButton";

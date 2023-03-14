@@ -3,12 +3,13 @@ import AddApplicationPopup from "./defaultComponents/popups/addApplication/AddAp
 import AddWorkspacePopup from "./defaultComponents/popups/addWorkspace/AddWorkspacePopup";
 import SaveWorkspacePopup from "./defaultComponents/popups/saveWorkspace/SaveWorkspacePopup";
 import Portal from "./Portal";
-import { ElementCreationWrapperState, WorkspacesProps, Bounds } from "./types/internal";
+import { ElementCreationWrapperState, Bounds } from "./types/internal";
 import workspacesManager from "./workspacesManager";
 import WorkspacesWrapper from "./WorkspacesWrapper";
 import workspacesStore from "./workspacesStore";
 import { useSyncExternalStore } from "use-sync-external-store/shim";
 import WorkspaceTabV2 from "./defaultComponents/workspace/tabV2/WorkspaceTabV2";
+import { WorkspacesProps } from "./types/api";
 
 const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ components, glue, ...additionalProperties }) => {
     const state = useSyncExternalStore<ElementCreationWrapperState>(workspacesStore.subscribe, workspacesStore.getSnapshot);
@@ -42,6 +43,7 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
     };
 
     const workspaceTab = components?.header?.WorkspaceTabComponent ?? WorkspaceTabV2;
+    const groupHeader = components?.groupHeader;
 
     const renderLogoComponent = () => {
         const LogoCustomElement = components?.header?.LogoComponent;
@@ -109,7 +111,7 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
     }
 
     const renderBeforeGroupTabs = () => {
-        const BeforeGroupTabsComponent = components?.containers?.group?.header?.BeforeTabs;
+        const BeforeGroupTabsComponent = groupHeader?.BeforeTabsComponent;
 
         return Object.values(state.beforeGroupTabsZones).map((g) => {
             if (!BeforeGroupTabsComponent || !g.domNode) {
@@ -117,12 +119,40 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
             }
 
             const { domNode, callback, ...options } = g;
-            return <Portal key={options.groupId} domNode={domNode}><BeforeGroupTabsComponent {...options} /></Portal>
+            return <Portal key={`${options.groupId}-beforeTabs`} domNode={domNode}><BeforeGroupTabsComponent {...options} /></Portal>
+        });
+    }
+
+    const renderWorkspaceWindowTabs = () => {
+        const WorkspaceWindowTabsComponent = groupHeader?.WorkspaceWindowTabComponent;
+
+        return Object.values(state.workspaceWindowTabsZones).map((g) => {
+            if (!WorkspaceWindowTabsComponent || !g.domNode) {
+                return;
+            }
+
+            const { domNode, callback, ...options } = g;
+
+            const close = {
+                ...options.close,
+                close: () => {
+                    workspacesManager.closeWindow(g.placementId)
+                }
+            };
+
+            const channels = {
+                ...options.channels,
+                showSelector: (bounds: Bounds) => {
+                    workspacesManager.showChannelsSelector(g.placementId, bounds);
+                }
+            }
+
+            return <Portal key={options.placementId} domNode={domNode}><WorkspaceWindowTabsComponent {...options} elementId={options.placementId} close={close} channels={channels} /></Portal>
         });
     }
 
     const renderAfterGroupTabs = () => {
-        const AfterGroupTabsComponent = components?.containers?.group?.header?.AfterTabs;
+        const AfterGroupTabsComponent = groupHeader?.AfterTabsComponent;
 
         return Object.values(state.afterGroupTabsZones).map((g) => {
             if (!AfterGroupTabsComponent || !g.domNode) {
@@ -130,7 +160,51 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
             }
 
             const { domNode, callback, ...options } = g;
-            return <Portal key={options.groupId} domNode={domNode}><AfterGroupTabsComponent {...options} /></Portal>
+            return <Portal key={`${options.groupId}-afterTabs`} domNode={domNode}><AfterGroupTabsComponent {...options} /></Portal>
+        });
+    }
+
+    const renderGroupHeaderButtons = () => {
+        const ButtonsComponent = groupHeader?.ButtonsComponent;
+
+        return Object.values(state.groupHeaderButtonsZones).map((g) => {
+            if (!ButtonsComponent || !g.domNode) {
+                return;
+            }
+
+            const { domNode, callback, ...options } = g;
+
+            const addWindow = {
+                ...options.addWindow,
+                showPopup: (bounds: Bounds) => {
+                    workspacesManager.showAddApplicationPopup(options.workspaceId, options.groupId, bounds);
+                }
+            };
+
+            const maximize = {
+                ...options.maximize,
+                maximize: () => {
+                    workspacesManager.maximizeGroup(options.groupId);
+                }
+            };
+
+            const restore = {
+                ...options.restore,
+                restore: () => {
+                    workspacesManager.restoreGroup(options.groupId);
+                }
+            };
+
+            const eject = {
+                ...options.eject,
+                eject: () => {
+                    workspacesManager.ejectActiveWindow(options.groupId);
+                }
+            };
+
+            return <Portal key={`${options.groupId}-headerButtons`} domNode={domNode}>
+                <ButtonsComponent {...options} addWindow={addWindow} maximize={maximize} restore={restore} eject={eject} />
+            </Portal>
         });
     }
 
@@ -185,31 +259,54 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
             {renderWorkspaceTabs()}
             {renderAddWorkspaceComponent()}
             {renderSystemButtonsComponent()}
+
             {renderWorkspaceContents()}
+
             {renderBeforeGroupTabs()}
+            {renderWorkspaceWindowTabs()}
             {renderAfterGroupTabs()}
+            {renderGroupHeaderButtons()}
+
             {renderSaveWorkspacePopupComponent()}
             {renderAddApplicationPopupComponent()}
             {renderAddWorkspacePopupComponent()}
+
             {renderWorkspaceLoadingAnimations()}
             <WorkspacesWrapper
-                onCreateSystemButtonsRequested={components?.header?.SystemButtonsComponent ? workspacesStore.onCreateSystemButtonsRequested : undefined}
+                onCreateLogoRequested={components?.header?.LogoComponent ? workspacesStore.onCreateLogoRequested : undefined}
                 onCreateWorkspaceTabRequested={workspaceTab ? workspacesStore.onCreateWorkspaceTabRequested : undefined}
                 onCreateAddWorkspaceRequested={components?.header?.AddWorkspaceComponent ? workspacesStore.onCreateAddWorkspaceRequested : undefined}
-                onCreateLogoRequested={components?.header?.LogoComponent ? workspacesStore.onCreateLogoRequested : undefined}
+                onCreateSystemButtonsRequested={components?.header?.SystemButtonsComponent ? workspacesStore.onCreateSystemButtonsRequested : undefined}
+
                 onCreateWorkspaceContentsRequested={components?.WorkspaceContents ? workspacesStore.onCreateWorkspaceContentsRequested : undefined}
-                onCreateBeforeGroupTabsRequested={components?.containers?.group?.header?.BeforeTabs ? workspacesStore.onCreateBeforeGroupTabsComponentRequested : undefined}
-                onCreateAfterGroupTabsRequested={components?.containers?.group?.header?.AfterTabs ? workspacesStore.onCreateAfterGroupTabsComponentRequested : undefined}
+
+                onCreateBeforeGroupTabsRequested={groupHeader?.BeforeTabsComponent ? workspacesStore.onCreateBeforeGroupTabsRequested : undefined}
+                onCreateWorkspaceWindowTabRequested={groupHeader?.WorkspaceWindowTabComponent ? workspacesStore.onCreateWorkspaceWindowTabRequested : undefined}
+                onCreateAfterGroupTabsRequested={groupHeader?.AfterTabsComponent ? workspacesStore.onCreateAfterGroupTabsRequested : undefined}
+                onCreateGroupHeaderButtonsRequested={groupHeader?.ButtonsComponent ? workspacesStore.onCreateGroupHeaderButtonsRequested : undefined}
+
                 onCreateSaveWorkspacePopupRequested={onCreateSaveWorkspaceRequested}
                 onCreateAddApplicationPopupRequested={onCreateAddApplicationRequested}
                 onCreateAddWorkspacePopupRequested={onCreateAddWorkspacePopupRequested}
-                onCreateWorkspaceLoadingAnimationRequested = {components?.loadingAnimation?.Workspace ? workspacesStore.onCreateWorkspaceLoadingAnimationRequested: undefined}
+
+                onCreateWorkspaceLoadingAnimationRequested={components?.loadingAnimation?.Workspace ? workspacesStore.onCreateWorkspaceLoadingAnimationRequested : undefined}
+
                 onUpdateWorkspaceTabsRequested={workspaceTab ? workspacesStore.onUpdateWorkspaceTabRequested : undefined}
+
+                onUpdateWorkspaceWindowTabsRequested={groupHeader?.WorkspaceWindowTabComponent ? workspacesStore.onUpdateWorkspaceWindowTabRequested : undefined}
+                onUpdateGroupHeaderButtonsRequested={groupHeader?.ButtonsComponent ? workspacesStore.onUpdateGroupHeaderButtonsRequested : undefined}
+
                 onRemoveWorkspaceTabsRequested={workspaceTab ? workspacesStore.onRemoveWorkspaceTabRequested : undefined}
+
                 onRemoveWorkspaceContentsRequested={components?.WorkspaceContents ? workspacesStore.onRemoveWorkspaceContentsRequested : undefined}
-                onRemoveBeforeGroupTabsRequested={components?.containers?.group?.header?.BeforeTabs ? workspacesStore.onRemoveBeforeTabsComponentRequested : undefined}
-                onRemoveAfterGroupTabsRequested={components?.containers?.group?.header?.AfterTabs ? workspacesStore.onRemoveAfterTabsComponentRequested : undefined}
-                onRemoveWorkspaceLoadingAnimationRequested = {components?.loadingAnimation?.Workspace ? workspacesStore.onRemoveWorkspaceLoadingAnimation : undefined}
+
+                onRemoveBeforeGroupTabsRequested={groupHeader?.BeforeTabsComponent ? workspacesStore.onRemoveBeforeTabsRequested : undefined}
+                onRemoveWorkspaceWindowTabRequested={groupHeader?.WorkspaceWindowTabComponent ? workspacesStore.onRemoveWorkspaceWindowTabRequested : undefined}
+                onRemoveAfterGroupTabsRequested={groupHeader?.AfterTabsComponent ? workspacesStore.onRemoveAfterTabsRequested : undefined}
+                onRemoveGroupHeaderButtonsRequested={groupHeader?.ButtonsComponent ? workspacesStore.onRemoveGroupHeaderButtonsRequested : undefined}
+
+                onRemoveWorkspaceLoadingAnimationRequested={components?.loadingAnimation?.Workspace ? workspacesStore.onRemoveWorkspaceLoadingAnimation : undefined}
+
                 onHideSystemPopupsRequested={workspacesStore.onHideSystemPopups}
                 externalPopupApplications={externalPopupApplications}
                 shouldInit={shouldInit}

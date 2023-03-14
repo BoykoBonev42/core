@@ -1,5 +1,5 @@
 import React from "react";
-import { WorkspaceLoadingAnimationProps } from "../types/internal";
+import { WorkspaceLoadingAnimationProps } from "../types/shared";
 
 const WorkspaceLoadingAnimation: React.FC<WorkspaceLoadingAnimationProps> = ({ workspaceId, ...props }) => {
     return (

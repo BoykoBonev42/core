@@ -1,4 +1,18 @@
-import { AddApplicationPopupProps, AddWorkspacePopupProps, CreateElementRequestOptions, CreateGroupRequestOptions, CreateWorkspaceContentsRequestOptions, CreateWorkspaceLoadingAnimationOptions, CreateWorkspaceTabRequestOptions, ElementCreationWrapperState, RemoveRequestOptions, RemoveWorkspaceContentsRequestOptions, SaveWorkspacePopupProps } from "./types/internal";
+import {
+    CreateAddApplicationPopupRequestOptions,
+    CreateAddWorkspacePopupRequestOptions,
+    CreateElementRequestOptions,
+    CreateGroupHeaderButtonsRequestOptions,
+    CreateGroupRequestOptions,
+    CreateSaveWorkspacePopupRequestOptions,
+    CreateWorkspaceContentsRequestOptions,
+    CreateWorkspaceLoadingAnimationRequestOptions,
+    CreateWorkspaceTabRequestOptions,
+    CreateWorkspaceWindowTabRequestOptions,
+    ElementCreationWrapperState,
+    RemoveRequestOptions,
+    RemoveWorkspaceContentsRequestOptions
+} from "./types/internal";
 
 class WorkspacesStore {
     private listeners = new Set<() => void>();
@@ -9,7 +23,9 @@ class WorkspacesStore {
         systemButtons: undefined,
         workspaceContents: [],
         beforeGroupTabsZones: {},
+        workspaceWindowTabsZones: {},
         afterGroupTabsZones: {},
+        groupHeaderButtonsZones: {},
         saveWorkspacePopup: undefined,
         addApplicationPopup: undefined,
         addWorkspacePopup: undefined,
@@ -40,22 +56,7 @@ class WorkspacesStore {
     }
 
     public onCreateWorkspaceTabRequested = (options: CreateWorkspaceTabRequestOptions) => {
-        if (options === this.state.workspaceTabs[options.workspaceId] || !options) {
-            return;
-        }
-        this.setState(s => {
-            const workspaceTabsObj = Object.keys(s.workspaceTabs).reduce((acc, workspaceId) => {
-                acc[workspaceId] = s.workspaceTabs[workspaceId];
-                return acc;
-            }, {});
-
-            const previousObj = workspaceTabsObj[options.workspaceId] ?? {};
-            workspaceTabsObj[options.workspaceId] = { ...previousObj, ...options };
-            return {
-                ...s,
-                workspaceTabs: workspaceTabsObj
-            }
-        });
+        this.onCreateOrUpdateRequested(options.workspaceId, options, "workspaceTabs");
     }
 
     public onCreateAddWorkspaceRequested = (options: CreateElementRequestOptions) => {
@@ -98,43 +99,23 @@ class WorkspacesStore {
         });
     }
 
-    public onCreateBeforeGroupTabsComponentRequested = (options: CreateGroupRequestOptions) => {
-        if (options === this.state.beforeGroupTabsZones[options.groupId] || !options) {
-            return;
-        }
-        this.setState(s => {
-            const beforeTabsZonesObj = Object.keys(s.beforeGroupTabsZones).reduce((acc, groupId) => {
-                acc[groupId] = s.beforeGroupTabsZones[groupId];
-                return acc;
-            }, {});
-
-            beforeTabsZonesObj[options.groupId] = options;
-            return {
-                ...s,
-                beforeGroupTabsZones: beforeTabsZonesObj
-            }
-        });
+    public onCreateBeforeGroupTabsRequested = (options: CreateGroupRequestOptions) => {
+        this.onCreateOrUpdateRequested(options.groupId, options, "beforeGroupTabsZones");
     }
 
-    public onCreateAfterGroupTabsComponentRequested = (options: CreateGroupRequestOptions) => {
-        if (options === this.state.afterGroupTabsZones[options.groupId] || !options) {
-            return;
-        }
-        this.setState(s => {
-            const afterTabsZonesObj = Object.keys(s.afterGroupTabsZones).reduce((acc, groupId) => {
-                acc[groupId] = s.afterGroupTabsZones[groupId];
-                return acc;
-            }, {});
-
-            afterTabsZonesObj[options.groupId] = options;
-            return {
-                ...s,
-                afterGroupTabsZones: afterTabsZonesObj
-            }
-        });
+    public onCreateWorkspaceWindowTabRequested = (options: CreateWorkspaceWindowTabRequestOptions) => {
+        this.onCreateOrUpdateRequested(options.placementId, options, "workspaceWindowTabsZones");
     }
 
-    public onCreateSaveWorkspaceRequested = (options: CreateElementRequestOptions & SaveWorkspacePopupProps) => {
+    public onCreateAfterGroupTabsRequested = (options: CreateGroupRequestOptions) => {
+        this.onCreateOrUpdateRequested(options.groupId, options, "afterGroupTabsZones");
+    }
+
+    public onCreateGroupHeaderButtonsRequested = (options: CreateGroupRequestOptions) => {
+        this.onCreateOrUpdateRequested(options.groupId, options, "groupHeaderButtonsZones");
+    }
+
+    public onCreateSaveWorkspaceRequested = (options: CreateSaveWorkspacePopupRequestOptions) => {
         if (options === this.state.saveWorkspacePopup) {
             return;
         }
@@ -146,7 +127,7 @@ class WorkspacesStore {
         }, options.callback);
     }
 
-    public onCreateAddApplicationRequested = (options: CreateElementRequestOptions & AddApplicationPopupProps) => {
+    public onCreateAddApplicationRequested = (options: CreateAddApplicationPopupRequestOptions) => {
         if (options === this.state.addApplicationPopup) {
             return;
         }
@@ -158,7 +139,7 @@ class WorkspacesStore {
         }, options.callback);
     }
 
-    public onCreateAddWorkspacePopupRequested = (options: CreateElementRequestOptions & AddWorkspacePopupProps) => {
+    public onCreateAddWorkspacePopupRequested = (options: CreateAddWorkspacePopupRequestOptions) => {
         if (options === this.state.addWorkspacePopup) {
             return;
         }
@@ -170,61 +151,24 @@ class WorkspacesStore {
         }, options.callback);
     }
 
-    public onCreateWorkspaceLoadingAnimationRequested = (options: CreateWorkspaceLoadingAnimationOptions) => {
-        if (options === this.state.workspaceLoadingAnimations[options.workspaceId] || !options) {
-            return;
-        }
-        this.setState(s => {
-            const workspaceLoadingAnimationsObj = Object.keys(s.workspaceLoadingAnimations).reduce((acc, workspaceId) => {
-                acc[workspaceId] = s.workspaceLoadingAnimations[workspaceId];
-                return acc;
-            }, {});
-
-            const previousObj = workspaceLoadingAnimationsObj[options.workspaceId] ?? {};
-            workspaceLoadingAnimationsObj[options.workspaceId] = { ...previousObj, ...options };
-            return {
-                ...s,
-                workspaceLoadingAnimations: workspaceLoadingAnimationsObj
-            }
-        });
+    public onCreateWorkspaceLoadingAnimationRequested = (options: CreateWorkspaceLoadingAnimationRequestOptions) => {
+        this.onCreateOrUpdateRequested(options.workspaceId, options, "workspaceLoadingAnimations");
     }
 
     public onUpdateWorkspaceTabRequested = (options: CreateWorkspaceTabRequestOptions) => {
-        if (!this.state.workspaceTabs[options.workspaceId] || !options) {
-            return;
-        }
-        this.setState(s => {
-            const workspaceTabsObj = Object.keys(s.workspaceTabs).reduce((acc, workspaceId) => {
-                acc[workspaceId] = s.workspaceTabs[workspaceId];
-                return acc;
-            }, {});
+        this.onCreateOrUpdateRequested(options.workspaceId, options, "workspaceTabs");
+    }
 
-            const previousObj = workspaceTabsObj[options.workspaceId] ?? {};
-            workspaceTabsObj[options.workspaceId] = { ...previousObj, ...options };
-            return {
-                ...s,
-                workspaceTabs: workspaceTabsObj
-            }
-        });
+    public onUpdateWorkspaceWindowTabRequested = (options: CreateWorkspaceWindowTabRequestOptions) => {
+        this.onCreateOrUpdateRequested(options.placementId, options, "workspaceWindowTabsZones");
+    }
+
+    public onUpdateGroupHeaderButtonsRequested = (options: CreateGroupHeaderButtonsRequestOptions) => {
+        this.onCreateOrUpdateRequested(options.groupId, options, "groupHeaderButtonsZones");
     }
 
     public onRemoveWorkspaceTabRequested = (options: RemoveRequestOptions) => {
-        if (!this.state.workspaceTabs[options.elementId]) {
-            return;
-        }
-        this.setState(s => {
-            const newTabElementsObj = Object.keys(s.workspaceTabs).reduce((acc, workspaceId) => {
-                if (workspaceId != options.elementId) {
-                    acc[workspaceId] = s.workspaceTabs[workspaceId];
-                }
-                return acc;
-            }, {});
-
-            return {
-                ...s,
-                workspaceTabs: newTabElementsObj
-            }
-        });
+        this.onRemoveRequested(options.elementId, "workspaceTabs");
     }
 
     public onRemoveWorkspaceContentsRequested = (options: RemoveWorkspaceContentsRequestOptions) => {
@@ -238,70 +182,39 @@ class WorkspacesStore {
         });
     }
 
-    public onRemoveBeforeTabsComponentRequested = (options: RemoveRequestOptions) => {
-        if (!this.state.beforeGroupTabsZones[options.elementId]) {
-            return;
-        }
-        this.setState(s => {
-            const newTabElementsObj = Object.keys(s.beforeGroupTabsZones).reduce((acc, elementId) => {
-                if (elementId != options.elementId) {
-                    acc[elementId] = s.beforeGroupTabsZones[elementId];
-                }
-                return acc;
-            }, {});
-
-            return {
-                ...s,
-                beforeGroupTabsZones: newTabElementsObj
-            }
-        });
+    public onRemoveBeforeTabsRequested = (options: RemoveRequestOptions) => {
+        this.onRemoveRequested(options.elementId, "beforeGroupTabsZones");
     }
 
-    public onRemoveAfterTabsComponentRequested = (options: RemoveRequestOptions) => {
-        if (!this.state.afterGroupTabsZones[options.elementId]) {
-            return;
-        }
-        this.setState(s => {
-            const newTabElementsObj = Object.keys(s.afterGroupTabsZones).reduce((acc, elementId) => {
-                if (elementId != options.elementId) {
-                    acc[elementId] = s.afterGroupTabsZones[elementId];
-                }
-                return acc;
-            }, {});
+    public onRemoveWorkspaceWindowTabRequested = (options: RemoveRequestOptions) => {
+        this.onRemoveRequested(options.elementId, "workspaceWindowTabsZones");
+    }
 
-            return {
-                ...s,
-                afterGroupTabsZones: newTabElementsObj
-            }
-        });
+    public onRemoveAfterTabsRequested = (options: RemoveRequestOptions) => {
+        this.onRemoveRequested(options.elementId, "afterGroupTabsZones");
+    }
+
+    public onRemoveGroupHeaderButtonsRequested = (options: RemoveRequestOptions) => {
+        this.onRemoveRequested(options.elementId, "groupHeaderButtonsZones");
     }
 
     public onHideSystemPopups = (cb: () => void) => {
-        this.setState((s) => ({
-            ...s,
-            addApplicationPopup: undefined,
-            saveWorkspacePopup: undefined,
-            addWorkspacePopup: undefined
-        }), cb);
+        this.setState((s) => {
+            if (!s.addApplicationPopup && !s.saveWorkspacePopup && !s.addWorkspacePopup) {
+                // preventing unnecessary rerendering
+                return s;
+            }
+            return {
+                ...s,
+                addApplicationPopup: undefined,
+                saveWorkspacePopup: undefined,
+                addWorkspacePopup: undefined
+            };
+        }, cb);
     }
 
     public onRemoveWorkspaceLoadingAnimation = (options: RemoveRequestOptions) => {
-        if (!this.state.workspaceLoadingAnimations[options.elementId]) {
-            return;
-        }
-        this.setState(s => {
-            const newLoadingAnimationElementsObj = Object.keys(s.workspaceLoadingAnimations).reduce((acc, workspaceId) => {
-                if (workspaceId != options.elementId) {
-                    acc[workspaceId] = s.workspaceLoadingAnimations[workspaceId];
-                }
-                return acc;
-            }, {});
-
-            return {
-                ...s,
-                workspaceLoadingAnimations: newLoadingAnimationElementsObj
-            }
-        });
+        this.onRemoveRequested(options.elementId, "workspaceLoadingAnimations");
     }
 
     private setState(cb: (ns: ElementCreationWrapperState) => ElementCreationWrapperState, afterUpdateCallback?: () => void) {
@@ -311,6 +224,44 @@ class WorkspacesStore {
         }
 
         this.listeners.forEach((l) => l());
+    }
+
+    private onCreateOrUpdateRequested = <T extends keyof ElementCreationWrapperState>(id: string, options: ElementCreationWrapperState[T], key: T) => {
+        if (options === this.state[key]![id] || !options) {
+            return;
+        }
+        this.setState(s => {
+            const partOfStateCopy = Object.keys(s[key]!).reduce((acc, elementId) => {
+                acc[elementId] = s[key]![elementId];
+                return acc;
+            }, {});
+
+            const previousObj = partOfStateCopy[id] ?? {};
+            partOfStateCopy[id] = { ...previousObj, ...options };
+            return {
+                ...s,
+                [key]: partOfStateCopy
+            }
+        });
+    }
+
+    private onRemoveRequested = (id: string, key: keyof ElementCreationWrapperState) => {
+        if (!this.state[key]![id]) {
+            return;
+        }
+        this.setState(s => {
+            const newTabElementsObj = Object.keys(s[key]!).reduce((acc, elementId) => {
+                if (elementId != id) {
+                    acc[elementId] = s[key]![elementId];
+                }
+                return acc;
+            }, {});
+
+            return {
+                ...s,
+                [key]: newTabElementsObj
+            }
+        });
     }
 }
 

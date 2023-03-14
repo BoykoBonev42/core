@@ -1,10 +1,8 @@
 import React, {
-    useContext,
     useEffect,
-    useLayoutEffect,
     useState
 } from "react";
-import { SaveWorkspacePopupProps } from "../../../types/internal";
+import { SaveWorkspacePopupProps } from "../../../types/defaultComponents";
 import Feedback from "../Feedback";
 import SaveContextCheckbox from "./SaveContextCheckbox";
 import SaveWorkspaceButton from "./SaveWorkspaceButton";

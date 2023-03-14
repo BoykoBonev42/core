@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import GoldenLayout from "@glue42/golden-layout";
+import componentStateMonitor from "../componentStateMonitor";
 import { LayoutEventEmitter } from "../layout/eventEmitter";
 import { Bounds, LockWindowConfig, WindowSummary } from "../types/internal";
 import { getElementBounds, idAsString } from "../utils";
@@ -68,6 +69,7 @@ export class WorkspaceWindowWrapper {
 
     public set showCloseButton(value: boolean | undefined) {
         this.setLockPropertyInConfig("showCloseButton", value);
+        componentStateMonitor.decoratedFactory.updateWorkspaceWindowTabs({ placementId: idAsString(this.windowContentItem.config.id), close: { visible: value } });
     }
 
     public get isMaximized(): boolean {

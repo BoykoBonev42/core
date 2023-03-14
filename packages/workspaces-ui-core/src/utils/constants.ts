@@ -11,3 +11,12 @@ export const DefaultMaxSize = 32767;
 export const DefaultMinSize = 20;
 
 export const PlaceholderAppName = "no-app-window";
+
+export const AddWindowButtonLabel = "add app";
+export const GroupHeaderMaximizeLabel = "maximize";
+export const GroupHeaderRestoreLabel = "restore";
+export const EjectButtonLabel = "eject";
+export const WorkspaceCloseButtonLabel = "close";
+export const WorkspaceWindowCloseButtonLabel = "close";
+export const FrameMaximizeButtonLabel = "maximize";
+export const FrameRestoreButtonLabel = "restore";

@@ -148,6 +148,9 @@ export class WorkspacesUIExecutor {
     }
 
     public showWindowCloseButton(windowId: string | GoldenLayout.Component): void {
+        if (componentStateMonitor.decoratedFactory.createWorkspaceWindowTabs) {
+            return;
+        }
         let windowContentItem;
         if (typeof windowId === "string") {
             windowContentItem = store.getWindowContentItem(windowId);
@@ -159,6 +162,9 @@ export class WorkspacesUIExecutor {
     }
 
     public hideWindowCloseButton(windowId: string | GoldenLayout.Component): void {
+        if (componentStateMonitor.decoratedFactory.createWorkspaceWindowTabs) {
+            return;
+        }
         let windowContentItem;
         if (typeof windowId === "string") {
             windowContentItem = store.getWindowContentItem(windowId);
@@ -170,6 +176,9 @@ export class WorkspacesUIExecutor {
     }
 
     public showMaximizeButton(itemId: string | GoldenLayout.Stack): void {
+        if (componentStateMonitor.decoratedFactory.createGroupHeaderButtons) {
+            return;
+        }
         let containerContentItem;
         if (typeof itemId === "string") {
             containerContentItem = store.getContainer(itemId);
@@ -187,6 +196,9 @@ export class WorkspacesUIExecutor {
     }
 
     public hideMaximizeButton(itemId: string | GoldenLayout.Stack): void {
+        if (componentStateMonitor.decoratedFactory.createGroupHeaderButtons) {
+            return;
+        }
         let containerContentItem;
         if (typeof itemId === "string") {
             containerContentItem = store.getContainer(itemId);
@@ -204,6 +216,9 @@ export class WorkspacesUIExecutor {
     }
 
     public showEjectButton(itemId: string | GoldenLayout.Stack): void {
+        if (componentStateMonitor.decoratedFactory.createGroupHeaderButtons) {
+            return;
+        }
         let containerContentItem;
         if (typeof itemId === "string") {
             containerContentItem = store.getContainer(itemId);
@@ -220,6 +235,9 @@ export class WorkspacesUIExecutor {
     }
 
     public hideEjectButton(itemId: string | GoldenLayout.Stack): void {
+        if (componentStateMonitor.decoratedFactory.createGroupHeaderButtons) {
+            return;
+        }
         let containerContentItem;
         if (typeof itemId === "string") {
             containerContentItem = store.getContainer(itemId);
@@ -236,6 +254,9 @@ export class WorkspacesUIExecutor {
     }
 
     public showAddWindowButton(itemId: string | GoldenLayout.Stack): void {
+        if (componentStateMonitor.decoratedFactory.createGroupHeaderButtons) {
+            return;
+        }
         let containerContentItem;
         if (typeof itemId === "string") {
             containerContentItem = store.getContainer(itemId);
@@ -256,6 +277,9 @@ export class WorkspacesUIExecutor {
     }
 
     public hideAddWindowButton(itemId: string | GoldenLayout.Stack): void {
+        if (componentStateMonitor.decoratedFactory.createGroupHeaderButtons) {
+            return;
+        }
         let containerContentItem;
         if (typeof itemId === "string") {
             containerContentItem = store.getContainer(itemId);

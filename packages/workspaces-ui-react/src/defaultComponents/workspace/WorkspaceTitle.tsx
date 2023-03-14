@@ -1,5 +1,5 @@
 import React from "react";
-import { WorkspaceTitleProps } from "../../types/internal";
+import { WorkspaceTitleProps } from "../../types/defaultComponents";
 
 const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({ title }) => {
     return (

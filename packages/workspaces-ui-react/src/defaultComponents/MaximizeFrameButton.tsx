@@ -1,5 +1,5 @@
 import React from "react";
-import { MaximizeFrameButtonProps } from "../types/internal";
+import { MaximizeFrameButtonProps } from "../types/defaultComponents";
 import HeaderButton from "./HeaderButton";
 
 const MaximizeFrameButton: React.FC<MaximizeFrameButtonProps> = ({ title, children, ...props }) => {

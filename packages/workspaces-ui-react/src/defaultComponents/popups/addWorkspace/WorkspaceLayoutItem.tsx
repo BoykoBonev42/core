@@ -1,5 +1,5 @@
 import React from "react";
-import { WorkspaceLayoutItemProps } from "../../../types/internal";
+import { WorkspaceLayoutItemProps } from "../../../types/defaultComponents";
 
 const WorkspaceLayoutItem: React.FC<WorkspaceLayoutItemProps> = ({ name, onClick, onCloseClick }) => {
     return (

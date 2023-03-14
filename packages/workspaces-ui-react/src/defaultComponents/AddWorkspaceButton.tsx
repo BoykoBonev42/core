@@ -1,5 +1,5 @@
 import React from "react";
-import { AddWorkspaceButtonProps } from "../types/internal";
+import { AddWorkspaceButtonProps } from "../types/defaultComponents";
 import HeaderButton from "./HeaderButton";
 
 const AddWorkspaceButton: React.FC<AddWorkspaceButtonProps> = ({ title, children, ...props }) => {

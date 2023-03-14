@@ -1,9 +1,9 @@
 import React from "react";
-import {  EjectButtonProps } from "../../types/internal";
+import { EjectButtonProps } from "../../types/defaultComponents";
 import HeaderButton from "../HeaderButton";
 
-const EjectButton: React.FC<EjectButtonProps> = ({ title, children, ...props }) => {
-    return <HeaderButton {...props} title={title || "eject"} className={"lm_popout"}>{children}</HeaderButton>
+const EjectButton: React.FC<EjectButtonProps> = ({ children, visible, eject, ...props }) => {
+    return <HeaderButton className={"lm_popout"} onClick={() => eject()} {...props} > {children}</HeaderButton >
 };
 
 export default EjectButton;
