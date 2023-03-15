@@ -77,6 +77,7 @@ export const queryResultDecoder: Decoder<Glue42Search.QueryResult> = object({
     displayName: optional(nonEmptyStringDecoder),
     description: optional(nonEmptyStringDecoder),
     iconURL: optional(nonEmptyStringDecoder),
+    metadata: optional(anyJson()),
     action: optional(mainActionDecoder),
     secondaryActions: optional(array(secondaryActionDecoder))
 });

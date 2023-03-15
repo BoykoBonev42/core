@@ -2,6 +2,7 @@ import { Glue42Search } from "../search";
 import { MainController } from "./controllers/main";
 import { nonNegativeNumberDecoder, providerRegistrationConfig, queryConfigDecoder } from "./shared/decoders";
 import { nanoid } from "nanoid";
+import { version } from "../package.json";
 
 export class SearchFacade {
 
@@ -12,6 +13,7 @@ export class SearchFacade {
     public exposeApi(): Glue42Search.API {
 
         const api: Glue42Search.API = {
+            version,
             setDebounceMS: this.setDebounceMS.bind(this),
             getDebounceMS: this.getDebounceMS.bind(this),
             listProviders: this.providers.bind(this),

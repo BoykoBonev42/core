@@ -452,6 +452,64 @@ describe("registerProvider ", () => {
             await wrapper.promise;
         });
 
+        it("the client should receive one correct result when sendResult was called once with meta data", async () => {
+            const wrapper = gtf.wrapPromise();
+
+            const ready = gtf.waitFor(2, () => wrapper.resolve());
+
+            const provider = await glue.search.registerProvider({ name: "test" });
+
+            const sentResult = {
+                type: { name: "testres", displayName: "TestRes" },
+                id: "asdadas",
+                displayName: "some display name",
+                description: "awesome description",
+                iconURL: "http://ico.com",
+                metadata: {
+                    test: 4242
+                },
+                action: {
+                    method: "some-method-name",
+                    target: "all",
+                    params: { testing: 42 }
+                },
+                secondaryActions: [
+                    {
+                        name: "second",
+                        method: "some-method-name2",
+                        target: "all",
+                        params: { testing: 422 }
+                    }
+                ],
+            };
+
+            providersToClear.push(provider);
+
+            gtf.withUnsub(provider.onQuery((query) => {
+                query.sendResult(sentResult);
+                query.done();
+            }));
+
+            const query = await glue.search.query({ search: "asd" });
+
+            await gtf.withUnsub(query.onResults((batch) => {
+                try {
+                    expect(batch.results.length).to.eql(1);
+                    const result = batch.results[0];
+
+                    expect(result).to.eql(sentResult);
+
+                    ready();
+                } catch (error) {
+                    wrapper.reject(error);
+                }
+            }));
+
+            await gtf.withUnsub(query.onCompleted(() => ready()));
+
+            await wrapper.promise;
+        });
+
         it("the client should receive two correct results in one batch when sendResult was called twice with no wait", async () => {
             const wrapper = gtf.wrapPromise();
 

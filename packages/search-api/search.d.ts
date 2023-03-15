@@ -7,6 +7,7 @@ export namespace Glue42Search {
     export interface Config {}
 
     export interface API {
+        version: string;
         setDebounceMS(milliseconds: number): void;
         getDebounceMS(): number;
         listProviders(): Promise<ProviderData[]>;
@@ -76,6 +77,7 @@ export namespace Glue42Search {
         displayName?: string;
         description?: string;
         iconURL?: string;
+        metadata?: any;
         action?: MainAction;
         secondaryActions?: SecondaryAction[];
     }
