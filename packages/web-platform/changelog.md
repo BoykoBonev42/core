@@ -1,3 +1,5 @@
+1.22.2
+chore: bump due to dependencies update
 1.22.1
 chore: bump due to dependencies update - introducing Search API
 1.22.0
