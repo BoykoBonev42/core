@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { SaveButtonProps } from "../../types/internal";
+import { SaveButtonProps } from "../../types/defaultComponents";
 
 const WorkspaceSaveButton: React.FC<SaveButtonProps> = ({ showSavePopup }) => {
     const saveButton = useRef<HTMLDivElement>(null);

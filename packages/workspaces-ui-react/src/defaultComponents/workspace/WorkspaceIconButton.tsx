@@ -1,5 +1,5 @@
 import React from "react";
-import { WorkspaceIconButtonProps } from "../../types/internal";
+import { WorkspaceIconButtonProps } from "../../types/defaultComponents";
 
 const WorkspaceIconButton: React.FC<WorkspaceIconButtonProps> = ({ icon, ...rest }) => {
     const style = {

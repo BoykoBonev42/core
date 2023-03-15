@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { SaveContextCheckboxProps } from "../../../types/internal";
+import { SaveContextCheckboxProps } from "../../../types/defaultComponents";
 
 const SaveContextCheckbox: React.FC<SaveContextCheckboxProps> = ({ changeChecked, refreshHeight }) => {
     const inputRef = React.createRef<HTMLInputElement>();

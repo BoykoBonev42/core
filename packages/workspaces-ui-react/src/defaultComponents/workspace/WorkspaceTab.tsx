@@ -1,5 +1,5 @@
 import React from "react";
-import { WorkspaceTabComponentProps } from "../../types/internal";
+import { WorkspaceTabComponentProps } from "../../types/api";
 import SaveButton from "./WorkspaceSaveButton";
 import WorkspaceIconButton from "./WorkspaceIconButton";
 import WorkspaceTabCloseButton from "./WorkspaceTabCloseButton";
