@@ -251,10 +251,10 @@ Go to the `GlueService` of the **Stocks** app and define a new method `openStock
 ```javascript
 public async openStockDetails(stock: Stock): Promise<void> {
     const windowName = `${stock.BPOD} Details`;
-    const URL = "http://localhost:4242/stocks/details/";
+    const URL = "http://localhost:4100/details/";
 
     // Check whether the clicked stock has already been opened in a new window.
-    const stockWindowExists = this.glueStore.getGlue().windows.list().find(w => w.name === name);
+    const stockWindowExists = this.glueStore.getGlue().windows.list().find(w => w.name === windowName);
 
     if (!stockWindowExists) {
         // Open a new window by providing a name and URL. The name must be unique.
@@ -285,14 +285,14 @@ Next, define settings for the new window position (`top` and `left`) and size (`
 ```javascript
 public async openStockDetails(stock: Stock): Promise<void> {
     const windowName = `${stock.BPOD} Details`;
-    const URL = "http://localhost:4242/stocks/details/";
+    const URL = "http://localhost:4100/details/";
     // Optional object with settings for the new window.
-    const windowSettings: Glue42Web.Windows.CreateOptions = {
+    const windowSettings: Glue42Web.Windows.Settings = {
         width: 600,
         height: 600
     };
 
-    const stockWindowExists = this.glueStore.getGlue().windows.list().find(w => w.name === name);
+    const stockWindowExists = this.glueStore.getGlue().windows.list().find(w => w.name === windowName);
 
     if (!stockWindowExists) {
         await this.glueStore.getGlue().windows.open(windowName, URL, windowSettings);
@@ -307,16 +307,16 @@ Every Glue42 Window has its own `context` property (its value can be any object)
 ```javascript
 public async openStockDetails(stock: Stock): Promise<void> {
     const windowName = `${stock.BPOD} Details`;
-    const URL = "http://localhost:4242/stocks/details/";
+    const URL = "http://localhost:4100/details/";
     // Optional object with settings for the new window.
-    const windowSettings: Glue42Web.Windows.CreateOptions = {
+    const windowSettings: Glue42Web.Windows.Settings = {
         width: 600,
         height: 600,
         // Pass the selected stock as a context for the new window.
         context: stock
     };
 
-    const stockWindowExists = this.glueStore.getGlue().windows.list().find(w => w.name === name);
+    const stockWindowExists = this.glueStore.getGlue().windows.list().find(w => w.name === windowName);
 
     if (!stockWindowExists) {
         await this.glueStore.getGlue().windows.open(windowName, URL, windowSettings);
