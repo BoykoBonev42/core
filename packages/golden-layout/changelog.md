@@ -1,3 +1,5 @@
+2.5.1
+fix: prevent mutating the default config
 2.5.0
 feat: added support for more customization zones
 2.4.0

@@ -568,10 +568,10 @@ lm.utils.copy(lm.items.AbstractContentItem.prototype, {
 	 * @returns {configuration item node} extended config
 	 */
 	_extendItemNode: function (config) {
-
-		for (var key in lm.config.itemDefaultConfig) {
+		const defaultConfig = lm.config.itemDefaultConfig();
+		for (var key in defaultConfig) {
 			if (config[key] === undefined) {
-				config[key] = lm.config.itemDefaultConfig[key];
+				config[key] = defaultConfig[key];
 			}
 		}
 
