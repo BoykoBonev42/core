@@ -1,3 +1,5 @@
+1.15.1
+chore: bump due to dependencies update
 1.15.0
 feat: added group header customization zones
 1.14.1
