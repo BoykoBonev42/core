@@ -26,8 +26,10 @@ export class PortsBridge {
     private isPreferredActivated = false;
     private activePreferredTransportConfig: Glue42Core.Connection.TransportSwitchSettings | undefined;
     private _communicationId!: string;
-    private readonly startUpPromise: Promise<void>;
+    private startUpPromise!: Promise<void>;
     private startupResolve!: (value: void | PromiseLike<void>) => void;
+    private _genericMessageHandler!: (event: MessageEvent<any>) => Promise<void> | undefined;
+    private _unloaderHandler!: () => void;
 
     constructor(
         private readonly gateway: Gateway,
@@ -35,16 +37,29 @@ export class PortsBridge {
         private readonly ioc: IoC
     ) {
         this.transactionsController = this.ioc.transactionsController;
-        this.startUpPromise = new Promise<void>((resolve) => {
-            this.startupResolve = resolve;
-        });
     }
 
     private get logger(): Glue42Core.Logger.API | undefined {
         return logger.get("ports.bridge.controller");
     }
 
+    public shutdown(): void {
+        window.removeEventListener("message", this._genericMessageHandler);
+
+        window.removeEventListener("unload", this._unloaderHandler);
+
+        this.registry.clear();
+
+        this.allPorts = {};
+        this.allClients = [];
+        this.isPreferredActivated = false;
+        this.unLoadStarted = false;
+    }
+
     public async configure(config: InternalPlatformConfig): Promise<void> {
+        this.startUpPromise = new Promise<void>((resolve) => {
+            this.startupResolve = resolve;
+        });
 
         const systemSettings = this.sessionStorage.getSystemSettings();
 
@@ -56,9 +71,7 @@ export class PortsBridge {
 
         await this.gateway.start(config?.gateway);
 
-        this.setUpGenericMessageHandler();
-
-        this.setUpUnload();
+        this.setupListeners();
     }
 
     public start(): void {
@@ -191,49 +204,46 @@ export class PortsBridge {
         }
     }
 
-    private setUpUnload(): void {
-        window.addEventListener("unload", () => {
+    private unloader(): void {
+        this.unLoadStarted = true;
 
-            this.unLoadStarted = true;
-
-            for (const id in this.allPorts) {
-                this.allPorts[id].postMessage({ type: "platformUnload" });
-            }
-        });
+        for (const id in this.allPorts) {
+            this.allPorts[id].postMessage({ type: "platformUnload" });
+        }
     }
 
-    private setUpGenericMessageHandler(): void {
-        window.addEventListener("message", (event) => {
-            const data = event.data?.glue42core;
+    private genericMessageHandler(event: MessageEvent<any>): Promise<void> | undefined {
+        const data = event.data?.glue42core;
 
-            if (!data || this.unLoadStarted) {
-                return;
-            }
+        if (!data || this.unLoadStarted) {
+            return;
+        }
 
-            // todo: domain whitelisting
+        // todo: domain whitelisting
 
-            if (data.type === Glue42CoreMessageTypes.clientUnload.name) {
+        if (data.type === Glue42CoreMessageTypes.clientUnload.name) {
 
-                const client = {
-                    windowId: data.data.ownWindowId,
-                    win: event.source
-                };
+            const client = {
+                windowId: data.data.ownWindowId,
+                win: event.source
+            };
 
-                return this.registry.execute("client-unloaded", client);
-            }
+            this.registry.execute("client-unloaded", client);
 
-            if (data.type === Glue42CoreMessageTypes.connectionRequest.name) {
-                return this.startUpPromise.then(() => this.handleRemoteConnectionRequest(event.source as Window, event.origin, data.clientId, data.clientType, data.bridgeInstanceId));
-            }
+            return;
+        }
 
-            if (data.type === Glue42CoreMessageTypes.platformPing.name) {
-                return this.startUpPromise.then(() => this.handlePlatformPing(event.source as Window, event.origin));
-            }
+        if (data.type === Glue42CoreMessageTypes.connectionRequest.name) {
+            return this.startUpPromise.then(() => this.handleRemoteConnectionRequest(event.source as Window, event.origin, data.clientId, data.clientType, data.bridgeInstanceId));
+        }
 
-            if (data.type === Glue42CoreMessageTypes.parentPing.name) {
-                return this.startUpPromise.then(() => this.handleParentPing(event.source as Window, event.origin));
-            }
-        });
+        if (data.type === Glue42CoreMessageTypes.platformPing.name) {
+            return this.startUpPromise.then(() => this.handlePlatformPing(event.source as Window, event.origin));
+        }
+
+        if (data.type === Glue42CoreMessageTypes.parentPing.name) {
+            return this.startUpPromise.then(() => this.handleParentPing(event.source as Window, event.origin));
+        }
     }
 
     private async handleRemoteConnectionRequest(source: Window, origin: string, clientId: string, clientType: "child" | "grandChild", bridgeInstanceId: string): Promise<void> {
@@ -413,5 +423,15 @@ export class PortsBridge {
         client.postMessage({ type, args, transactionId: transaction.id });
 
         return transaction.lock;
+    }
+
+    private setupListeners(): void {
+        this._genericMessageHandler = this.genericMessageHandler.bind(this);
+
+        window.addEventListener("message", this._genericMessageHandler);
+
+        this._unloaderHandler = this.unloader.bind(this);
+
+        window.addEventListener("unload", this._unloaderHandler);
     }
 }

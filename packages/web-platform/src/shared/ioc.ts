@@ -30,7 +30,7 @@ import { TransactionsController } from "../controllers/transactions";
 import { InterceptionController } from "../controllers/interception";
 import { PluginsController } from "../controllers/plugins";
 import { DomainsController } from "../controllers/domains";
-import { IntentsResolverHelper } from '../libs/intents/resolverHelper';
+import { IntentsResolverHelper } from "../libs/intents/resolverHelper";
 
 export class IoC {
     private _gatewayInstance!: Gateway;
@@ -110,7 +110,8 @@ export class IoC {
                 this.serviceWorkerController,
                 this.preferredConnectionController,
                 this.interceptionController,
-                this.pluginsController
+                this.pluginsController,
+                this.sessionController
             );
         }
 

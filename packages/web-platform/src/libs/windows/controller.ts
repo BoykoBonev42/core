@@ -36,7 +36,7 @@ export class WindowsController implements LibController {
         unregisterWorkspaceWindow: { name: "unregisterWorkspaceWindow", dataDecoder: simpleWindowDecoder, execute: this.handleWorkspaceClientRemoval.bind(this) },
         operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) },
         focusChange: { name: "focusChange", dataDecoder: focusEventDataDecoder, execute: this.handleFocusEvent.bind(this) }
-    }
+    };
 
     constructor(
         private readonly glueController: GlueController,
@@ -63,6 +63,10 @@ export class WindowsController implements LibController {
 
     public get getBoundsOperation() {
         return this.operations.getBounds;
+    }
+
+    public handlePlatformShutdown(): void {
+        this.started = false;
     }
 
     public async start(config: InternalPlatformConfig): Promise<void> {

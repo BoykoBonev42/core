@@ -18,10 +18,15 @@ export class ExtController implements LibController {
     private channelsController!: ChannelsController;
     private config!: ExtensionConfig;
     private channels: Glue42Web.Channels.ChannelContext[] = [];
+    private unsubFuncs: (() => void)[] = [];
 
     private readonly contentCommands: { [key in string]: { name: string; handle: (message: any) => Promise<void> } } = {
         widgetVisualizationPermission: { name: "widgetVisualizationPermission", handle: this.handleWidgetVisualizationPermission.bind(this) },
         changeChannel: { name: "changeChannel", handle: this.handleChangeChannel.bind(this) }
+    };
+
+    public handlePlatformShutdown(): void {
+        this.unsubFuncs.forEach((unsub) => unsub());
     }
 
     public async start(coreGlue: Glue42Core.GlueCore, ioc: IoC): Promise<void> {
@@ -48,10 +53,13 @@ export class ExtController implements LibController {
 
         this.channels = await this.channelsController.list();
 
-        this.eventsDispatcher.onContentMessage(this.handleContentMessage.bind(this));
-        this.channelsController.onChanged((channel) => {
+        const unsubDispatcher = this.eventsDispatcher.onContentMessage(this.handleContentMessage.bind(this));
+        const unsubChannels = this.channelsController.onChanged((channel) => {
             this.eventsDispatcher.sendContentMessage({ command: "channelChange", newChannel: channel });
         });
+
+        this.unsubFuncs.push(unsubDispatcher);
+        this.unsubFuncs.push(unsubChannels);
     }
 
     public async handleBridgeMessage(_: any): Promise<void> {

@@ -8,6 +8,7 @@ import { IntentsOperationTypes, WrappedIntentFilter, WrappedIntents } from "../i
 import { IntentResolverResponse, LibDomains, OperationCheckConfig, OperationCheckResult, SimpleItemIdRequest, WorkspaceFrameBoundsResult, IntentRequestWithResolverInfo, IntentRequestResolverConfig } from "./types";
 import { AllNotificationsData, NotificationEventPayload, NotificationsOperationTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotification, SimpleNotificationData, SimpleNotificationSelect } from "../notifications/protocol";
 import { AllThemesResponse, SelectThemeConfig, SimpleThemeResponse } from "../themes/protocol";
+import { SystemOperationTypes } from "../system/protocol";
 
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
 export const nonNegativeNumberDecoder: Decoder<number> = number().where((num) => num >= 0, "Expected a non-negative number");
@@ -77,6 +78,12 @@ export const notificationsOperationTypesDecoder: Decoder<NotificationsOperationT
     constant("click"),
     constant("clear"),
     constant("clearAll")
+);
+
+export const systemOperationTypesDecoder: Decoder<SystemOperationTypes> = oneOf<"getEnvironment" | "getBase" | "platformShutdown">(
+    constant("getEnvironment"),
+    constant("getBase"),
+    constant("platformShutdown")
 );
 
 export const windowRelativeDirectionDecoder: Decoder<Glue42Web.Windows.RelativeDirection> = oneOf<"top" | "left" | "right" | "bottom">(

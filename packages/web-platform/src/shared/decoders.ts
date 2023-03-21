@@ -281,6 +281,7 @@ export const channelDefinitionDecoder: Decoder<Glue42WebPlatform.Channels.Channe
 export const pluginDefinitionDecoder: Decoder<Glue42WebPlatform.Plugins.PluginDefinition> = object({
     name: nonEmptyStringDecoder,
     start: anyJson(),
+    onPlatformShutDown: optional(anyJson()),
     version: optional(nonEmptyStringDecoder),
     config: optional(anyJson()),
     critical: optional(boolean())

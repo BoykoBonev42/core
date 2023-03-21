@@ -10,9 +10,9 @@ import {
     UnsubscribeFunction,
 } from "callback-registry";
 import { latestFDC3Type } from "../shared/constants";
-import { IoC } from '../shared/ioc';
-import { GlueBridge } from '../communication/bridge';
-import { operations } from './protocol';
+import { IoC } from "../shared/ioc";
+import { GlueBridge } from "../communication/bridge";
+import { operations } from "./protocol";
 
 export class ChannelsController implements LibController {
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
@@ -25,6 +25,10 @@ export class ChannelsController implements LibController {
     private readonly GlueWebChannelsPrefix = "___channel___";
     private readonly SubsKey = "subs";
     private readonly ChangedKey = "changed";
+
+    public handlePlatformShutdown(): void {
+        this.registry.clear();
+    }
 
     public async start(coreGlue: Glue42Core.GlueCore, ioc: IoC): Promise<void> {
         this.logger = coreGlue.logger.subLogger("channels.controller.web");
@@ -286,5 +290,5 @@ export class ChannelsController implements LibController {
                 }
             })
             .catch(err => this.logger.trace(err));
-    }
+    };
 }

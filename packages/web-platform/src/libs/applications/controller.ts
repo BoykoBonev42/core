@@ -40,7 +40,7 @@ export class ApplicationsController implements LibController {
         clear: { name: "clear", execute: this.handleClear.bind(this) },
         registerRemoteApps: { name: "registerRemoteApps", dataDecoder: appsRemoteRegistrationDecoder, execute: this.handleRegisterRemoteApps.bind(this) },
         operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
-    }
+    };
 
     constructor(
         private readonly glueController: GlueController,
@@ -48,10 +48,16 @@ export class ApplicationsController implements LibController {
         private readonly stateController: WindowsStateController,
         private readonly appDirectory: AppDirectory,
         private readonly ioc: IoC
-    ) { }
+    ) {}
 
     private get logger(): Glue42Core.Logger.API | undefined {
         return logger.get("applications.controller");
+    }
+
+    public handlePlatformShutdown(): void {
+        this.locks = {};
+        this.started = false;
+        this.appDirectory.stop();
     }
 
     public async start(config: InternalPlatformConfig): Promise<void> {
@@ -208,7 +214,7 @@ export class ApplicationsController implements LibController {
 
         if (instanceData) {
             delete this.locks[instanceData.id];
-            this.glueController.clearContext(selfWindowId, "instance").catch(() => { });
+            this.glueController.clearContext(selfWindowId, "instance").catch(() => {});
             this.sessionStorage.removeInstance(instanceData.id);
             this.emitStreamData("instanceStopped", instanceData);
         }

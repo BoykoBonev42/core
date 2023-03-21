@@ -6,14 +6,14 @@ import { BridgeOperation, InternalPlatformConfig, LibController, OperationCheckC
 import { GlueController } from "../../controllers/glue";
 import logger from "../../shared/logger";
 import { ChannelContextPrefix } from "../../common/constants";
-import { channelContextDecoder, channelOperationDecoder, ChannelOperationTypes } from './decoders';
+import { channelContextDecoder, channelOperationDecoder, ChannelOperationTypes } from "./decoders";
 import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
 
 export class ChannelsController implements LibController {
     private operations: { [key in ChannelOperationTypes]: BridgeOperation } = {
         addChannel: { name: "addChannel", execute: this.addChannel.bind(this), dataDecoder: channelContextDecoder },
         operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
-    }
+    };
 
     constructor(
         private readonly glueController: GlueController

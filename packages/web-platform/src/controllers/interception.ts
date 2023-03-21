@@ -1,9 +1,13 @@
 import { Glue42WebPlatform } from "../../platform";
-import { InterceptorEntry, InterceptorInquiry, InterceptorInquiryResult, LibDomains } from "../common/types";
+import { InterceptorEntry, InterceptorInquiry, InterceptorInquiryResult } from "../common/types";
 import { interceptorRegistrationRequestDecoder, nonEmptyStringDecoder } from "../shared/decoders";
 
 export class InterceptionController {
-    private readonly interceptions: Array<InterceptorEntry> = [];
+    private interceptions: Array<InterceptorEntry> = [];
+    
+    public shutdown(): void {
+        this.interceptions = [];
+    }
 
     public async registerInterceptor(request: Glue42WebPlatform.Plugins.InterceptorRegistrationRequest, registrantName: string): Promise<void> {
 
@@ -17,7 +21,7 @@ export class InterceptionController {
                 collisions.push({ domain: interception.domain, operation: interception.operation });
             }
 
-            return collisions
+            return collisions;
         }, []);
 
         if (collisions.length) {
@@ -43,7 +47,7 @@ export class InterceptionController {
             return {
                 name: foundEntry.registrantName,
                 intercept: foundEntry.callInterceptor
-            }
+            };
         }
     }
 }

@@ -247,6 +247,7 @@ export namespace Glue42WebPlatform {
             version?: string;
             config?: any;
             critical?: boolean;
+            onPlatformShutDown?: () => void;
         }
 
         export interface Config {
@@ -363,6 +364,7 @@ export namespace Glue42WebPlatform {
         export interface Config {
             start: (ioc: any, platformConfig: any) => Promise<void>;
             version: string;
+            stop?: () => Promise<void>;
         }
     }
 
@@ -393,6 +395,9 @@ export namespace Glue42WebPlatform {
     export interface API {
         version: string;
         corePlus?: { version: string };
+        system: {
+            shutdown(): Promise<void>
+        }
     }
 
     export interface SystemInfo {

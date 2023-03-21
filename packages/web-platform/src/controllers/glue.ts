@@ -27,7 +27,7 @@ export class GlueController {
     constructor(
         private readonly portsBridge: PortsBridge,
         private readonly sessionStorage: SessionStorageController
-    ) { }
+    ) {}
 
     public get platformVersion(): string {
         return version;
@@ -142,6 +142,29 @@ export class GlueController {
         }
 
         return result;
+    }
+
+    public async sendShutDownSignals(): Promise<void> {
+
+        const allNonMeWindows = this.clientGlue.windows.list().filter((webWindow) => webWindow.id !== this.platformWindowId);
+
+        await Promise.all(allNonMeWindows.map((webWindow) => webWindow.close()));
+
+        const messageData = {
+            domain: "system",
+            operation: "platformShutdown"
+        };
+
+        const baseErrorMessage = `Internal Platform-> ${messageData.domain} Domain Communication Error. Attempted sending shutdown signal to all clients.`;
+
+        await this.transmitMessage(GlueClientControlName, messageData, baseErrorMessage, "all", { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
+
+    }
+
+    public shutdown(): void {
+        this.systemGlue.connection.logout();
+        this.contextsTrackingGlue?.connection.logout();
+        this.clientGlue.connection.logout();
     }
 
     public async callWindow<OutBound extends object, InBound>(domain: LibDomains, operationDefinition: BridgeOperation, data: OutBound, target: Glue42Core.Interop.Instance): Promise<InBound> {

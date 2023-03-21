@@ -16,13 +16,15 @@ export class Platform {
     constructor(
         private readonly controller: PlatformController,
         private readonly session: SessionStorageController,
-        config?: Glue42WebPlatform.Config,
-    ) {
-        this.checkSingleton();
-        this.processConfig(config);
-    }
+        private readonly config?: Glue42WebPlatform.Config,
+    ) { }
 
     public async ready(): Promise<void> {
+        this.session.start();
+
+        this.checkSingleton();
+        this.processConfig(this.config);
+
         await this.controller.start(this.platformConfig);
     }
 

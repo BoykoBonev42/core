@@ -10,6 +10,7 @@ export class GlueBridge {
     private readonly platformMethodTimeoutMs = 10000;
     private controllers!: { [key in LibDomains]: LibController };
     private sub!: Glue42Core.AGM.Subscription;
+    private running?: boolean;
 
     constructor(private readonly coreGlue: Glue42Core.GlueCore, private readonly communicationId: string) {}
 
@@ -21,7 +22,14 @@ export class GlueBridge {
         return this.coreGlue.interop.instance.instance;
     }
 
+    public async stop(): Promise<void> {
+        this.running = false;
+        this.sub.close();
+        await this.coreGlue.interop.unregister(GlueClientControlName);
+    }
+
     public async start(controllers: { [key in LibDomains]: LibController }): Promise<void> {
+        this.running = true;
         this.controllers = controllers;
 
         await Promise.all([
@@ -185,6 +193,11 @@ export class GlueBridge {
         const systemId = this.communicationId;
 
         try {
+
+            if (!this.running) {
+                throw new Error("Cannot send a control message, because the platform shut down");
+            }
+
             invocationResult = await this.coreGlue.interop.invoke(GlueWebPlatformControlName, messageData, systemId ? { instance: this.communicationId } : undefined, options);
 
             if (!invocationResult) {

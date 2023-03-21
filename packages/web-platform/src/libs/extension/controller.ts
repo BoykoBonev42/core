@@ -15,7 +15,7 @@ export class ExtensionController implements LibController {
     private operations: { [key in ExtensionOperationTypes]: BridgeOperation } = {
         clientHello: { name: "appHello", resultDecoder: clientHelloResponseDecoder, dataDecoder: clientHelloDecoder, execute: this.handleClientHello.bind(this) },
         operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
-    }
+    };
 
     constructor(
         private readonly session: SessionStorageController
@@ -23,6 +23,10 @@ export class ExtensionController implements LibController {
 
     private get logger(): Glue42Core.Logger.API | undefined {
         return logger.get("extension.controller");
+    }
+
+    public handlePlatformShutdown(): void {
+        this.started = false;
     }
 
     public async start(): Promise<void> {

@@ -1,15 +1,15 @@
-import { Glue42Core } from '@glue42/core';
-import { Glue42Web } from '@glue42/web';
-import shortid from 'shortid';
-import logger from '../../shared/logger';
-import { GlueController } from '../../controllers/glue';
-import { intentResolverResponseDecoder } from './decoders';
-import { INTENTS_RESOLVER_HEIGHT, INTENTS_RESOLVER_INTEROP_PREFIX, INTENTS_RESOLVER_WIDTH } from './constants';
-import { IntentResolverResponse, IntentsResolverResponse, IntentsResolverResponsePromise, IntentsResolverStartContext, RaiseIntentRequestWithResolverConfig } from './types';
-import { WorkspacesController } from '../workspaces/controller';
-import { PromisePlus } from '../../shared/promisePlus';
-import { WindowsController } from '../windows/controller';
-import { SimpleWindowCommand, WindowBoundsResult } from '../windows/types';
+import { Glue42Core } from "@glue42/core";
+import { Glue42Web } from "@glue42/web";
+import shortid from "shortid";
+import logger from "../../shared/logger";
+import { GlueController } from "../../controllers/glue";
+import { intentResolverResponseDecoder } from "./decoders";
+import { INTENTS_RESOLVER_HEIGHT, INTENTS_RESOLVER_INTEROP_PREFIX, INTENTS_RESOLVER_WIDTH } from "./constants";
+import { IntentResolverResponse, IntentsResolverResponse, IntentsResolverResponsePromise, IntentsResolverStartContext, RaiseIntentRequestWithResolverConfig } from "./types";
+import { WorkspacesController } from "../workspaces/controller";
+import { PromisePlus } from "../../shared/promisePlus";
+import { WindowsController } from "../windows/controller";
+import { SimpleWindowCommand, WindowBoundsResult } from "../windows/types";
 
 export class IntentsResolverHelper {
     private intentsResolverResponsePromises: { [instanceId: string]: IntentsResolverResponsePromise } = {};
@@ -105,7 +105,7 @@ export class IntentsResolverHelper {
         const bounds = await this.getTargetBounds(windowId, commandId);
 
         if (!bounds) {
-            throw new Error(`[${commandId}] Cannot find window with id: ${windowId} - the client which sent the 'raise' command is no longer opened`);
+            throw new Error(`[${commandId}] Cannot find window with id: ${windowId} - the client which sent the "raise" command is no longer opened`);
         }
 
         return {
@@ -143,7 +143,7 @@ export class IntentsResolverHelper {
         const serverInstance = this.getServerInstanceByWindowId(windowId);
 
         if (!win && !serverInstance) {
-            throw new Error(`Client with id '${windowId}' does not exist`);
+            throw new Error(`Client with id "${windowId}" does not exist`);
         }
 
         if (!win && serverInstance) {
@@ -151,7 +151,7 @@ export class IntentsResolverHelper {
         }
 
         if (!win) {
-            throw new Error(`Client with id '${windowId}' does not exist`);
+            throw new Error(`Client with id "${windowId}" does not exist`);
         }
 
         try {

@@ -18,6 +18,14 @@ export class PreferredConnectionController {
         this.logger = this.coreGlue.logger.subLogger("web.preferred.connection.controller");
     }
 
+    public stop(): void {
+        if (!this.webPlatformMessagesUnsubscribe) {
+            return;
+        }
+
+        this.webPlatformMessagesUnsubscribe();
+    }
+
     public async start(coreConfig: ParsedConfig): Promise<void> {
         if (coreConfig.isPlatformInternal) {
             this.logger.trace("This is an internal client to the platform, skipping all client preferred communication logic.");

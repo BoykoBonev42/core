@@ -16,12 +16,19 @@ export class FramesController {
     private locks: { [key: string]: FrameLock } = {};
     private defaultFrameHelloTimeoutMs = 15000;
     private myFrameId: string | undefined;
+    private _handleUnload?: () => void;
 
     constructor(
         private readonly sessionController: SessionStorageController,
         private readonly glueController: GlueController,
         private readonly ioc: IoC
     ) { }
+
+    public stop(): void {
+        if (this._handleUnload) {
+            window.removeEventListener("unload", this._handleUnload);
+        }
+    }
 
     public async start(config: Glue42WebPlatform.Workspaces.Config, defaultBounds: Glue42Web.Windows.Bounds, frameSummaryOperation: BridgeOperation): Promise<void> {
         this.config = config;
@@ -30,11 +37,10 @@ export class FramesController {
 
         if (config.isFrame) {
             this.myFrameId = this.sessionController.getAllFrames().find((frame) => frame.isPlatform)?.windowId;
-            window.addEventListener("unload", () => {
-                if (this.myFrameId) {
-                    this.clearAllWorkspaceWindows(this.myFrameId);
-                }
-            });
+
+            this._handleUnload = this.handleUnload.bind(this);
+
+            window.addEventListener("unload", this._handleUnload);
         }
     }
 
@@ -222,6 +228,12 @@ export class FramesController {
                 resolve(entry as { workspacesUrl: { current: string; default: string } });
             });
         });
+    }
+
+    private handleUnload(): void {
+        if (this.myFrameId) {
+            this.clearAllWorkspaceWindows(this.myFrameId);
+        }
     }
 
 }

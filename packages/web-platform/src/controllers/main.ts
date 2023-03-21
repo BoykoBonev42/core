@@ -14,6 +14,7 @@ import { Glue42Core } from "@glue42/core";
 import { InterceptionController } from "./interception";
 import { PluginsController } from "./plugins";
 import { DomainsController } from "./domains";
+import { SessionStorageController } from "./session";
 
 export class PlatformController {
 
@@ -27,7 +28,8 @@ export class PlatformController {
         private readonly serviceWorkerController: ServiceWorkerController,
         private readonly preferredConnectionController: PreferredConnectionController,
         private readonly interceptionController: InterceptionController,
-        private readonly pluginsController: PluginsController
+        private readonly pluginsController: PluginsController,
+        private readonly sessionController: SessionStorageController
     ) {}
 
     private get logger(): Glue42Web.Logger.API | undefined {
@@ -164,6 +166,9 @@ export class PlatformController {
             },
             onSystemReconnect: (callback: () => void): UnsubscribeFunction => {
                 return this.onSystemReconnect(callback);
+            },
+            system: {
+                shutdown: this.shutDown.bind(this)
             }
         } as Glue42WebPlatform.API;
     }
@@ -174,5 +179,29 @@ export class PlatformController {
 
     private onSystemReconnect(callback: () => void): UnsubscribeFunction {
         return this.preferredConnectionController.onReconnect(callback);
+    }
+
+    private async shutDown(): Promise<void> {
+        await this.glueController.sendShutDownSignals();
+
+        this.stateController.cancel();
+
+        this.portsBridge.shutdown();
+
+        this.domainsController.shutdown();
+
+        this.serviceWorkerController.shutdown();
+
+        await this.pluginsController.shutdown();
+
+        this.interceptionController.shutdown();
+
+        this.preferredConnectionController.shutdown();
+
+        this.glueController.shutdown();
+
+        this.sessionController.shutdown();
+
+        (window as any).glue42core = { webStarted: false };
     }
 }

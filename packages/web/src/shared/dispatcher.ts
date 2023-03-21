@@ -11,6 +11,7 @@ export class EventsDispatcher {
     private glue!: Glue42Web.API;
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
     private readonly glue42EventName = "Glue42";
+    private _handleMessage!: (event: Event) => void;
 
     constructor(private readonly config: ParsedConfig) { }
 
@@ -18,6 +19,10 @@ export class EventsDispatcher {
         notifyStarted: { name: "notifyStarted", handle: this.handleNotifyStarted.bind(this) },
         contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) },
         requestGlue: { name: "requestGlue", handle: this.handleRequestGlue.bind(this) }
+    };
+
+    public stop(): void {
+        window.removeEventListener(this.glue42EventName, this._handleMessage);
     }
 
     public start(glue: Glue42Web.API): void {
@@ -37,26 +42,30 @@ export class EventsDispatcher {
     }
 
     private wireCustomEventListener(): void {
-        window.addEventListener(this.glue42EventName, (event) => {
-            const data = (event as CustomEvent).detail;
 
-            const namespace = data?.glue42 ?? data?.glue42core;
-            
-            if (!namespace) {
-                return;
-            }
+        this._handleMessage = this.handleMessage.bind(this);
 
-            const glue42Event: string = namespace.event;
+        window.addEventListener(this.glue42EventName, this._handleMessage);
+    }
 
-            const foundHandler = this.events[glue42Event];
+    private handleMessage(event: Event): void {
+        const data = (event as CustomEvent).detail;
 
-            if (!foundHandler) {
-                return;
-            }
+        const namespace = data?.glue42 ?? data?.glue42core;
+        
+        if (!namespace) {
+            return;
+        }
 
-            foundHandler.handle(namespace.message);
+        const glue42Event: string = namespace.event;
 
-        });
+        const foundHandler = this.events[glue42Event];
+
+        if (!foundHandler) {
+            return;
+        }
+
+        foundHandler.handle(namespace.message);
     }
 
     private announceStarted(): void {

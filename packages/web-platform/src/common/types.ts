@@ -99,6 +99,7 @@ export interface LibController {
     start(config: InternalPlatformConfig): Promise<void>;
     handleControl(args: Glue42WebPlatform.ControlMessage): Promise<any>;
     handleClientUnloaded?(windowId: string, win: Window): void;
+    handlePlatformShutdown?(): void;
 }
 
 export interface SessionNonGlueData {

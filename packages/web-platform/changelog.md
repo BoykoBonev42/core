@@ -1,3 +1,5 @@
+1.23.0
+feat: implemented Platform shutdown
 1.22.2
 chore: bump due to dependencies update
 1.22.1

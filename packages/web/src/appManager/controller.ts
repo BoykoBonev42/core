@@ -28,6 +28,12 @@ export class AppManagerController implements LibController {
     private platformRegistration!: Promise<void>;
     private logger!: Glue42Web.Logger.API;
 
+    public handlePlatformShutdown(): void {
+        this.applications = [];
+        this.instances = [];
+        delete this.me;
+    }
+
     public async start(coreGlue: Glue42Core.GlueCore, ioc: IoC): Promise<void> {
         this.logger = coreGlue.logger.subLogger("appManger.controller.web");
 

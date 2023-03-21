@@ -19,6 +19,8 @@ export class Gateway {
         this.create = (window as any).gateway_web.core.create;
     }
 
+    // TODO: implement GW stop when the stop is not logging errors
+
     public async start(config?: Glue42WebPlatform.Gateway.Config): Promise<void> {
         if (config?.logging) {
             this.configureLogging({

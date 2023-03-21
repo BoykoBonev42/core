@@ -10,7 +10,7 @@ import { SessionStorageController } from "../../controllers/session";
 import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
 import logger from "../../shared/logger";
 import { PromiseWrap } from "../../shared/promisePlus";
-import { objEqual } from "../../shared/utils";
+import { extractErrorMsg, objEqual } from "../../shared/utils";
 import { WindowsController } from "../windows/controller";
 import { allLayoutsFullConfigDecoder, allLayoutsSummariesResultDecoder, getAllLayoutsConfigDecoder, layoutsImportConfigDecoder, layoutsOperationTypesDecoder, optionalSimpleLayoutResult, permissionStateResultDecoder, restoreLayoutConfigDecoder, saveLayoutConfigDecoder, saveRequestClientResponseDecoder, rawWindowsLayoutDataRequestConfigDecoder, windowsRawLayoutDataDecoder, simpleAvailabilityResultDecoder, simpleLayoutConfigDecoder } from "./decoders";
 import { IdbLayoutsStore } from "./idbStore";
@@ -35,7 +35,7 @@ export class LayoutsController implements LibController {
         requestGlobalPermission: { name: "requestGlobalPermission", resultDecoder: simpleAvailabilityResultDecoder, execute: this.handleRequestGlobalPermission.bind(this) },
         checkGlobalActivated: { name: "checkGlobalActivated", resultDecoder: simpleAvailabilityResultDecoder, execute: this.handleCheckGlobalActivated.bind(this) },
         operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
-    }
+    };
 
     constructor(
         private readonly glueController: GlueController,
@@ -46,6 +46,15 @@ export class LayoutsController implements LibController {
 
     private get logger(): Glue42Core.Logger.API | undefined {
         return logger.get("layouts.controller");
+    }
+
+    public handlePlatformShutdown(): void {
+        this.started = false;
+
+        if (this.config.mode === "idb") {
+            this.idbStore.clear("Global").catch((error) => this.logger?.warn(extractErrorMsg(error)));
+            this.idbStore.clear("Workspace").catch((error) => this.logger?.warn(extractErrorMsg(error)));
+        }
     }
 
     public async start(config: InternalPlatformConfig): Promise<void> {
@@ -116,7 +125,7 @@ export class LayoutsController implements LibController {
     public async handleRestore(config: RestoreLayoutConfig, commandId: string): Promise<void> {
         this.logger?.trace(`[${commandId}] handling restore layout with config: ${JSON.stringify(config)}`);
 
-        throw new Error(`This Web Platform cannot restore Global Layouts.`);
+        throw new Error("This Web Platform cannot restore Global Layouts.");
     }
 
     public async handleGetAll(config: GetAllLayoutsConfig, commandId: string): Promise<AllLayoutsSummariesResult> {
@@ -254,7 +263,7 @@ export class LayoutsController implements LibController {
             initialContext: windowData.initialContext,
             windowId: windowData.windowId,
             layoutComponentId: windowData.layoutComponentId
-        }
+        };
     }
 
     private async buildRawNonGlueWindowData(windowData: SessionWindowData, requestConfig: RawWindowsLayoutDataRequestConfig, commandId: string): Promise<WindowRawLayoutData> {
@@ -273,7 +282,7 @@ export class LayoutsController implements LibController {
             initialContext: windowData.initialContext,
             windowId: windowData.windowId,
             layoutComponentId: windowData.layoutComponentId
-        }
+        };
     }
 
     public async handleGetGlobalPermissionState(args: unknown, commandId: string): Promise<PermissionStateResult> {
@@ -396,7 +405,7 @@ export class LayoutsController implements LibController {
                 await this.waitEventFlush();
             }
 
-            this.emitStreamData(event.operation, event.layout)
+            this.emitStreamData(event.operation, event.layout);
         }
     }
 
@@ -453,7 +462,7 @@ export class LayoutsController implements LibController {
             .filter((eligibleWindow) =>
                 allNonGlueWindows.some((nonGlueWebWindow) => nonGlueWebWindow.windowId === eligibleWindow.windowId) &&
                 allWorkspaceClients.every((workspaceClient) => workspaceClient.windowId !== eligibleWindow.windowId)
-            )
+            );
     }
 
     private getEligibleGlueWorkspaceWindows(requestedInstances?: string[], ignoreInstances?: string[]): SessionWindowData[] {

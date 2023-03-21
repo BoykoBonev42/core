@@ -20,6 +20,10 @@ export class AppDirectory {
         private readonly remoteWatcher: RemoteWatcher
     ) { }
 
+    public stop(): void {
+        this.remoteWatcher.stop();
+    }
+
     public async start(setup: AppDirSetup): Promise<void> {
         this.logger?.trace("Starting the application directory");
         this.appsStateChange = setup.appsStateChange;

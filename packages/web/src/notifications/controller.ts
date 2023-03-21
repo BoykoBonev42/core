@@ -22,6 +22,11 @@ export class NotificationsController implements LibController {
     private coreGlue!: Glue42Core.GlueCore;
     private buildNotificationFunc!: (config: Glue42Web.Notifications.RaiseOptions, id: string) => Glue42Web.Notifications.Notification;
 
+    public handlePlatformShutdown(): void {
+        this.notifications = {};
+        this.registry.clear();
+    }
+
     public async start(coreGlue: Glue42Core.GlueCore, ioc: IoC): Promise<void> {
         this.logger = coreGlue.logger.subLogger("notifications.controller.web");
 

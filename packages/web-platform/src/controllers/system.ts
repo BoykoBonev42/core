@@ -20,7 +20,7 @@ export class SystemController implements LibController {
         getEnvironment: { name: "getEnvironment", resultDecoder: anyDecoder, execute: this.handleGetEnvironment.bind(this) },
         getBase: { name: "getBase", resultDecoder: anyDecoder, execute: this.handleGetBase.bind(this) },
         operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
-    }
+    };
 
     constructor(private readonly session: SessionStorageController) { }
 

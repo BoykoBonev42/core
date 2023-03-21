@@ -19,6 +19,7 @@ export class PreferredConnectionController {
     private shouldForceTransfer!: boolean;
     private preferredUrl!: string;
     private preferredAuth!: Glue42Core.Auth;
+    private stopped = false;
 
     constructor(
         private readonly glueController: GlueController,
@@ -30,9 +31,17 @@ export class PreferredConnectionController {
         return logger.get("preferred.connection.controller");
     }
 
+    public shutdown(): void {
+        this.stopped = true;
+
+        this.registry.clear();
+    }
+
     public async start(config: Glue42WebPlatform.Connection.PreferredConnectionSettings): Promise<void> {
 
         this.logger?.trace(`Starting the preferred connection with config: ${JSON.stringify(config)}`);
+
+        this.stopped = false;
 
         this.preferredUrl = config.url;
 
@@ -56,6 +65,10 @@ export class PreferredConnectionController {
     }
 
     private async connectPreferred(): Promise<void> {
+        if (this.stopped) {
+            return;
+        }
+
         const check = await this.checkPreFlight();
 
         if (!check.ready) {
@@ -70,6 +83,10 @@ export class PreferredConnectionController {
         };
 
         this.logger?.trace("Switching the system glue.");
+
+        if (this.stopped) {
+            return;
+        }
 
         const switched = (await this.glueController.switchTransport(transportSwitchConfig, "system")).success;
 

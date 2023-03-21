@@ -11,7 +11,7 @@ import logger from "../../shared/logger";
 import { GlueWebIntentsPrefix } from "../../common/constants";
 import { AppDirectory } from "../applications/appStore/directory";
 import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
-import { IntentsResolverHelper } from './resolverHelper';
+import { IntentsResolverHelper } from "./resolverHelper";
 
 export class IntentsController implements LibController {
     private operations: { [key in IntentsOperationTypes]: BridgeOperation } = {
@@ -32,6 +32,10 @@ export class IntentsController implements LibController {
 
     private get logger(): Glue42Core.Logger.API | undefined {
         return logger.get("intents.controller");
+    }
+
+    public handlePlatformShutdown(): void {
+        this.started = false;
     }
 
     public async start(): Promise<void> {
@@ -410,7 +414,7 @@ export class IntentsController implements LibController {
         this.logger?.trace(`[${commandId}] Receive raise command with config: ${JSON.stringify(request)}`);
 
         if (!callerId) {
-            throw new Error(`Cannot raise intent - callerId is not defined`);
+            throw new Error("Cannot raise intent - callerId is not defined");
         }
 
         const { resolverConfig, intentRequest } = request;
@@ -477,7 +481,7 @@ export class IntentsController implements LibController {
 
     private checkIfResolverShouldBeOpened(intent: Glue42Web.Intents.Intent, intentRequest: Glue42Web.Intents.IntentRequest, resolverConfig: IntentRequestResolverConfig): ShouldResolverOpen {
         if (!resolverConfig.enabled) {
-            return { open: false, reason: `Intent Resolver is disabled. Raising intent to first found handler` };
+            return { open: false, reason: "Intent Resolver is disabled. Raising intent to first found handler" };
         }
 
         const intentsResolverApp = this.glueController.clientGlue.appManager.application(resolverConfig.appName);
@@ -489,7 +493,7 @@ export class IntentsController implements LibController {
         const hasMoreThanOneHandler = this.checkIfIntentHasMoreThanOneHandler(intent, intentRequest);
 
         if (!hasMoreThanOneHandler) {
-            return { open: false, reason: `Raised intent has only one handler` };
+            return { open: false, reason: "Raised intent has only one handler" };
         }
 
         return { open: true };

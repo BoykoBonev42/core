@@ -16,7 +16,7 @@ import { ExtensionController } from "../libs/extension/controller";
 export class DomainsController {
     private readonly defaultDomainNames = ["system", "windows", "appManager", "layouts", "workspaces", "intents", "channels", "notifications", "extension"];
 
-    private readonly domains: { [key in string]: PlatformDomain } = {
+    private domains: { [key in string]: PlatformDomain } = {
         system: { name: "system", libController: this.systemController },
         windows: { name: "windows", libController: this.windowsController },
         appManager: { name: "appManager", libController: this.applicationsController },
@@ -38,10 +38,26 @@ export class DomainsController {
         private readonly channelsController: ChannelsController,
         private readonly notificationsController: NotificationsController,
         private readonly extensionController: ExtensionController
-    ) { }
+    ) {}
 
     private get logger(): Glue42Web.Logger.API | undefined {
         return logger.get("domains.controller");
+    }
+
+    public shutdown(): void {
+        Object.values(this.domains).forEach((domain) => domain.libController.handlePlatformShutdown ? domain.libController.handlePlatformShutdown() : null);
+
+        this.domains = {
+            system: { name: "system", libController: this.systemController },
+            windows: { name: "windows", libController: this.windowsController },
+            appManager: { name: "appManager", libController: this.applicationsController },
+            layouts: { name: "layouts", libController: this.layoutsController },
+            workspaces: { name: "workspaces", libController: this.workspacesController },
+            intents: { name: "intents", libController: this.intentsController },
+            channels: { name: "channels", libController: this.channelsController },
+            notifications: { name: "notifications", libController: this.notificationsController },
+            extension: { name: "extension", libController: this.extensionController }
+        };
     }
 
     public validateDomain(domainName: string): void {

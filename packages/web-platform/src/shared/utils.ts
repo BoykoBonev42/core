@@ -60,3 +60,12 @@ export const waitFor = (invocations: number, callback: () => any): () => void =>
 };
 
 export const wait = (ms: number): Promise<void> => new Promise<void>((resolve) => setTimeout(() => resolve(), ms));
+
+export const extractErrorMsg = (error: any): string => {
+    const stringError = typeof error === "string" ?
+        error :
+        error.message ? JSON.stringify(error.message) :
+            JSON.stringify(error);
+
+    return stringError;
+};

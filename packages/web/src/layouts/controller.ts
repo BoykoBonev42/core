@@ -21,6 +21,10 @@ export class LayoutsController implements LibController {
     private windowsController!: WindowsController;
     private saveRequestSubscription?: (info?: Glue42Web.Layouts.SaveRequestContext) => Glue42Web.Layouts.SaveRequestResponse;
 
+    public handlePlatformShutdown(): void {
+        this.registry.clear();
+    }
+
     public async start(coreGlue: Glue42Core.GlueCore, ioc: IoC): Promise<void> {
         this.logger = coreGlue.logger.subLogger("layouts.controller.web");
 
@@ -246,7 +250,7 @@ export class LayoutsController implements LibController {
 
         return () => {
             delete this.saveRequestSubscription;
-        }
+        };
     }
 
     private async handleOnAdded(layout: Glue42Web.Layouts.Layout): Promise<void> {

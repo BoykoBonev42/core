@@ -16,6 +16,7 @@ export interface ParsedConfig extends Glue42Web.Config {
 export interface LibController {
     start(coreGlue: Glue42Core.GlueCore, ioc: IoC): Promise<void>;
     handleBridgeMessage(args: any): Promise<void>;
+    handlePlatformShutdown?(): void;
 }
 
 export type LibDomains = "system" | "windows" | "appManager" | "layouts" | "notifications" | "intents" | "channels" | "extension" | "themes";

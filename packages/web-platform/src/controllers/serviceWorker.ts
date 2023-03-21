@@ -15,6 +15,7 @@ export class ServiceWorkerController {
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
     private _serviceWorkerRegistration: ServiceWorkerRegistration | undefined;
     private channel!: BroadcastChannel;
+    private _broadcastMessageHandler!: (event: MessageEvent<any>) => void;
 
     constructor(private readonly ioc: IoC) { }
 
@@ -28,6 +29,12 @@ export class ServiceWorkerController {
         }
 
         return this._serviceWorkerRegistration;
+    }
+
+    public shutdown(): void {
+        this.channel?.removeEventListener("message", this._broadcastMessageHandler);
+
+        this.registry.clear();
     }
 
     public async connect(config: InternalPlatformConfig): Promise<void> {
@@ -103,42 +110,44 @@ export class ServiceWorkerController {
     private setUpBroadcastChannelConnection(): void {
         this.channel = new BroadcastChannel(serviceWorkerBroadcastChannelName);
 
-        this.channel.addEventListener("message", async (event) => {
+        this._broadcastMessageHandler = this.broadcastMessageHandler.bind(this);
 
-            const eventData = event.data;
-            const messageType: string = eventData?.messageType;
+        this.channel.addEventListener("message", this._broadcastMessageHandler);
+    }
 
-            if (!messageType) {
-                return;
-            }
+    private broadcastMessageHandler(event: MessageEvent<any>): void {
+        const eventData = event.data;
+        const messageType: string = eventData?.messageType;
 
-            if (messageType === "ping") {
-                this.channel.postMessage({ pong: true });
-                return;
-            }
+        if (!messageType) {
+            return;
+        }
 
-            if (messageType === "notificationClick") {
-                const action = eventData.action as string;
-                const glueData = eventData.glueData;
+        if (messageType === "ping") {
+            this.channel.postMessage({ pong: true });
+            return;
+        }
 
-                this.registry.execute("notification-click", { action, glueData });
-                return;
-            }
+        if (messageType === "notificationClick") {
+            const action = eventData.action as string;
+            const glueData = eventData.glueData;
 
-            if (messageType === "notificationClose") {
-                const action = eventData.action as string;
-                const glueData = eventData.glueData;
+            this.registry.execute("notification-click", { action, glueData });
+            return;
+        }
 
-                this.registry.execute("notification-close", { action, glueData });
-                return;
-            }
+        if (messageType === "notificationClose") {
+            const action = eventData.action as string;
+            const glueData = eventData.glueData;
 
-            if (messageType === "notificationError") {
-                this.logger?.error(`Service worker error when raising notification: ${eventData.error}`);
-                return;
-            }
+            this.registry.execute("notification-close", { action, glueData });
+            return;
+        }
 
-        });
+        if (messageType === "notificationError") {
+            this.logger?.error(`Service worker error when raising notification: ${eventData.error}`);
+            return;
+        }
     }
 
     private async registerWorker(workerUrl: string): Promise<ServiceWorkerRegistration | undefined> {

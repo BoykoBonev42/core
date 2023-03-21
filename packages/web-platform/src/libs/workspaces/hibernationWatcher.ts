@@ -10,6 +10,7 @@ export class WorkspaceHibernationWatcher {
     private workspacesController!: WorkspacesController;
     private settings: Glue42WebPlatform.Workspaces.HibernationConfig | undefined;
     private maximumAmountCheckInProgress = false;
+    private running?: boolean;
 
     constructor(private readonly session: SessionStorageController) { }
 
@@ -17,9 +18,15 @@ export class WorkspaceHibernationWatcher {
         return logger.get("workspaces.hibernation");
     }
 
+    public stop(): void {
+        this.running = false;
+    }
+
     public start(workspacesController: WorkspacesController, settings: Glue42WebPlatform.Workspaces.HibernationConfig): void {
 
         this.logger?.trace(`starting the hibernation watcher with following settings: ${JSON.stringify(this.settings)}`);
+
+        this.running = true;
 
         this.workspacesController = workspacesController;
         this.settings = settings;
@@ -209,6 +216,11 @@ export class WorkspaceHibernationWatcher {
 
     private buildTimer(workspaceId: string): void {
         const timeout = window.setTimeout(() => {
+
+            if (!this.running) {
+                return;
+            }
+
             this.logger?.trace(`Timer triggered will try to hibernated ${workspaceId}`);
             this.tryHibernateWorkspace(workspaceId);
             this.session.removeTimeout(workspaceId);

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42WebPlatform } from "../../platform";
 import { InternalPlatformConfig, PluginsConfig } from "../common/types";
 import { GlueController } from "./glue";
@@ -9,21 +10,41 @@ export class PluginsController {
 
     private handlePluginMessage!: (args: Glue42WebPlatform.Plugins.BaseControlMessage, pluginName: string) => Promise<any>;
     private platformApi!: Glue42WebPlatform.API;
+    private allPlugins!: Glue42WebPlatform.Plugins.PluginDefinition[];
+    private corePlus?: Glue42WebPlatform.CorePlus.Config;
     public registeredPlugins: Array<{ name: string, version: string }> = [];
 
     constructor(
         private readonly interceptionController: InterceptionController,
         private readonly glueController: GlueController,
         private readonly startCore: (platformConfig: InternalPlatformConfig) => Promise<void>
-    ) { }
+    ) {}
 
     private get logger(): Glue42Web.Logger.API | undefined {
         return logger.get("plugins.controller");
     }
 
+    public async shutdown(): Promise<void> {
+        this.allPlugins.forEach((plugin) => plugin.onPlatformShutDown ? plugin.onPlatformShutDown() : null);
+
+        this.allPlugins = [];
+        this.registeredPlugins = [];
+
+        if (this.corePlus?.stop) {
+            await this.corePlus.stop();
+        }
+    }
+
     public async start(config: PluginsConfig): Promise<void> {
+
+        if (!config.plugins) {
+            return;
+        }
+
+        this.allPlugins = config.plugins;
+
         this.handlePluginMessage = config.handlePluginMessage;
-        // this.internalConfig = config.platformConfig;
+
         this.platformApi = config.api;
 
         if (!config.plugins || !config.plugins.length) {
@@ -47,6 +68,8 @@ export class PluginsController {
         if (!platformConfig.corePlus) {
             return;
         }
+
+        this.corePlus = platformConfig.corePlus;
 
         await this.startCore(platformConfig);
     }
@@ -83,7 +106,7 @@ export class PluginsController {
             system: {
                 sendControl: (args: Glue42WebPlatform.Plugins.BaseControlMessage): Promise<any> => this.handlePluginMessage(args, pluginName)
             }
-        }
+        };
     }
 
     private registerPlugin(name: string, version: string): void {

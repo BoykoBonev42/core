@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Web } from "@glue42/web";
+import { UnsubscribeFunction } from "callback-registry";
 import { BridgeOperation, InternalPlatformConfig, LibController, OperationCheckConfig, OperationCheckResult } from "../../common/types";
 import { GlueController } from "../../controllers/glue";
 import { ServiceWorkerController } from "../../controllers/serviceWorker";
@@ -16,6 +17,10 @@ export class NotificationsController implements LibController {
     private enableToasts!: boolean;
     private clearNotificationOnClick!: boolean;
     private extNotificationConfig: { defaultIcon: string; defaultMessage: string } | undefined;
+    private systemUnsubFuncs: UnsubscribeFunction[] = [];
+    private _chromeClickedHandler!: (notificationId: string) => void;
+    private _chromeButtonClickedHandler!: (notificationId: string, buttonIndex: number) => void;
+    private _chromeClosedHandler!: (notificationId: string) => void;
 
     private operations: { [key in NotificationsOperationsTypes]: BridgeOperation } = {
         raiseNotification: { name: "raiseNotification", execute: this.handleRaiseNotification.bind(this), dataDecoder: raiseNotificationDecoder },
@@ -36,6 +41,19 @@ export class NotificationsController implements LibController {
 
     private get logger(): Glue42Web.Logger.API | undefined {
         return logger.get("notifications.controller");
+    }
+
+    public handlePlatformShutdown(): void {
+        this.started = false;
+
+        const currentProtocol = (new URL(window.location.href)).protocol;
+
+        if (currentProtocol.includes("extension")) {
+            this.removeExtensionNotificationsListeners();
+        }
+
+        this.systemUnsubFuncs.forEach((unsub) => unsub());
+        this.systemUnsubFuncs = [];
     }
 
     public async start(config: InternalPlatformConfig): Promise<void> {
@@ -289,39 +307,60 @@ export class NotificationsController implements LibController {
     }
 
     private listenForExtensionNotificationsEvents(): void {
-        chrome.notifications.onClicked.addListener((id) => {
 
-            const notificationData = this.session.getNotification(id);
+        this._chromeClickedHandler = this.chromeClickedHandler.bind(this);
 
-            if (!notificationData) {
-                return;
-            }
+        chrome.notifications.onClicked.addListener(this._chromeClickedHandler);
 
-            this.handleNotificationClick({ notification: notificationData });
-        });
+        this._chromeButtonClickedHandler = this.chromeButtonClickedHandler.bind(this);
 
-        chrome.notifications.onButtonClicked.addListener((id, buttonIndex) => {
+        chrome.notifications.onButtonClicked.addListener(this._chromeButtonClickedHandler);
 
-            const notificationData = this.session.getNotification(id);
+        this._chromeClosedHandler = this.chromeClosedHandler.bind(this);
 
-            if (!notificationData) {
-                return;
-            }
+        chrome.notifications.onClosed.addListener(this._chromeClosedHandler);
+    }
 
-            if (!notificationData.actions) {
-                return;
-            }
+    private removeExtensionNotificationsListeners(): void {
+        chrome.notifications.onClicked.removeListener(this._chromeClickedHandler);
 
-            const action = notificationData.actions[buttonIndex].action;
+        chrome.notifications.onButtonClicked.removeListener(this._chromeButtonClickedHandler);
 
-            this.handleNotificationClick({ action, notification: notificationData });
-        });
+        chrome.notifications.onClosed.removeListener(this._chromeClosedHandler);
+    }
 
-        chrome.notifications.onClosed.addListener((id) => this.removeNotification(id));
+    private chromeClickedHandler(notificationId: string) : void {
+        const notificationData = this.session.getNotification(notificationId);
+
+        if (!notificationData) {
+            return;
+        }
+
+        this.handleNotificationClick({ notification: notificationData });
+    }
+    
+    private chromeButtonClickedHandler(notificationId: string, buttonIndex: number): void {
+        const notificationData = this.session.getNotification(notificationId);
+
+        if (!notificationData) {
+            return;
+        }
+
+        if (!notificationData.actions) {
+            return;
+        }
+
+        const action = notificationData.actions[buttonIndex].action;
+
+        this.handleNotificationClick({ action, notification: notificationData });
+    }
+
+    private chromeClosedHandler(notificationId: string): void {
+        this.removeNotification(notificationId);
     }
 
     private listenForServiceWorkerNotificationEvents(): void {
-        this.serviceWorkerController.onNotificationClick((clickData) => {
+        const unsubNotificationClick = this.serviceWorkerController.onNotificationClick((clickData) => {
             const notificationData = this.session.getNotification(clickData.glueData.id);
 
             if (!notificationData) {
@@ -331,7 +370,10 @@ export class NotificationsController implements LibController {
             this.handleNotificationClick({ action: clickData.action, notification: notificationData });
         });
 
-        this.serviceWorkerController.onNotificationClose((notification) => this.removeNotification(notification.glueData.id));
+        const unsubNotificationClose = this.serviceWorkerController.onNotificationClose((notification) => this.removeNotification(notification.glueData.id));
+
+        this.systemUnsubFuncs.push(unsubNotificationClick);
+        this.systemUnsubFuncs.push(unsubNotificationClose);
     }
 
     private getExtNotificationsConfig(): Promise<{ notifications: { defaultIcon: string; defaultMessage: string } }> {

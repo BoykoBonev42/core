@@ -7,7 +7,7 @@ import { FrameSessionData } from "../libs/workspaces/types";
 import logger from "../shared/logger";
 
 export class SessionStorageController {
-    private readonly sessionStorage: Storage;
+    private sessionStorage!: Storage;
     private readonly windowsNamespace = "g42_core_windows";
     private readonly instancesNamespace = "g42_core_instances";
     private readonly bridgeInstancesNamespace = "g42_core_bridge";
@@ -21,24 +21,29 @@ export class SessionStorageController {
     private readonly appDefsInmemoryNamespace = "g42_core_app_definitions_inmemory";
     private readonly notificationsNamespace = "g42_core_notifications";
     private readonly systemNamespace = "g42_system";
+    private readonly allNamespaces = [
+        this.bridgeInstancesNamespace,
+        this.windowsNamespace,
+        this.instancesNamespace,
+        this.nonGlueNamespace,
+        this.workspaceWindowsNamespace,
+        this.workspaceFramesNamespace,
+        this.globalLayoutsNamespace,
+        this.workspaceLayoutsNamespace,
+        this.appDefsNamespace,
+        this.workspaceHibernationNamespace,
+        this.appDefsInmemoryNamespace,
+        this.notificationsNamespace
+    ];
 
-    constructor() {
+    private get logger(): Glue42Core.Logger.API | undefined {
+        return logger.get("session.storage");
+    }
+
+    public start(): void {
         this.sessionStorage = window.sessionStorage;
 
-        [
-            this.bridgeInstancesNamespace,
-            this.windowsNamespace,
-            this.instancesNamespace,
-            this.nonGlueNamespace,
-            this.workspaceWindowsNamespace,
-            this.workspaceFramesNamespace,
-            this.globalLayoutsNamespace,
-            this.workspaceLayoutsNamespace,
-            this.appDefsNamespace,
-            this.workspaceHibernationNamespace,
-            this.appDefsInmemoryNamespace,
-            this.notificationsNamespace
-        ].forEach((namespace) => {
+        this.allNamespaces.forEach((namespace) => {
             const data = this.sessionStorage.getItem(namespace);
 
             if (!data) {
@@ -47,8 +52,10 @@ export class SessionStorageController {
         });
     }
 
-    private get logger(): Glue42Core.Logger.API | undefined {
-        return logger.get("session.storage");
+    public shutdown(): void {
+        this.allNamespaces.forEach((namespace) => {
+            this.sessionStorage.setItem(namespace, JSON.stringify([]));
+        });
     }
 
     public getSystemSettings(): SessionSystemSettings | undefined {

@@ -85,6 +85,12 @@ export class WorkspacesController implements LibController {
         private readonly ioc: IoC
     ) { }
 
+    public handlePlatformShutdown(): void {
+        this.started = false;
+        this.hibernationWatcher.stop();
+        this.framesController.stop();
+    }
+
     public async start(config: InternalPlatformConfig): Promise<void> {
         if (!config.workspaces) {
             this.started = false;
@@ -781,7 +787,7 @@ export class WorkspacesController implements LibController {
             return {
                 windowId,
                 windowContext: await this.getWorkspaceWindowOnLayoutSaveData(windowId, config)
-            }
+            };
         }));
 
         this.logger?.trace(`[${commandId}] operation GetWorkspaceWindowsOnLayoutSaveContext completed responding`);
@@ -897,7 +903,7 @@ export class WorkspacesController implements LibController {
         // the response will be undefined when communicating with an older Glue Web client which cannot service this message 
         const saveRequestResponse = await PromiseWrap<SaveRequestClientResponse>(async () => {
             try {
-                const clientResponse = await this.glueController.callWindow<RawWindowsLayoutDataRequestConfig, SaveRequestClientResponse>("layouts", this.ioc.layoutsController.operations.clientSaveRequest, requestConfig, { windowId })
+                const clientResponse = await this.glueController.callWindow<RawWindowsLayoutDataRequestConfig, SaveRequestClientResponse>("layouts", this.ioc.layoutsController.operations.clientSaveRequest, requestConfig, { windowId });
                 return clientResponse;
             } catch (error) {
                 return {};

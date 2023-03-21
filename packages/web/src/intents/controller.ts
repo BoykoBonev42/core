@@ -7,9 +7,9 @@ import { GlueBridge } from "../communication/bridge";
 import { UnsubscribeFunction } from "callback-registry";
 import { intentsOperationTypesDecoder, raiseRequestDecoder, findFilterDecoder, AddIntentListenerDecoder } from "../shared/decoders";
 import { operations, WrappedIntentFilter, WrappedIntents } from "./protocol";
-import { ADDITIONAL_BRIDGE_OPERATION_TIMEOUT, DEFAULT_RESOLVER_RESPONSE_TIMEOUT, GLUE42_FDC3_INTENTS_METHOD_PREFIX, INTENTS_RESOLVER_APP_NAME } from './constants';
-import { LegacyIntentsHelper } from './legacyHelper';
-import { systemOperations } from '../shared/systemOperations';
+import { ADDITIONAL_BRIDGE_OPERATION_TIMEOUT, DEFAULT_RESOLVER_RESPONSE_TIMEOUT, GLUE42_FDC3_INTENTS_METHOD_PREFIX, INTENTS_RESOLVER_APP_NAME } from "./constants";
+import { LegacyIntentsHelper } from "./legacyHelper";
+import { systemOperations } from "../shared/systemOperations";
 
 export class IntentsController implements LibController {
     private bridge!: GlueBridge;
@@ -18,7 +18,7 @@ export class IntentsController implements LibController {
     private legacyIntentsController!: LegacyIntentsHelper;
     private myIntents = new Set<string>();
 
-    private useIntentsResolverUI: boolean = true;
+    private useIntentsResolverUI = true;
     private intentsResolverAppName!: string;
     private intentResolverResponseTimeout!: number;
 
@@ -108,7 +108,7 @@ export class IntentsController implements LibController {
                 appName: this.intentsResolverAppName,
                 waitResponseTimeout: this.intentResolverResponseTimeout
             }
-        }
+        };
     }
 
     private async isRaiseOperationSupported(): Promise<IsRaiseOperationSupported> {
@@ -117,14 +117,14 @@ export class IntentsController implements LibController {
 
             return {
                 supported: isSupported,
-                reason: isSupported ? "" : `The platform of this client is outdated and does not support "raise" operation`
+                reason: isSupported ? "" : "The platform of this client is outdated and does not support \"raise\" operation"
             };
         } catch (error) {
             return {
                 supported: false,
-                reason: `The platform of this client is outdated and does not support "operationCheck" command`
+                reason: "The platform of this client is outdated and does not support \"operationCheck\" command"
             };
-        };
+        }
     }
 
     private async all(): Promise<Glue42Web.Intents.Intent[]> {
@@ -141,6 +141,7 @@ export class IntentsController implements LibController {
             throw new Error("Cannot add intent listener, because the provided handler is not a function!");
         }
 
+        // eslint-disable-next-line prefer-const
         let registerPromise: Promise<void>;
 
         // `addIntentListener()` is sync.
@@ -223,7 +224,7 @@ export class IntentsController implements LibController {
         } catch (err) {
             this.myIntents.delete(intentName);
 
-            throw new Error(`Registration of a method with name ${methodName} failed with reason: ${JSON.stringify(err)}`)
+            throw new Error(`Registration of a method with name ${methodName} failed with reason: ${JSON.stringify(err)}`);
         }
 
         return {
@@ -290,7 +291,7 @@ export class IntentsController implements LibController {
                 this.clearUnregistrationPromise(unregisterPromise);
             })
             .catch((err) => {
-                this.logger.error(`Unregistration of a method with name ${methodName} failed with reason: ${err}`)
+                this.logger.error(`Unregistration of a method with name ${methodName} failed with reason: ${err}`);
 
                 this.clearUnregistrationPromise(unregisterPromise);
             });

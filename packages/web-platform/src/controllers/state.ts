@@ -14,13 +14,15 @@ export class WindowsStateController {
     private checkerCancelled = false;
     private currentTimeout: NodeJS.Timeout | undefined;
 
-    constructor(private readonly sessionStorage: SessionStorageController) { }
+    constructor(private readonly sessionStorage: SessionStorageController) {}
 
     private get logger(): Glue42Core.Logger.API | undefined {
         return logger.get("state.controller");
     }
 
     public start(): void {
+        this.checkerCancelled = false;
+
         const nonGlueWindows = this.sessionStorage.getAllNonGlue();
 
         nonGlueWindows.forEach((w) => {
@@ -55,6 +57,8 @@ export class WindowsStateController {
             clearTimeout(this.currentTimeout);
         }
         this.checkerCancelled = true;
+
+        this.registry.clear();
     }
 
     public onWindowDisappeared(cb: (windowId: string) => void | Promise<void>): UnsubscribeFunction {

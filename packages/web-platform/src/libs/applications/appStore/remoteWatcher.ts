@@ -12,6 +12,7 @@ export class RemoteWatcher {
     private handleApps!: (apps: Array<Glue42Web.AppManager.Definition | Glue42WebPlatform.Applications.FDC3Definition>) => Promise<void>;
     private requestTimeout!: number;
     private pollingInterval: number | undefined;
+    private running?: boolean;
 
     public start(config: Glue42WebPlatform.RemoteStore, handleApps: (apps: Array<Glue42Web.AppManager.Definition | Glue42WebPlatform.Applications.FDC3Definition>) => Promise<void>): void {
         this.url = config.url;
@@ -20,16 +21,30 @@ export class RemoteWatcher {
         this.pollingInterval = config.pollingInterval;
 
         this.setRequest(config.customHeaders);
-        
+
         this.logger?.trace(`Remote watcher configured with timeout: ${this.requestTimeout} and interval: ${this.pollingInterval}`);
+
+        this.running = true;
 
         this.poll();
     }
 
+    public stop(): void {
+        this.running = false;
+    }
+
     private async poll(): Promise<void> {
+
+        if (!this.running) {
+            return;
+        }
 
         try {
             const response = await fetchTimeout(this.request, this.requestTimeout);
+
+            if (!this.running) {
+                return;
+            }
 
             const responseJson: { applications: Array<Glue42Web.AppManager.Definition | Glue42WebPlatform.Applications.FDC3Definition> } = await response.json();
 
