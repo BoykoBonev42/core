@@ -247,7 +247,7 @@ export namespace Glue42WebPlatform {
             version?: string;
             config?: any;
             critical?: boolean;
-            onPlatformShutDown?: () => void;
+            stop?: () => void;
         }
 
         export interface Config {

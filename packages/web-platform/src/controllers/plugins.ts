@@ -5,6 +5,7 @@ import { GlueController } from "./glue";
 import { InterceptionController } from "./interception";
 import logger from "../shared/logger";
 import { Glue42Web } from "@glue42/web";
+import { extractErrorMsg } from "../shared/utils";
 
 export class PluginsController {
 
@@ -25,14 +26,25 @@ export class PluginsController {
     }
 
     public async shutdown(): Promise<void> {
-        this.allPlugins.forEach((plugin) => plugin.onPlatformShutDown ? plugin.onPlatformShutDown() : null);
+        if (this.corePlus?.stop) {
+            await this.corePlus.stop();
+        }
+
+        this.allPlugins.forEach((plugin) => {
+            if (!plugin.stop) {
+                return;
+            }
+
+            try {
+                plugin.stop();
+            } catch (error) {
+                this.logger?.warn(`Plugin: ${plugin.name} threw while onPlatformShutdown -> ${extractErrorMsg(error)}`);
+            }
+        });
 
         this.allPlugins = [];
         this.registeredPlugins = [];
 
-        if (this.corePlus?.stop) {
-            await this.corePlus.stop();
-        }
     }
 
     public async start(config: PluginsConfig): Promise<void> {

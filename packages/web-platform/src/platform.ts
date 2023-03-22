@@ -105,25 +105,27 @@ export class Platform {
 
     private validatePlugins(verifiedConfig: Glue42WebPlatform.Config): void {
 
-        if (verifiedConfig.plugins?.definitions) {
+        if (!verifiedConfig.plugins?.definitions) {
+            return;
+        }
 
-            const badDefinitions = verifiedConfig.plugins.definitions.reduce<Array<{ name: string; startType: string }>>((soFar, definition) => {
-                const startType = typeof definition.start;
-                const name = definition.name;
+        const badDefinitions = verifiedConfig.plugins.definitions.reduce<Array<{ name: string; startType: string; stopType: string }>>((soFar, definition) => {
+            const startType = typeof definition.start;
+            const stopType = typeof definition.stop;
+            const name = definition.name;
 
-                if (startType !== "function") {
-                    soFar.push({ name, startType });
-                }
-
-                return soFar;
-            }, []);
-
-            if (badDefinitions.length) {
-                const errorStack = badDefinitions
-                    .map((def) => `The start function for plugin ${def.name} was expected to be of type function, but was provided: ${def.startType}`)
-                    .join("\n");
-                throw new Error(errorStack);
+            if (startType !== "function" || (definition.stop && stopType !== "function")) {
+                soFar.push({ name, startType, stopType });
             }
+
+            return soFar;
+        }, []);
+
+        if (badDefinitions.length) {
+            const errorStack = badDefinitions
+                .map((def) => `The start and stop functions for plugin ${def.name} were expected to be of type function, but was provided start: ${def.startType} and stop: ${def.stopType}`)
+                .join("\n");
+            throw new Error(errorStack);
         }
     }
 }

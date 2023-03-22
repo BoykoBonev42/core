@@ -1,3 +1,5 @@
+1.23.1
+fix: improved shutdown signals processing for plugins
 1.23.0
 feat: implemented Platform shutdown
 1.22.2
