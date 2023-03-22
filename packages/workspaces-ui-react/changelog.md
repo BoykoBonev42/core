@@ -1,3 +1,5 @@
+2.4.3
+feat: improved the typings for the group header components
 2.4.2
 chore: bump due to dependencies update
 2.4.1

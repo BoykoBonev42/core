@@ -1,6 +1,6 @@
 import { Bounds, Size } from "./internal";
 
-export interface ButtonProps extends React.DetailedHTMLProps<React.HtmlHTMLAttributes<HTMLLIElement>, HTMLLIElement> {
+export interface ButtonProps extends Omit<React.DetailedHTMLProps<React.HtmlHTMLAttributes<HTMLLIElement>, HTMLLIElement>, "title"> {
     title?: string;
     frameId?: string;
 }
@@ -148,10 +148,15 @@ export interface WorkspaceWindowTabProps {
         color: string;
         showSelector: (bounds: Bounds) => void;
     };
+    isSelected: boolean;
+    elementId: string;
+    windowId: string;
+    groupId: string;
+    workspaceId: string;
     title: string;
     close: {
         visible: boolean;
-        title: string;
+        title?: string;
         close: () => void;
     };
 }
@@ -162,7 +167,7 @@ export interface WorkspaceWindowTabTitleProps {
 
 export interface WorkspaceWindowTabCloseButtonProps {
     close: () => void;
-    title: string;
+    title?: string;
 }
 
 export interface WorkspaceWindowChannelsLinkProps {

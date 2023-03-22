@@ -57,7 +57,7 @@ import WorkspaceIconButton from './defaultComponents/workspace/WorkspaceIconButt
 import WorkspaceTabCloseButton from './defaultComponents/workspace/WorkspaceTabCloseButton';
 import WorkspaceLoadingAnimation from './defaultComponents/WorkspaceLoadingAnimation';
 import WorkspaceTabV2 from './defaultComponents/workspace/tabV2/WorkspaceTabV2';
-import WorkspaceWindowChannelsSelector from './defaultComponents/groups/workspaceWindow/TabChannelsLink';
+import WorkspaceWindowChannelsLink from './defaultComponents/groups/workspaceWindow/TabChannelsLink';
 import WorkspaceWindowTabTitle from './defaultComponents/groups/workspaceWindow/TabTitle';
 import WorkspaceWindowTabCloseButton from './defaultComponents/groups/workspaceWindow/TabCloseButton';
 import WorkspaceWindowTab from './defaultComponents/groups/workspaceWindow/Tab';
@@ -88,7 +88,7 @@ export {
     WorkspaceTabCloseButton,
     WorkspaceLoadingAnimation,
     WorkspaceTabV2,
-    WorkspaceWindowChannelsSelector,
+    WorkspaceWindowChannelsLink,
     WorkspaceWindowTabTitle,
     WorkspaceWindowTabCloseButton,
     WorkspaceWindowTab,

@@ -29,10 +29,10 @@ export interface WorkspaceTabComponentProps {
 
 export interface GroupHeaderButtonProps {
     visible: boolean;
-    title: string;
+    title?: string;
 }
 
-export interface ChannelsGroupHeaderButtonProps extends GroupHeaderButtonProps {
+export interface ChannelsGroupHeaderButtonProps extends Omit<GroupHeaderButtonProps, "title"> {
     color: string;
     showSelector: (bounds: Bounds) => void;
 }
@@ -57,7 +57,7 @@ export interface EjectGroupHeaderButtonProps extends GroupHeaderButtonProps {
     eject: () => void;
 }
 
-export interface GroupHeaderComponentProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
+export interface GroupHeaderComponentProps {
     groupId: string;
     workspaceId: string;
 }
