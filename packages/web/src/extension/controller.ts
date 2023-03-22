@@ -27,6 +27,8 @@ export class ExtController implements LibController {
 
     public handlePlatformShutdown(): void {
         this.unsubFuncs.forEach((unsub) => unsub());
+        this.channels = [];
+        this.unsubFuncs = [];
     }
 
     public async start(coreGlue: Glue42Core.GlueCore, ioc: IoC): Promise<void> {

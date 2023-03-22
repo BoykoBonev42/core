@@ -44,6 +44,11 @@ export class IntentsController implements LibController {
         (coreGlue as Glue42Web.API).intents = api;
     }
 
+    public handlePlatformShutdown(): void {
+        this.myIntents = new Set<string>();
+        this.unregisterIntentPromises = [];
+    }
+
     public async handleBridgeMessage(args: any): Promise<void> {
         const operationName = intentsOperationTypesDecoder.runWithException(args.operation);
 

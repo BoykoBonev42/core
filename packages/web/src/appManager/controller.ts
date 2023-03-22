@@ -29,6 +29,7 @@ export class AppManagerController implements LibController {
     private logger!: Glue42Web.Logger.API;
 
     public handlePlatformShutdown(): void {
+        this.registry.clear();
         this.applications = [];
         this.instances = [];
         delete this.me;

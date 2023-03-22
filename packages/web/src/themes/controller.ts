@@ -34,6 +34,14 @@ export class ThemesController implements LibController {
         this.logger.trace("themes are ready");
     }
 
+    public handlePlatformShutdown(): void {
+        this.registry.clear();
+        this.activeThemeSubs = 0;
+        this.themesSubscription?.close();
+
+        delete this.themesSubscription;
+    }
+
     public async handleBridgeMessage(): Promise<void> {
         // noop, because we do not want theme changes notifications to be published by default
     }

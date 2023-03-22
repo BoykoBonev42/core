@@ -1,3 +1,5 @@
+2.18.1
+fix: improved the cleanup of the libs on platform shutdown
 2.18.0
 feat: added support for Platform shutdown
 2.17.1

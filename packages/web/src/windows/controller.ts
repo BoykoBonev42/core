@@ -16,6 +16,7 @@ import { PromisePlus } from "../shared/promise-plus";
 
 export class WindowsController implements LibController {
 
+    private focusEventHandler?: () => void;
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
     private platformRegistration!: Promise<void>;
     private ioc!: IoC;
@@ -54,6 +55,19 @@ export class WindowsController implements LibController {
         const api = this.toApi();
 
         (coreGlue as Glue42Web.API).windows = api;
+    }
+
+    public handlePlatformShutdown(): void {
+        this.registry.clear();
+        this.allWindowProjections = [];
+
+        if (!this.focusEventHandler) {
+            return;
+        }
+
+        document.removeEventListener("visibilityChange", this.focusEventHandler);
+        window.removeEventListener("focus", this.focusEventHandler);
+        window.removeEventListener("blur", this.focusEventHandler);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -325,9 +339,7 @@ export class WindowsController implements LibController {
             await this.transmitFocusChange(false);
         }
 
-        document.addEventListener("visibilityChange", this.processFocusEvent.bind(this));
-        window.addEventListener("focus", this.processFocusEvent.bind(this));
-        window.addEventListener("blur", this.processFocusEvent.bind(this));
+        this.defineEventListeners();
     }
 
     private processFocusEvent(): void {
@@ -347,7 +359,7 @@ export class WindowsController implements LibController {
         return PromisePlus<Glue42Web.Windows.WebWindow>((resolve) => {
             const unsubscribe = this.onWindowAdded((addedWindow) => {
                 if (addedWindow.id === windowId) {
-                    unsubscribe()
+                    unsubscribe();
                     resolve(addedWindow);
                 }
             });
@@ -364,5 +376,14 @@ export class WindowsController implements LibController {
         this.me.isFocused = hasFocus;
 
         await this.bridge.send<FocusEventData, void>("windows", operations.focusChange, eventData);
+    }
+
+    private defineEventListeners(): void {
+
+        this.focusEventHandler = this.processFocusEvent.bind(this);
+
+        document.addEventListener("visibilityChange", this.focusEventHandler);
+        window.addEventListener("focus", this.focusEventHandler);
+        window.addEventListener("blur", this.focusEventHandler);
     }
 }
