@@ -24,7 +24,7 @@ The factory function will initialize and configure everything needed for a fully
 
 ## Configuration
 
-Optionally, specify configuration settings for other Glue42 libraries or [Plugins](../../../../capabilities/plugins/index.html) initialized by the `GlueWebPlatform()` function:
+Optionally, specify configuration settings for other Glue42 libraries or [Plugins](../../../../capabilities/plugins/setup/index.html) initialized by the `GlueWebPlatform()` function:
 
 ```javascript
 import GlueWebPlatform from "@glue42/web-platform";
@@ -53,7 +53,7 @@ Use this configuration object to set various important aspects of your [**Glue42
 | `layouts` | Set a source for Layout definitions by passing an array of Layout definition objects to the `local` property of this object. Set the mode of the Layouts library (`"idb"` or `"session"`) with the `mode` property. See the [Layouts](../../../../capabilities/windows/layouts/setup/index.html) section. |
 | `channels` | Configure the Glue42 [Channels](../../../../capabilities/data-sharing-between-apps/channels/index.html) that will be available in your project. |
 | `workspaces` | Set a location of your [Workspaces App](../../../../capabilities/windows/workspaces/workspaces-app/index.html#workspaces_concepts-frame) and other options for [Workspaces](../../../../capabilities/windows/workspaces/overview/index.html). |
-| `plugins` | Provide your custom Glue42-specific logic, which will be included in the boot sequence of the Main app. See the [Plugins](../../../../capabilities/plugins/index.html) section. |
+| `plugins` | Provide your custom Glue42-specific logic, which will be included in the boot sequence of the Main app. See the [Plugins](../../../../capabilities/plugins/setup/index.html) section. |
 | `connection` | Defines settings for connecting to a local [**Glue42 Enterprise**](https://glue42.com/enterprise/) instance. See the [Connecting to Glue42 Enterprise](../../../../capabilities/connectivity-to-enterprise/index.html) section. |
 | `glue` | A [`Config`](../../../../reference/core/latest/glue42%20web/index.html#Config) object for the [Glue42 Web](https://www.npmjs.com/package/@glue42/web) library that will be used when registering the Main app as a Glue42 client in [**Glue42 Enterprise**](https://glue42.com/enterprise/). |
 | `gluefactory` |The Glue42 [Web Platform](https://www.npmjs.com/package/@glue42/web-platform) library will always initialize the latest version of [Glue42 Web](https://www.npmjs.com/package/@glue42/web) internally, but you can override this by passing your own Glue42 factory function. This is especially helpful if you want your Main app to run with a specific [`@glue42/web`](https://www.npmjs.com/package/@glue42/web) package version and not the latest. |
