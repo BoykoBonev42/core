@@ -238,6 +238,40 @@ describe("raiseIntent()", function () {
         expect(supportApp1Context).to.eql(context);
     });
 
+    it("Should target instance which registered intent listener at runtime and context type is not present in app definition (same app registers and raises the intent)", async() => {
+        const intentName = `fdc3.intent.${Date.now()}`;
+        const context = gtf.fdc3.getContext();
+
+        const listenerInvokedPromise = gtf.wrapPromise();
+
+        const listener = await fdc3.addIntentListener(intentName, () => {
+            listenerInvokedPromise.resolve();
+        });
+
+        gtf.fdc3.addActiveListener(listener);
+
+        await fdc3.raiseIntent(intentName, context);
+
+        await listenerInvokedPromise.promise;
+    });
+
+    it("Should target instance which registered intent listener at runtime and context type is not present in app definition (one app registers the intent and another one raises it)", async() => {
+        const intentName = `fdc3.intent.${Date.now()}`;
+        const context = gtf.fdc3.getContext();
+
+        const listenerInvokedPromise = gtf.wrapPromise();
+
+        const listener = await fdc3.addIntentListener(intentName, () => {
+            listenerInvokedPromise.resolve();
+        });
+
+        gtf.fdc3.addActiveListener(listener);
+
+        await supportApp1.fdc3.raiseIntent(intentName, context);
+
+        await listenerInvokedPromise.promise;
+    });
+
     describe("when the same app raises the intent, intentResolution.getResult() method", function () {
         const defaultChannelMethods = ["broadcast", "addContextListener", "getCurrentContext"];
         const defaultPrivateChannelMethods = ["id", "type", "displayMetadata", ...defaultChannelMethods, "onAddContextListener", "onUnsubscribe", "onDisconnect", "disconnect"];

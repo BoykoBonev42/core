@@ -22,3 +22,5 @@ export const responseInteropMethodPrefix = "T42.FDC3.Open.Listener.Response";
 export const glueChannelNamePrefix = "___channel___";
 
 export const fdc3NothingContextType = "fdc3.nothing";
+
+export const Glue42EnterpriseNoAppWindow = "no-app-window";

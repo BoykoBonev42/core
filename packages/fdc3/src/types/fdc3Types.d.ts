@@ -64,7 +64,7 @@ export interface FindIntentsByContextConfig extends CommandIdConfig {
 export interface RaiseIntentConfig extends CommandIdConfig {
     intent: string;
     context: Context;
-    target?: string | AppIdentifier; 
+    target?: string | AppIdentifier;
 }
 
 export interface RaiseIntentForContextConfig extends CommandIdConfig {

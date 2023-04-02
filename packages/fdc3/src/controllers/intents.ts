@@ -1,7 +1,7 @@
 import { Context, Listener, AppIntent, Channel, IntentResolution, IntentResult, IntentHandler, ResolveError, ResultError } from "@finos/fdc3";
 import { GlueController } from "./glue";
 import { GlueIntentHandler, GlueIntent, IntentContext, IntentResult as GlueIntentResult, GlueIntentRequest, Logger } from "../types/glue42Types";
-import { IntentHandlerResultTypes, fdc3NothingContextType } from "../shared/constants";
+import { Glue42EnterpriseNoAppWindow, IntentHandlerResultTypes, fdc3NothingContextType } from "../shared/constants";
 import { ChannelsFactory } from "../channels/factory";
 import { extractChannelMetadata, isChannel, isChannelMetadata, isContext } from "../channels/utils";
 import { ChannelsController } from "../channels/controller";
@@ -84,10 +84,10 @@ export class IntentsController {
 
         const glueContext = { type: context.type, data: { ...context } };
 
-        const searchedGlueIntent = (await this.glueController.findIntents({ name: intent, contextType: context.type === fdc3NothingContextType ? undefined : context.type })).find(glueIntent => glueIntent.name === intent);
+        const searchedGlueIntent = (await this.glueController.findIntents({ name: intent })).find(glueIntent => glueIntent.name === intent);
 
         if (!searchedGlueIntent) {
-            throw new Error(`${ResolveError.NoAppsFound} - There's no app registering an intent with passed name`);
+            throw new Error(`${ResolveError.NoAppsFound} - There's no app registering an intent '${intent}'`);
         }
 
         this.logger.info(`[${commandId}] - filtering found intent handlers by context type`);
@@ -271,7 +271,21 @@ export class IntentsController {
         let filteredHandlers = handlers;
 
         if (filter.contextType) {
-            filteredHandlers = handlers.filter((handler) => handler.contextTypes?.includes(filter.contextType as string));
+            filteredHandlers = handlers.filter((handler: GlueIntentHandler) => {
+                if (handler.instanceId) {
+                    // check if there's an app definition for this instance or it's a handler created at runtime
+                    // instances with "no-app-window" as application name in GLue42 Enterprise do not have app definition
+                    const appExists = (window as any).glue42gd && handler.applicationName === Glue42EnterpriseNoAppWindow
+                        ? false
+                        : !!(this.glueController.getApplication(handler.applicationName));
+
+                    return appExists
+                        ? handler.contextTypes?.includes(filter.contextType as string)
+                        : handler;
+                }
+
+                return handler.contextTypes?.includes(filter.contextType as string); 
+            });
         }
 
         if (filter.resultType) {
