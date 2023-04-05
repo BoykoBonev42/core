@@ -1,3 +1,5 @@
+3.2.0
+feat: added support for targeting intent handlers with no appD
 3.1.1.
 bugfix: findIntent filters handlers by contextType
 bugfix: findIntentsByContext filter handlers by contextType
