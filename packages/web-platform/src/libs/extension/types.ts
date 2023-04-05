@@ -1,7 +1,7 @@
 export type ExtensionOperationTypes = "clientHello" | "operationCheck";
 
 export interface ClientHello {
-    windowId: string;
+    windowId?: string;
 }
 
 export interface ClientHelloResponse {

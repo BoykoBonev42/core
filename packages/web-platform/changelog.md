@@ -1,3 +1,5 @@
+1.24.0
+feat: added support for handling self-assigned glue windows
 1.23.1
 fix: improved shutdown signals processing for plugins
 1.23.0

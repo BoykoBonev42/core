@@ -1,3 +1,5 @@
+5.10.0
+feat: reworked the web-platform transport to recursively search for a gw
 5.9.0
 feat: added experimental support for running the platform as a workspace frame inside an iframe
 fix: updated ws to ^8.12.1, which fixes a regression in ws when bundling for the browser

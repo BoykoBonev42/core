@@ -1,3 +1,6 @@
+2.19.0
+feat: now recursively searches a gw in all parents and openers
+fix: iframes now have no window.my
 2.18.1
 fix: improved the cleanup of the libs on platform shutdown
 2.18.0

@@ -21,7 +21,6 @@ export class AppManagerController implements LibController {
     private ioc!: IoC;
     private bridge!: GlueBridge;
     private publicWindowId!: string;
-    private actualWindowId: string | undefined;
     private me: Glue42Web.AppManager.Instance | undefined;
     private applications: Glue42Web.AppManager.Application[] = [];
     private instances: Glue42Web.AppManager.Instance[] = [];
@@ -41,7 +40,6 @@ export class AppManagerController implements LibController {
         this.logger.trace("starting the web appManager controller");
 
         this.publicWindowId = ioc.publicWindowId;
-        this.actualWindowId = ioc.actualWindowId;
 
         this.addOperationsExecutors();
 
@@ -333,7 +331,7 @@ export class AppManagerController implements LibController {
     }
 
     private async registerWithPlatform(): Promise<void> {
-        const result = await this.bridge.send<WindowHello, AppHelloSuccess>("appManager", operations.appHello, { windowId: this.actualWindowId }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
+        const result = await this.bridge.send<WindowHello, AppHelloSuccess>("appManager", operations.appHello, { windowId: this.publicWindowId }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
 
         this.logger.trace("the platform responded to the hello message with a full list of apps");
 

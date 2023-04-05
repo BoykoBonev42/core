@@ -113,6 +113,7 @@ export interface SessionWindowData {
     initialUrl?: string;
     initialContext?: any;
     layoutComponentId?: string;
+    selfAssigned?: boolean;
 }
 
 export interface WorkspaceWindowSession {

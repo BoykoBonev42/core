@@ -234,7 +234,7 @@ export class PortsBridge {
         }
 
         if (data.type === Glue42CoreMessageTypes.connectionRequest.name) {
-            return this.startUpPromise.then(() => this.handleRemoteConnectionRequest(event.source as Window, event.origin, data.clientId, data.clientType, data.bridgeInstanceId));
+            return this.startUpPromise.then(() => this.handleRemoteConnectionRequest(event.source as Window, event.origin, data.clientId, data.clientType, data.bridgeInstanceId, data.selfAssignedWindowId));
         }
 
         if (data.type === Glue42CoreMessageTypes.platformPing.name) {
@@ -246,7 +246,7 @@ export class PortsBridge {
         }
     }
 
-    private async handleRemoteConnectionRequest(source: Window, origin: string, clientId: string, clientType: "child" | "grandChild", bridgeInstanceId: string): Promise<void> {
+    private async handleRemoteConnectionRequest(source: Window, origin: string, clientId: string, clientType: "child" | "grandChild", bridgeInstanceId: string, selfAssignedWindowId: string): Promise<void> {
         const channel = this.ioc.createMessageChannel();
 
         const client = await this.gateway.connectClient(channel.port1);
@@ -270,6 +270,10 @@ export class PortsBridge {
                 appName, clientId, clientType
             }
         };
+
+        if (selfAssignedWindowId) {
+            await this.ioc.windowsController.registerSelfAssignedWindow({windowId: selfAssignedWindowId, name: selfAssignedWindowId}, selfAssignedWindowId);
+        }
 
         source.postMessage(message, origin, [channel.port2]);
     }

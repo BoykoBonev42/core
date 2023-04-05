@@ -8,7 +8,7 @@ import { SessionStorageController } from "../../controllers/session";
 import { PromiseWrap } from "../../shared/promisePlus";
 import { frameWindowBoundsResultDecoder, openWindowConfigDecoder, simpleWindowDecoder, windowBoundsResultDecoder, windowMoveResizeConfigDecoder, windowOperationDecoder, windowTitleConfigDecoder, windowUrlResultDecoder } from "./decoders";
 import { WindowsStateController } from "../../controllers/state";
-import { HelloSuccess, OpenWindowConfig, OpenWindowSuccess, SimpleWindowCommand, WindowBoundsResult, WindowMoveResizeConfig, WindowOperationsTypes, WindowTitleConfig, WindowUrlResult } from "./types";
+import { HelloSuccess, OpenWindowConfig, OpenWindowSuccess, SelfAssignedWindowData, SimpleWindowCommand, WindowBoundsResult, WindowMoveResizeConfig, WindowOperationsTypes, WindowTitleConfig, WindowUrlResult } from "./types";
 import { getRelativeBounds } from "../../shared/utils";
 import logger from "../../shared/logger";
 import { WorkspaceWindowData } from "../workspaces/types";
@@ -173,6 +173,18 @@ export class WindowsController implements LibController {
             this.glueController.clearContext(windowId, "window").catch(() => { });
             this.emitStreamData("windowRemoved", { windowId });
         }
+    }
+
+    public async registerSelfAssignedWindow(data: SelfAssignedWindowData, commandId: string): Promise<void> {
+        this.logger?.trace(`[${commandId}] handling workspace window registration with id: ${data.windowId} and name: ${data.name}`);
+
+        this.sessionController.saveWindowData({ windowId: data.windowId, name: data.name, selfAssigned: true });
+
+        this.sessionController.saveNonGlue({ windowId: data.windowId });
+
+        this.emitStreamData("windowAdded", { windowId: data.windowId, name: data.name });
+
+        this.logger?.trace(`[${commandId}] workspace window registered successfully with id ${data.windowId} and name ${data.name}`);
     }
 
     public async registerWorkspaceWindow(data: WorkspaceWindowData, commandId: string): Promise<void> {
@@ -426,6 +438,10 @@ export class WindowsController implements LibController {
 
         if (windowData.name === "Platform") {
             throw new Error("Closing the main application is not allowed");
+        }
+
+        if (windowData.selfAssigned) {
+            throw new Error("Closing self-assigned windows (windows not opened by the Glue API) is not allowed");
         }
 
         this.logger?.trace(`[${commandId}] handling a close request for window ${data.windowId}`);

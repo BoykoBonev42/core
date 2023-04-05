@@ -25,7 +25,6 @@ import { ThemesController } from "../themes/controller";
 export class IoC {
     private _coreGlue!: Glue42Core.GlueCore;
     private _communicationId!: string;
-    private _actualWindowId!: string;
     private _publicWindowId!: string;
     private _webConfig!: ParsedConfig;
     private _windowsControllerInstance!: WindowsController;
@@ -59,17 +58,7 @@ export class IoC {
     }
 
     public get publicWindowId(): string {
-        if (!this._publicWindowId) {
-            throw new Error("Accessing undefined public window id.");
-        }
-
         return this._publicWindowId;
-    }
-
-    public get actualWindowId(): string {
-        // the non-workspaces iframes are not considered "GDWindows", so they do not have an actual window id
-        // they present themselves with the windowId of their parent.
-        return this._actualWindowId;
     }
 
     public get windowsController(): WindowsController {
@@ -184,7 +173,6 @@ export class IoC {
         this._coreGlue = coreGlue;
 
         this._publicWindowId = (coreGlue as any).connection.transport.publicWindowId;
-        this._actualWindowId = coreGlue.interop.instance.windowId as string;
 
         // the communicationId will be available in the glue42core namespace if this client is an internal client to the platform
         this._communicationId = (coreGlue as any).connection.transport.communicationId || (window as any).glue42core.communicationId;

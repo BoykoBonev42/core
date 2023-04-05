@@ -52,3 +52,8 @@ export interface WindowUrlResult {
     windowId: string;
     url: string;
 }
+
+export interface SelfAssignedWindowData {
+    windowId: string;
+    name: string;
+}

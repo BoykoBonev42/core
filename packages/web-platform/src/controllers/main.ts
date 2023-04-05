@@ -15,6 +15,7 @@ import { InterceptionController } from "./interception";
 import { PluginsController } from "./plugins";
 import { DomainsController } from "./domains";
 import { SessionStorageController } from "./session";
+import { extractErrorMsg } from "../shared/utils";
 
 export class PlatformController {
 
@@ -107,7 +108,7 @@ export class PlatformController {
         try {
             this.domainsController.validateDomain(args.domain);
         } catch (error) {
-            const errString = JSON.stringify(error);
+            const errString = extractErrorMsg(error);
 
             this.logger?.trace(`rejecting execution of a command issued by a ${callerType}: ${callerId}, because of a domain validation error: ${errString}`);
 

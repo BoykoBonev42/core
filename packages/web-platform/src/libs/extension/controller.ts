@@ -80,7 +80,7 @@ export class ExtensionController implements LibController {
 
         const widgetConfig = (await this.getWidgetConfig()).widget;
 
-        const isWorkspaceFrame = !!this.session.getFrameData(config.windowId);
+        const isWorkspaceFrame = config.windowId ? !!this.session.getFrameData(config.windowId) : false;
 
         const shouldInjectWidget = isWorkspaceFrame ? false :
             widgetConfig ? widgetConfig.enable : false;

@@ -1,4 +1,4 @@
-import { Decoder, oneOf, constant, object, boolean } from "decoder-validate";
+import { Decoder, oneOf, constant, object, boolean, optional } from "decoder-validate";
 import { nonEmptyStringDecoder } from "../../shared/decoders";
 import { ClientHello, ClientHelloResponse, ExtensionOperationTypes } from "./types";
 
@@ -14,5 +14,5 @@ export const clientHelloResponseDecoder: Decoder<ClientHelloResponse> = object({
 });
 
 export const clientHelloDecoder: Decoder<ClientHello> = object({
-    windowId: nonEmptyStringDecoder
+    windowId: optional(nonEmptyStringDecoder)
 });

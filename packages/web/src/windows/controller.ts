@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Glue42Core } from "@glue42/core";
 import { Glue42Web } from "../../web";
@@ -22,11 +23,11 @@ export class WindowsController implements LibController {
     private ioc!: IoC;
     private bridge!: GlueBridge;
     private publicWindowId!: string;
-    private actualWindowId: string | undefined;
     private allWindowProjections: WindowProjection[] = [];
-    private me!: Glue42Web.Windows.WebWindow;
+    private me?: Glue42Web.Windows.WebWindow;
     private logger!: Glue42Web.Logger.API;
     private isWorkspaceFrame?: boolean;
+    private instanceId!: string;
 
     public async start(coreGlue: Glue42Core.GlueCore, ioc: IoC): Promise<void> {
 
@@ -35,14 +36,14 @@ export class WindowsController implements LibController {
         this.logger.trace("starting the web windows controller");
 
         this.publicWindowId = ioc.publicWindowId;
-        this.actualWindowId = ioc.actualWindowId;
 
         this.addWindowOperationExecutors();
 
         this.ioc = ioc;
         this.bridge = ioc.bridge;
+        this.instanceId = coreGlue.interop.instance.instance as string;
 
-        this.logger.trace(`set the public window id: ${this.publicWindowId} and actual window id: ${this.actualWindowId}, set the bridge operations and ioc, registering with the platform now`);
+        this.logger.trace(`set the public window id: ${this.publicWindowId}, set the bridge operations and ioc, registering with the platform now`);
 
         this.platformRegistration = this.registerWithPlatform();
 
@@ -175,7 +176,7 @@ export class WindowsController implements LibController {
     }
 
     private async sayHello(): Promise<HelloSuccess> {
-        const helloSuccess = await this.bridge.send<WindowHello, HelloSuccess>("windows", operations.windowHello, { windowId: this.actualWindowId });
+        const helloSuccess = await this.bridge.send<WindowHello, HelloSuccess>("windows", operations.windowHello, { windowId: this.publicWindowId });
 
         return helloSuccess;
     }
@@ -188,7 +189,8 @@ export class WindowsController implements LibController {
 
         this.logger.trace("the platform responded to the hello message");
 
-        if (!this.isWorkspaceFrame) {
+        // if I am an iframe, I am not considered a Glue Window
+        if (!this.isWorkspaceFrame && this.publicWindowId) {
             this.logger.trace("i am not treated as a workspace frame, setting my window");
 
             const myWindow = windows.find((w) => w.windowId === this.publicWindowId);
@@ -255,18 +257,13 @@ export class WindowsController implements LibController {
 
     private async handleGetBounds(): Promise<WindowBoundsResult> {
 
-        // this handles the case where an iframe is asked for it's bounds, the iframe should respond with it's top window bounds
-        if (!this.isWorkspaceFrame && this.publicWindowId !== this.actualWindowId) {
-            const bounds = await this.me.getBounds();
-            return {
-                windowId: this.me.id,
-                bounds
-            };
+        if (!this.me && !this.isWorkspaceFrame) {
+            throw new Error("This window cannot report it's bounds, because it is not a Glue Window, most likely because it is an iframe");
         }
 
         // this.me is optional, because this handler responds to a workspace frame bounds request and the frame is not a regular GD window
         return {
-            windowId: this.isWorkspaceFrame ? "noop" : this.me.id,
+            windowId: this.isWorkspaceFrame ? "noop" : this.me!.id,
             bounds: {
                 top: window.screenTop,
                 left: window.screenLeft,
@@ -277,6 +274,11 @@ export class WindowsController implements LibController {
     }
 
     private async handleGetTitle(): Promise<WindowTitleConfig> {
+
+        if (!this.me) {
+            throw new Error("This window cannot report it's title, because it is not a Glue Window, most likely because it is an iframe");
+        }
+
         return {
             windowId: this.me.id,
             title: document.title
@@ -284,6 +286,11 @@ export class WindowsController implements LibController {
     }
 
     private async handleGetUrl(): Promise<WindowUrlResult> {
+
+        if (!this.me) {
+            throw new Error("This window cannot report it's url, because it is not a Glue Window, most likely because it is an iframe");
+        }
+
         return {
             windowId: this.me.id,
             url: window.location.href
@@ -369,11 +376,13 @@ export class WindowsController implements LibController {
     private async transmitFocusChange(hasFocus: boolean): Promise<void> {
 
         const eventData: FocusEventData = {
-            windowId: this.me.id,
+            windowId: this.me?.id || `iframe-${this.instanceId}`,
             hasFocus
         };
 
-        this.me.isFocused = hasFocus;
+        if (this.me) {
+            this.me.isFocused = hasFocus;
+        }
 
         await this.bridge.send<FocusEventData, void>("windows", operations.focusChange, eventData);
     }

@@ -19,6 +19,7 @@ export default class WebPlatformTransport implements Transport {
 
     private _communicationId: string | undefined;
     private publicWindowId: string | undefined;
+    private selfAssignedWindowId: string | undefined;
     private iAmConnected = false;
     private parentReady = false;
     private rejected = false;
@@ -40,7 +41,7 @@ export default class WebPlatformTransport implements Transport {
 
     private readonly webNamespace = "g42_core_web";
     private parent: Window | undefined;
-    private readonly parentType: "opener" | "top" | "workspace" | undefined;
+    private parentType: "window" | "workspace" | "extension" | undefined;
     private readonly parentPingTimeout = 5000;
     private readonly connectionRequestTimeout = 7000;
     private readonly defaultTargetString = "*";
@@ -49,7 +50,7 @@ export default class WebPlatformTransport implements Transport {
         connectionAccepted: { name: "connectionAccepted", handle: this.handleConnectionAccepted.bind(this) },
         connectionRejected: { name: "connectionRejected", handle: this.handleConnectionRejected.bind(this) },
         connectionRequest: { name: "connectionRequest", handle: this.handleConnectionRequest.bind(this) },
-        parentReady: { name: "parentReady", handle: this.handleParentReady.bind(this) },
+        parentReady: { name: "parentReady", handle: () => {} },
         parentPing: { name: "parentPing", handle: this.handleParentPing.bind(this) },
         platformPing: { name: "platformPing", handle: this.handlePlatformPing.bind(this) },
         platformReady: { name: "platformReady", handle: this.handlePlatformReady.bind(this) },
@@ -68,12 +69,7 @@ export default class WebPlatformTransport implements Transport {
         this.setUpUnload();
         this.setupPlatformUnloadListener();
 
-        if (!this.settings.port) {
-            this.parent = window.opener || window.top;
-
-            this.parentType = window.opener ? "opener" :
-                window.name.indexOf("#wsp") !== -1 ? "workspace" : "top";
-        }
+        this.parentType = window.name.includes("#wsp") ? "workspace" : undefined;
     }
 
     public manualSetReadyState(): void {
@@ -155,31 +151,6 @@ export default class WebPlatformTransport implements Transport {
         return Promise.resolve();
     }
 
-    private async connect(): Promise<void> {
-
-        if (this.settings.port) {
-            await this.initiateInternalConnection();
-            this.logger.debug("internal web platform connection completed");
-            return;
-        }
-
-        if (!this.parentType || !this.parent) {
-            throw new Error("Cannot initiate a connection, because there is no opener, no top and no port.");
-        }
-
-        this.logger.debug(`opening a ${this.parentType === "opener" ? "child" : "grandchild"} client web platform connection`);
-
-        await this.waitParent(this.parent, this.parentType);
-
-        if (this.parentInExtMode) {
-            await this.requestConnectionPermissionFromExt();
-        }
-
-        await this.initiateRemoteConnection(this.parent, this.parentType);
-
-        this.logger.debug(`the ${this.parentType === "opener" ? "child" : "grandchild"} client is connected`);
-    }
-
     private initiateInternalConnection(): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.logger.debug("opening an internal web platform connection");
@@ -227,7 +198,7 @@ export default class WebPlatformTransport implements Transport {
         });
     }
 
-    private initiateRemoteConnection(target: Window, parentType: "opener" | "top" | "workspace"): Promise<void> {
+    private initiateRemoteConnection(target?: Window): Promise<void> {
 
         return PromisePlus<void>((resolve, reject) => {
             this.connectionResolve = resolve;
@@ -236,18 +207,19 @@ export default class WebPlatformTransport implements Transport {
             // if I am reconnecting, I want to reuse my original client id
             this.myClientId = this.myClientId ?? generate();
 
-            const bridgeInstanceId = this.parentType === "workspace" ? window.name.substring(0, window.name.indexOf("#wsp")) : window.name;
+            const bridgeInstanceId = this.getMyWindowId() || generate();
 
             const request = {
                 glue42core: {
                     type: this.messages.connectionRequest.name,
                     clientId: this.myClientId,
-                    clientType: parentType === "top" || parentType === "workspace" ? "grandChild" : "child",
-                    bridgeInstanceId
+                    clientType: "child",
+                    bridgeInstanceId,
+                    selfAssignedWindowId: this.selfAssignedWindowId
                 }
             };
 
-            this.logger.debug(`sending connection request to ${parentType}`);
+            this.logger.debug("sending connection request");
 
             if (this.extContentConnecting) {
                 request.glue42core.clientType = "child";
@@ -256,47 +228,13 @@ export default class WebPlatformTransport implements Transport {
                 return window.postMessage(request, this.defaultTargetString);
             }
 
+            if (!target) {
+                throw new Error("Cannot send a connection request, because no glue target was specified!");
+            }
+
             target.postMessage(request, this.defaultTargetString);
-        }, this.connectionRequestTimeout, "The connection to the opener/top window timed out");
+        }, this.connectionRequestTimeout, "The connection to the target glue window timed out");
 
-    }
-
-    private async waitParent(target: Window, parentType: "opener" | "top" | "workspace"): Promise<void> {
-        const connectionNotPossibleMsg = "Cannot initiate glue, because this window was not opened or created by a glue client";
-
-        this.logger.debug("Checking the default parent");
-
-        const defaultParentCheck = await this.isParentCheckSuccess(this.tryFindProxy(target, parentType));
-
-        if (defaultParentCheck.success) {
-            this.logger.debug("The default parent was found!");
-            return;
-        }
-
-        this.logger.debug("the default parent check failed, trying to find a g42x");
-
-        const extensionCheck = this.extContentAvailable ? await this.isParentCheckSuccess(this.requestConnectionPermissionFromExt()) : { success: false };
-
-        if (extensionCheck.success) {
-            this.logger.debug("G42X was found!");
-            return;
-        }
-
-        if (parentType === "opener") {
-            throw new Error(connectionNotPossibleMsg);
-        }
-
-        this.logger.debug("the default and g42x parent checks failed, trying the direct parent, if it is different than the top");
-
-        const directParentCheck = window.top !== window.parent ? await this.isParentCheckSuccess(this.tryFindProxy(window.parent, parentType)) : { success: false };
-
-        if (directParentCheck.success) {
-            this.logger.debug("The direct parent was found!");
-            this.parent = window.parent;
-            return;
-        }
-
-        throw new Error(connectionNotPossibleMsg);
     }
 
     private async isParentCheckSuccess(parentCheck: Promise<void>): Promise<{ success: boolean }> {
@@ -307,43 +245,6 @@ export default class WebPlatformTransport implements Transport {
         } catch (error) {
             return { success: false };
         }
-    }
-
-    private tryFindProxy(target: Window, parentType: "opener" | "top" | "workspace"): Promise<void> {
-        const connectionNotPossibleMsg = "Cannot initiate glue, because this window was not opened or created by a glue client";
-
-        const parentCheck = PromisePlus<void>((resolve, reject) => {
-
-            const iAmTop = window.self === window.top;
-
-            if (parentType === "top" && iAmTop) {
-                return reject(connectionNotPossibleMsg);
-            }
-
-            this.parentPingResolve = resolve;
-
-            const message = {
-                glue42core: {
-                    type: parentType === "opener" ? this.messages.platformPing.name : this.messages.parentPing.name
-                }
-            };
-
-            this.logger.debug(`checking for ${parentType} window availability`);
-
-            this.parentPingInterval = setInterval(() => {
-                target.postMessage(message, this.defaultTargetString);
-            }, 1000);
-
-        }, this.parentPingTimeout, connectionNotPossibleMsg);
-
-        parentCheck.catch(() => {
-            if (this.parentPingInterval) {
-                clearInterval(this.parentPingInterval);
-                delete this.parentPingInterval;
-            }
-        });
-
-        return parentCheck;
     }
 
     private setUpMessageListener(): void {
@@ -405,30 +306,7 @@ export default class WebPlatformTransport implements Transport {
         });
     }
 
-    private handleParentReady(event: MessageEvent): void {
-        this.logger.debug("handling the ready signal from the parent, by resoling the pending promise.");
-        this.parentReady = true;
-
-        const data = event.data?.glue42core;
-
-        if (data && data.extMode) {
-            this.logger.debug("my parent is connected to its content script, fetching windowId and proceeding with content script connection");
-            this.parentWindowId = data.extMode.windowId;
-            this.parentInExtMode = true;
-        }
-
-        if (this.parentPingResolve) {
-            this.parentPingResolve();
-            delete this.parentPingResolve;
-        }
-
-        if (this.parentPingInterval) {
-            clearInterval(this.parentPingInterval);
-            delete this.parentPingInterval;
-        }
-    }
-
-    private handlePlatformReady(): void {
+    private handlePlatformReady(event: MessageEvent): void {
         this.logger.debug("the web platform gave the ready signal");
         this.parentReady = true;
 
@@ -441,6 +319,9 @@ export default class WebPlatformTransport implements Transport {
             clearInterval(this.parentPingInterval);
             delete this.parentPingInterval;
         }
+
+        this.parent = event.source as Window;
+        this.parentType = window.name.includes("#wsp") ? "workspace" : "window";
     }
 
     private handleConnectionAccepted(event: MessageEvent): void {
@@ -467,17 +348,11 @@ export default class WebPlatformTransport implements Transport {
             return;
         }
 
-        this.publicWindowId = this.parentType === "opener" ? window.name :
-            this.parentType === "top" ? data.parentWindowId :
-                window.name.substring(0, window.name.indexOf("#wsp"));
+        this.publicWindowId = this.getMyWindowId();
 
-        if (this.identity && this.parentType !== "top") {
-            this.identity.windowId = this.identity.windowId ?? this.publicWindowId;
-            this.identity.instance = this.identity.instance ?? this.publicWindowId;
-        }
-
-        if (this.identity && this.parentType === "top") {
-            this.identity.instance = this.identity.instance ?? generate();
+        if (this.identity) {
+            this.identity.windowId = this.publicWindowId;
+            this.identity.instance = this.identity.instance ? this.identity.instance : this.publicWindowId || generate();
         }
 
         if (this.identity && data.appName) {
@@ -587,7 +462,7 @@ export default class WebPlatformTransport implements Transport {
             return this.rejectConnectionRequest(source, event.origin, "rejecting a connection request, because the source did not provide a valid id");
         }
 
-        if (this.parentType !== "opener" || !this.parent) {
+        if (!this.parent) {
             return this.rejectConnectionRequest(source, event.origin, "Cannot forward the connection request, because no direct connection to the platform was found");
         }
 
@@ -682,7 +557,7 @@ export default class WebPlatformTransport implements Transport {
     }
 
     private handlePlatformPing(): void {
-        this.logger.error("cannot handle platform ping, because this is not a platform calls handling component");
+        return;
     }
 
     private notifyStatusChanged(status: boolean, reason?: string): void {
@@ -732,16 +607,18 @@ export default class WebPlatformTransport implements Transport {
     private handleExtConnectionResponse(event: MessageEvent): void {
         const data = event.data?.glue42core;
 
-        if (!data.approved && this.extConnectionReject) {
-            return this.extConnectionReject("Cannot initialize glue, because this app was not opened or created by a Glue Client and the request for extension connection was rejected");
+        if (!data.approved) {
+            return this.extConnectionReject ? this.extConnectionReject("Cannot initialize glue, because this app was not opened or created by a Glue Client and the request for extension connection was rejected") : undefined;
         }
 
         if (this.extConnectionResolve) {
-            this.extContentConnecting = true;
-            this.logger.debug("The extension connection was approved, proceeding.");
             this.extConnectionResolve();
             delete this.extConnectionResolve;
         }
+
+        this.extContentConnecting = true;
+        this.parentType = "extension";
+        this.logger.debug("The extension connection was approved, proceeding.");
     }
 
     private handleExtSetupRequest(): void {
@@ -773,5 +650,115 @@ export default class WebPlatformTransport implements Transport {
             });
 
         }, this.connectionRequestTimeout, "The content script was available, but was never heard to be ready");
+    }
+
+    // ---- V2 Connection ----
+
+    private async connect(): Promise<void> {
+
+        if (this.settings.port) {
+            await this.initiateInternalConnection();
+            this.logger.debug("internal web platform connection completed");
+            return;
+        }
+
+        this.logger.debug("opening a client web platform connection");
+
+        await this.findParent();
+
+        await this.initiateRemoteConnection(this.parent);
+
+        this.logger.debug("the client is connected");
+    }
+
+    private async findParent(): Promise<void> {
+        const connectionNotPossibleMsg = "Cannot initiate glue, because this window was not opened or created by a glue client";
+
+        const myInsideParents = this.getPossibleParentsInWindow(window);
+
+        const myOutsideParents = this.getPossibleParentsOutsideWindow(window.top?.opener, window.top);
+
+        const uniqueParents = new Set<Window>([...myInsideParents, ...myOutsideParents]);
+
+        if (!uniqueParents.size && !this.extContentAvailable) {
+            throw new Error(connectionNotPossibleMsg);
+        }
+
+        if (!uniqueParents.size && this.extContentAvailable) {
+            await this.requestConnectionPermissionFromExt();
+            return;
+        }
+
+        const defaultParentCheck = await this.isParentCheckSuccess(this.confirmParent(Array.from(uniqueParents)));
+
+        if (defaultParentCheck.success) {
+            this.logger.debug("The default parent was found!");
+            return;
+        }
+
+        if (!this.extContentAvailable) {
+            throw new Error(connectionNotPossibleMsg);
+        }
+
+        await this.requestConnectionPermissionFromExt();
+    }
+
+    private getPossibleParentsInWindow(currentWindow: Window): Window[] {
+        return (!currentWindow || currentWindow === currentWindow.top) ? [] : [currentWindow.parent, ...this.getPossibleParentsInWindow(currentWindow.parent)];
+    }
+
+    private getPossibleParentsOutsideWindow(opener: Window | null, current: Window | null): Window[] {
+        return (!opener || !current || opener === current) ? [] : [opener, ...this.getPossibleParentsInWindow(opener), ...this.getPossibleParentsOutsideWindow(opener.opener, opener)];
+    }
+
+    private confirmParent(targets: Window[]): Promise<void> {
+        const connectionNotPossibleMsg = "Cannot initiate glue, because this window was not opened or created by a glue client";
+
+        const parentCheck = PromisePlus<void>((resolve) => {
+
+            this.parentPingResolve = resolve;
+
+            const message = {
+                glue42core: {
+                    type: this.messages.platformPing.name
+                }
+            };
+
+            this.parentPingInterval = setInterval(() => {
+                targets.forEach((target) => {
+                    target.postMessage(message, this.defaultTargetString);
+                });
+            }, 1000);
+
+        }, this.parentPingTimeout, connectionNotPossibleMsg);
+
+        parentCheck.catch(() => {
+            if (this.parentPingInterval) {
+                clearInterval(this.parentPingInterval);
+                delete this.parentPingInterval;
+            }
+        });
+
+        return parentCheck;
+    }
+
+    private getMyWindowId(): string | undefined {
+
+        if (this.parentType === "workspace") {
+            return window.name.substring(0, window.name.indexOf("#wsp"));
+        }
+
+        if (window !== window.top) {
+            // iframes are not considered Glue Windows and have no window Id
+            return;
+        }
+
+        if (window.name?.includes("g42")) {
+            return window.name;
+        }
+
+        this.selfAssignedWindowId = this.selfAssignedWindowId || `g42-${generate()}`;
+
+        return this.selfAssignedWindowId;        
     }
 }
