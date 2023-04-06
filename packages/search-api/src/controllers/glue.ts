@@ -27,7 +27,7 @@ export class GlueController {
     }
 
     public async registerMainClientMethod(handler: (args: any, caller: Glue42Core.Interop.Instance) => Promise<any>): Promise<void> {
-        const mainMethodStatus = this.checkMyMethodExists(MAIN_PROVIDER_METHOD_NAME);
+        const mainMethodStatus = this.checkMyMethodExists(MAIN_CLIENT_METHOD_NAME);
 
         if (mainMethodStatus.exists) {
             return;

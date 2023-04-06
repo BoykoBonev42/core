@@ -179,6 +179,8 @@ export class ProviderController {
 
         this.logger.trace(`[${commandId}] An active query for query ${identification.queryId} was found and the provider is within limits, queueing the result`);
 
+        this.limitsTracker.update(command);
+
         activeQuery.publisher.queueResult(command);
 
         this.logger.trace(`[${commandId}] The query result was queued successfully.`);
@@ -369,6 +371,12 @@ export class ProviderController {
     private getFilteredProvidersBySearchTypes(providers: ProviderModel[], searchTypes: Glue42Search.SearchType[]): ProviderModel[] {
 
         const filtered = providers.filter((provider) => {
+
+            // a provider with no registered types should receive all queries
+            if (!provider.myProviderData.types || !provider.myProviderData.types.length) {
+                return true;
+            }
+
             return provider.myProviderData.types?.some((providerSearchType) => searchTypes.some((searchType) => searchType.name === providerSearchType.name));
         });
 

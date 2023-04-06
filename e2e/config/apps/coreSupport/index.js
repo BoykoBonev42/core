@@ -62,7 +62,7 @@ const getAllContextNames = async (_, success) => {
     success({ result: contextNames });
 };
 
-const destroyContext = async({ name }, success, error) => {
+const destroyContext = async ({ name }, success, error) => {
     if (!name) {
         return error(`Context name is not provided to operation destroyContext`);
     }
@@ -72,7 +72,7 @@ const destroyContext = async({ name }, success, error) => {
     success();
 };
 
-const setPathContext = async({ name, path, data }, success, error) => {
+const setPathContext = async ({ name, path, data }, success, error) => {
     if (!name) {
         return error(`Context name is not provided to operation setPathContext`);
     }
@@ -82,7 +82,7 @@ const setPathContext = async({ name, path, data }, success, error) => {
     success();
 };
 
-const setPathsContext = async({ name, paths }, success, error) => {
+const setPathsContext = async ({ name, paths }, success, error) => {
     if (!name) {
         return error(`Context name is not provided to operation setPathsContext`);
     }
@@ -299,7 +299,7 @@ const publish = async ({ data, name }, success) => {
     success();
 };
 
-const fdc3JoinUserChannel = async({ channelId }, success, error) => {
+const fdc3JoinUserChannel = async ({ channelId }, success, error) => {
     try {
         await fdc3.joinUserChannel(channelId);
         success();
@@ -308,7 +308,7 @@ const fdc3JoinUserChannel = async({ channelId }, success, error) => {
     }
 }
 
-const fdc3Broadcast = async({ context }, success, error) => {
+const fdc3Broadcast = async ({ context }, success, error) => {
     try {
         await fdc3.broadcast(context);
         success();
@@ -317,12 +317,12 @@ const fdc3Broadcast = async({ context }, success, error) => {
     }
 };
 
-const fdc3RaiseIntent = async(params, success, error) => {
+const fdc3RaiseIntent = async (params, success, error) => {
     try {
         const resolution = await fdc3.raiseIntent(params.intent, params.context, params.app);
 
         const { getResult, ...data } = resolution;
-        
+
         const resolutionResult = await getResult();
 
         const resultIsChannel = isChannel(resolutionResult);
@@ -331,12 +331,12 @@ const fdc3RaiseIntent = async(params, success, error) => {
             privateChannel = resolutionResult;
         }
 
-        const result = { 
-            data, 
+        const result = {
+            data,
             resolutionResult:
                 resultIsChannel // if result is a channel => return the metadata only
-                    ? extractChannelMetadata(resolutionResult) 
-                    : resolutionResult 
+                    ? extractChannelMetadata(resolutionResult)
+                    : resolutionResult
         };
 
         success({ result });
@@ -345,7 +345,7 @@ const fdc3RaiseIntent = async(params, success, error) => {
     }
 };
 
-const fdc3BroadcastOnAppChannel = async({ channelId, context }, success, error) => {
+const fdc3BroadcastOnAppChannel = async ({ channelId, context }, success, error) => {
     const channel = await fdc3.getOrCreateChannel(channelId);
 
     if (!channel) {
@@ -360,7 +360,7 @@ const fdc3BroadcastOnAppChannel = async({ channelId, context }, success, error) 
     }
 };
 
-const fdc3BroadcastOnPrivateChannel = async({ context }, success, error) => {
+const fdc3BroadcastOnPrivateChannel = async ({ context }, success, error) => {
     try {
         await privateChannel.broadcast(context);
         success();
@@ -369,7 +369,7 @@ const fdc3BroadcastOnPrivateChannel = async({ context }, success, error) => {
     }
 }
 
-const fdc3AddContextListenerOnPrivateChannel = async({ contextType }, success, error) => {
+const fdc3AddContextListenerOnPrivateChannel = async ({ contextType }, success, error) => {
     const handler = () => {};
 
     try {
@@ -380,7 +380,7 @@ const fdc3AddContextListenerOnPrivateChannel = async({ contextType }, success, e
     }
 };
 
-const fdc3UnsubscribeFromPrivateChannelListener = async(_, success, error) => {
+const fdc3UnsubscribeFromPrivateChannelListener = async (_, success, error) => {
     try {
         privateChannelListener.unsubscribe();
         success();
@@ -389,9 +389,9 @@ const fdc3UnsubscribeFromPrivateChannelListener = async(_, success, error) => {
     }
 };
 
-const fdc3AddIntentListener = async({ intent, returnValue }, success, error) => {
+const fdc3AddIntentListener = async ({ intent, returnValue }, success, error) => {
     try {
-        const listener = await fdc3.addIntentListener(intent, async(context) => {
+        const listener = await fdc3.addIntentListener(intent, async (context) => {
             fdc3IntentContextAndListener[intent] = { ...fdc3IntentContextAndListener[intent], context };
 
             if (!returnValue) {
@@ -427,7 +427,7 @@ const fdc3UnsubscribeIntentListener = async ({ intent }, success, error) => {
     success();
 };
 
-const fdc3GetIntentListenerContext = async({ intent }, success, error) => {
+const fdc3GetIntentListenerContext = async ({ intent }, success, error) => {
     const intentListenerAndContext = fdc3IntentContextAndListener[intent];
 
     if (!intentListenerAndContext) {
@@ -439,16 +439,16 @@ const fdc3GetIntentListenerContext = async({ intent }, success, error) => {
     success({ result: context });
 };
 
-const fdc3CreatePrivateChannel = async(_, success, error) => {
+const fdc3CreatePrivateChannel = async (_, success, error) => {
     try {
         privateChannel = await fdc3.createPrivateChannel();
         success();
     } catch (err) {
         error(err);
     }
-} 
+}
 
-const initFdc3 = async(_, success, error) => {
+const initFdc3 = async (_, success, error) => {
     const fdc3Ready = new Promise((resolve) => {
         window.addEventListener("fdc3Ready", resolve);
     });
@@ -460,13 +460,81 @@ const initFdc3 = async(_, success, error) => {
     success();
 };
 
-const fdc3DisconnectFromPrivateChannel = async(_, success, error) => {
+const fdc3DisconnectFromPrivateChannel = async (_, success, error) => {
     try {
         await privateChannel.disconnect();
         success();
     } catch (err) {
         error(err);
     }
+};
+
+const createSimpleSearchProvider = async (_, success, error) => {
+
+    const provider = await glue.search.registerProvider({ name: "support" });
+
+    provider.onQuery(async (query) => {
+        if (!query.search || !query.search.length) {
+            query.done();
+            return;
+        }
+
+        const allApps = glue.appManager.applications();
+
+        const firstLevel = allApps.filter((app) => !!app.title?.toLowerCase().includes(query.search.toLowerCase()));
+        const secondLevel = allApps.filter((app) => !!app.caption?.toLowerCase().includes(query.search.toLowerCase()));
+        const thirdLevel = allApps.filter((app) => app.name.toLowerCase().includes(query.search.toLowerCase()));
+
+        const foundApps = Array.from(new Set([...firstLevel, ...secondLevel, ...thirdLevel]));
+
+        const appQueryResults = foundApps.map((app) => {
+            return {
+                type: {
+                    name: "application",
+                    displayName: "Applications"
+                },
+                id: app.name,
+                displayName: app.title,
+                description: app.caption,
+                iconURL: app.icon
+            }
+        });
+
+        try {
+            appQueryResults.forEach((queryResult) => query.sendResult(queryResult));
+        } catch (error) {
+            console.warn(error)
+        }
+
+        const allLayouts = await glue.layouts.getAll("Global");
+
+        const filteredGlobal = allLayouts.filter((layout) => layout.name.toLowerCase().includes(query.search.toLowerCase()));
+
+        const allWorkspaces = await glue.layouts.getAll("Workspace");
+
+        const filteredWorkspace = allWorkspaces.filter((workspace) => workspace.name.toLowerCase().includes(query.search.toLowerCase()));
+
+        const layoutQueryResults = [...filteredGlobal, ...filteredWorkspace].map((layout) => {
+            return {
+                type: {
+                    name: layout.type === "Global" ? "layout" : "workspace",
+                    displayName: layout.type === "Global" ? "Layouts" : "Workspaces"
+                },
+                id: layout.name,
+                displayName: layout.name
+            }
+        });
+
+        try {
+            layoutQueryResults.forEach((queryResult) => query.sendResult(queryResult));
+        } catch (error) {
+            console.warn(error);
+        }
+
+        query.done();
+    });
+
+    success();
 };
 
 const operations = [
@@ -502,6 +570,7 @@ const operations = [
     { name: 'fdc3UnsubscribeIntentListener', execute: fdc3UnsubscribeIntentListener },
     { name: 'fdc3GetIntentListenerContext', execute: fdc3GetIntentListenerContext },
     { name: "fdc3CreatePrivateChannel", execute: fdc3CreatePrivateChannel },
+    { name: "createSimpleSearchProvider", execute: createSimpleSearchProvider }
 ];
 
 const handleControl = (args, _, success, error) => {
@@ -518,7 +587,7 @@ const handleControl = (args, _, success, error) => {
     foundOperation.execute(params, success, error);
 };
 
-GlueWeb().then((glue) => {
+GlueWeb({ libraries: [window.GlueSearch], systemLogger: {level: "warn"} }).then((glue) => {
     window.glue = glue;
 
     glue.intents.addIntentListener('core-intent', (context) => context);

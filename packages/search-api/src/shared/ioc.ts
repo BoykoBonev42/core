@@ -25,10 +25,6 @@ export class IoC {
         private readonly glue: Glue42Core.GlueCore, private readonly config?: Glue42Search.Config
     ) {}
 
-    public async initiate(): Promise<void> {
-        await this.clientController.start();
-    }
-
     public get glueController(): GlueController {
         if (!this._glueController) {
             this._glueController = new GlueController(this.glue);

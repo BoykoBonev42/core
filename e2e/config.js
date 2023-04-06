@@ -17,7 +17,8 @@ module.exports = {
         'packages/web/dist/web.es.js',
         'packages/web-platform/dist/platform.web.es.js',
         'packages/workspaces-api/dist/workspaces.es.js',
-        'packages/fdc3/dist/fdc3.umd.js'
+        'packages/fdc3/dist/fdc3.umd.js',
+        'packages/search-api/dist/search-api.umd.js'
     ],
     run: [
         {

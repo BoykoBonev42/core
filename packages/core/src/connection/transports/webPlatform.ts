@@ -50,7 +50,11 @@ export default class WebPlatformTransport implements Transport {
         connectionAccepted: { name: "connectionAccepted", handle: this.handleConnectionAccepted.bind(this) },
         connectionRejected: { name: "connectionRejected", handle: this.handleConnectionRejected.bind(this) },
         connectionRequest: { name: "connectionRequest", handle: this.handleConnectionRequest.bind(this) },
-        parentReady: { name: "parentReady", handle: () => {} },
+        parentReady: {
+            name: "parentReady", handle: () => {
+                //
+            }
+        },
         parentPing: { name: "parentPing", handle: this.handleParentPing.bind(this) },
         platformPing: { name: "platformPing", handle: this.handlePlatformPing.bind(this) },
         platformReady: { name: "platformReady", handle: this.handlePlatformReady.bind(this) },
@@ -759,6 +763,6 @@ export default class WebPlatformTransport implements Transport {
 
         this.selfAssignedWindowId = this.selfAssignedWindowId || `g42-${generate()}`;
 
-        return this.selfAssignedWindowId;        
+        return this.selfAssignedWindowId;
     }
 }

@@ -1,8 +1,6 @@
 import { Glue42Search } from "../../search";
 import { LimitTestResult, ProviderQueryLimit, ProviderQueryResultCommand, QueryProviderResultsTracker } from "../shared/types";
 
-
-
 // important to work in O(1)
 export class LimitsTracker {
     private readonly limitsLookup: { [key in string]: { [key in string]: QueryProviderResultsTracker } } = {};
@@ -31,20 +29,43 @@ export class LimitsTracker {
             foundLookup[command.identification.providerId] = providerStateLookup;
         }
 
-        providerStateLookup.total = ++providerStateLookup.total;
-
-        if (providerStateLookup.total > limitData.maxResults) {
+        if ((providerStateLookup.total + 1) > limitData.maxResults) {
             return { maxLimitHit: true };
         }
 
         const resultTypeName = command.result.type.name;
 
-        providerStateLookup[resultTypeName] = providerStateLookup[resultTypeName] ? ++providerStateLookup[resultTypeName] : 1;
+        if (!resultTypeName) {
+            return;
+        }
 
-        if (providerStateLookup[resultTypeName] > limitData.maxResultsPerType) {
+        const currentResultTypeCount = providerStateLookup[resultTypeName] || 0;
+
+        if ((currentResultTypeCount + 1) > limitData.maxResultsPerType) {
             return { maxLimitPerTypeHit: true };
         }
 
+    }
+
+    public update(command: ProviderQueryResultCommand): void {
+        const foundLookup = this.limitsLookup[command.identification.queryId];
+        const limitData = this.limitsData[command.identification.queryId];
+
+        if (!foundLookup || !limitData) {
+            return;
+        }
+
+        const providerStateLookup = foundLookup[command.identification.providerId];
+
+        providerStateLookup.total += 1;
+
+        const resultTypeName = command.result.type.name;
+
+        if (!resultTypeName) {
+            return;
+        }
+
+        providerStateLookup[resultTypeName] = providerStateLookup[resultTypeName] ? providerStateLookup[resultTypeName] + 1 : 1;
     }
 
     public cleanTracking(queryId: string): void {

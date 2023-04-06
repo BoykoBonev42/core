@@ -7,8 +7,6 @@ const factoryFunction: GlueSearchFactoryFunction = async (glue: Glue42Core.GlueC
 
     const ioc = new IoC(glue, config);
 
-    await ioc.initiate();
-
     (glue as any).search = ioc.facade.exposeApi();
 };
 

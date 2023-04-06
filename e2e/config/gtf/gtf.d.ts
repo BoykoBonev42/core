@@ -78,6 +78,10 @@ export namespace Gtf {
             setPaths(ctxName: string, paths: Glue42Web.Contexts.PathValue[]): Promise<void>
         };
 
+        search: {
+            createSimpleProvider(): Promise<void>;
+        };
+
         fdc3?: {
             joinUserChannel(channelId: string): Promise<void>;
             broadcast(context: Context): Promise<void>;

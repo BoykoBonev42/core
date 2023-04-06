@@ -275,6 +275,27 @@ describe("registerProvider ", () => {
             await wrapper.promise;
         });
 
+        it("should be called when a client makes a query, when the provider has no defined type, but the query has a defined type", async () => {
+            const wrapper = gtf.wrapPromise();
+
+            const ready = gtf.waitFor(2, () => wrapper.resolve());
+
+            const provider = await glue.search.registerProvider({ name: "test" });
+
+            providersToClear.push(provider);
+
+            gtf.withUnsub(provider.onQuery((query) => {
+                query.done();
+                ready();
+            }));
+
+            const query = await glue.search.query({ search: "asd", types: [{ name: "testType" }] });
+
+            await gtf.withUnsub(query.onCompleted(() => ready()));
+
+            await wrapper.promise;
+        });
+
         it("should contain a valid provider query object", async () => {
             const wrapper = gtf.wrapPromise();
 
@@ -933,7 +954,7 @@ describe("registerProvider ", () => {
 
             providersToClear.push(provider);
 
-            gtf.withUnsub(provider.onQueryCancel(() => { }));
+            gtf.withUnsub(provider.onQueryCancel(() => {}));
         });
 
         it("should return a function", async () => {
@@ -941,7 +962,7 @@ describe("registerProvider ", () => {
 
             providersToClear.push(provider);
 
-            const unsub = provider.onQueryCancel(() => { });
+            const unsub = provider.onQueryCancel(() => {});
 
             expect(unsub).to.be.a("function");
         });

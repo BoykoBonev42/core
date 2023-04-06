@@ -1,3 +1,5 @@
+5.10.1
+chore: fixed linting errors
 5.10.0
 feat: reworked the web-platform transport to recursively search for a gw
 5.9.0

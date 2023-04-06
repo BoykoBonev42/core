@@ -28,10 +28,6 @@ export class ClientController {
         private readonly modelFactory: ModelFactory
     ) {}
 
-    public async start(): Promise<void> {
-        await this.glueController.registerMainClientMethod(this.handleProviderCall.bind(this));
-    }
-
     public setDebounceMS(data: { milliseconds: number, commandId: string }): void {
 
         this.logger.info(`[${data.commandId}] Setting the debounceMS to: ${data.milliseconds}`);
@@ -54,6 +50,8 @@ export class ClientController {
         if (this.debounceMS && !skipDebounce) {
             return this.debounceQuery(data);
         }
+
+        await this.glueController.registerMainClientMethod(this.handleProviderCall.bind(this));
 
         const { queryConfig, commandId } = data;
 
@@ -276,6 +274,11 @@ export class ClientController {
 
         return servers.filter((server) => {
             const allTypes = server.info.supportedTypes;
+
+            // allows providers with no defined type to receive all queries
+            if (!allTypes || !allTypes.length) {
+                return true;
+            }
 
             return allTypes.some((supportedType) => allowedLookup[supportedType]);
         });

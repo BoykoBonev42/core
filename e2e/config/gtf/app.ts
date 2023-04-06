@@ -56,9 +56,9 @@ export class GtfApp implements Gtf.App {
                 const responseMethodName = `agm.integration.tests.onMethodInvoke.${this.myInstance.id}.${++this.registerResponseCounter}`;
 
                 await this.glue.interop.register(responseMethodName, (args) => {
-                    const success = () => { };
+                    const success = () => {};
 
-                    const error = () => { };
+                    const error = () => {};
 
                     return callback(args.args, this.myInstance.agm, success, error);
                 });
@@ -212,7 +212,7 @@ export class GtfApp implements Gtf.App {
                     operation: "getAllContextNames",
                     params: {}
                 };
-        
+
                 return this.sendControl<string[]>(controlArgs);
             },
 
@@ -224,7 +224,7 @@ export class GtfApp implements Gtf.App {
                         data: ctxData
                     }
                 };
-        
+
                 return this.sendControl<void>(controlArgs);
             },
 
@@ -236,10 +236,10 @@ export class GtfApp implements Gtf.App {
                         data: ctxData
                     }
                 };
-        
+
                 return this.sendControl<void>(controlArgs);
             },
-            
+
             get: (ctxName: string): Promise<any> => {
                 const controlArgs: ControlArgs = {
                     operation: "getContext",
@@ -247,7 +247,7 @@ export class GtfApp implements Gtf.App {
                         name: ctxName
                     }
                 };
-        
+
                 return this.sendControl<any>(controlArgs);
             },
 
@@ -262,12 +262,12 @@ export class GtfApp implements Gtf.App {
                 return this.sendControl<any>(controlArgs);
             },
 
-            setPath: (ctxName: string, path: string, data: any): Promise<void>  => {
+            setPath: (ctxName: string, path: string, data: any): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: "setPathContext",
                     params: {
-                        name: ctxName, 
-                        path, 
+                        name: ctxName,
+                        path,
                         data
                     }
                 };
@@ -275,11 +275,11 @@ export class GtfApp implements Gtf.App {
                 return this.sendControl<any>(controlArgs);
             },
 
-            setPaths: (ctxName: string, paths: Glue42Web.Contexts.PathValue[]): Promise<void>  => {
+            setPaths: (ctxName: string, paths: Glue42Web.Contexts.PathValue[]): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: "setPathsContext",
                     params: {
-                        name: ctxName, 
+                        name: ctxName,
                         paths
                     }
                 };
@@ -289,9 +289,22 @@ export class GtfApp implements Gtf.App {
         };
     }
 
+    public get search() {
+        return {
+            createSimpleProvider: async () => {
+                const controlArgs: ControlArgs = {
+                    operation: "createSimpleSearchProvider",
+                    params: {}
+                };
+
+                return this.sendControl<void>(controlArgs);
+            }
+        }
+    }
+
     public get fdc3() {
         return {
-            joinUserChannel: async(channelId: string): Promise<void> => {
+            joinUserChannel: async (channelId: string): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: "fdc3JoinUserChannel",
                     params: { channelId }
@@ -301,7 +314,7 @@ export class GtfApp implements Gtf.App {
 
                 return this.sendControl<void>(controlArgs);
             },
-            broadcast: async(context: Context): Promise<void> => {
+            broadcast: async (context: Context): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: "fdc3Broadcast",
                     params: { context }
@@ -311,7 +324,7 @@ export class GtfApp implements Gtf.App {
 
                 return this.sendControl<void>(controlArgs);
             },
-            broadcastOnAppChannel: async(channelId: string, context: Context): Promise<void> => {
+            broadcastOnAppChannel: async (channelId: string, context: Context): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: "fdc3BroadcastOnAppChannel",
                     params: { channelId, context }
@@ -321,7 +334,7 @@ export class GtfApp implements Gtf.App {
 
                 return this.sendControl<void>(controlArgs);
             },
-            broadcastOnPrivateChannel: async(context: Context): Promise<void> => {
+            broadcastOnPrivateChannel: async (context: Context): Promise<void> => {
                 const controlArgs = {
                     operation: "fdc3BroadcastOnPrivateChannel",
                     params: { context }
@@ -331,7 +344,7 @@ export class GtfApp implements Gtf.App {
 
                 return this.sendControl<void>(controlArgs);
             },
-            raiseIntent: async(intent: string, context: Context, app?: AppIdentifier): Promise<IntentResolution> => {
+            raiseIntent: async (intent: string, context: Context, app?: AppIdentifier): Promise<IntentResolution> => {
                 const controlArgs: ControlArgs = {
                     operation: "fdc3RaiseIntent",
                     params: { intent, context }
@@ -350,7 +363,7 @@ export class GtfApp implements Gtf.App {
                     getResult: () => Promise.resolve(resolutionResult)
                 }
             },
-            addContextListenerOnPrivateChannel: async(contextType: string): Promise<void> => {
+            addContextListenerOnPrivateChannel: async (contextType: string): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: "fdc3AddContextListenerOnPrivateChannel",
                     params: { contextType }
@@ -360,17 +373,17 @@ export class GtfApp implements Gtf.App {
 
                 return this.sendControl<void>(controlArgs);
             },
-            unsubscribeFromPrivateChannelListener: async(): Promise<void> => {
+            unsubscribeFromPrivateChannelListener: async (): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: "fdc3UnsubscribeFromPrivateChannelListener",
-                    params: { }
+                    params: {}
                 }
 
                 await this.fdc3Ready;
 
                 return this.sendControl<void>(controlArgs);
             },
-            disconnectFromPrivateChannel: async(): Promise<void> => {
+            disconnectFromPrivateChannel: async (): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: "fdc3DisconnectFromPrivateChannel",
                     params: {}
@@ -378,9 +391,9 @@ export class GtfApp implements Gtf.App {
 
                 await this.fdc3Ready;
 
-                return this.sendControl<void>(controlArgs); 
+                return this.sendControl<void>(controlArgs);
             },
-            addIntentListener: async(intent: string, returnValue?: Fdc3AddIntentListenerReturnValue): Promise<void> => {
+            addIntentListener: async (intent: string, returnValue?: Fdc3AddIntentListenerReturnValue): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: 'fdc3AddIntentListener',
                     params: { intent, returnValue }
@@ -390,7 +403,7 @@ export class GtfApp implements Gtf.App {
 
                 return this.sendControl<void>(controlArgs);
             },
-            unsubscribeIntentListener: async(intent: string): Promise<void> => {
+            unsubscribeIntentListener: async (intent: string): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: 'fdc3UnsubscribeIntentListener',
                     params: { intent }
@@ -400,7 +413,7 @@ export class GtfApp implements Gtf.App {
 
                 return this.sendControl<void>(controlArgs);
             },
-            getIntentListenerContext: async(intent: string): Promise<void> => {
+            getIntentListenerContext: async (intent: string): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: 'fdc3GetIntentListenerContext',
                     params: { intent }
@@ -410,7 +423,7 @@ export class GtfApp implements Gtf.App {
 
                 return this.sendControl<void>(controlArgs);
             },
-            createPrivateChannel: async(): Promise<void> => {
+            createPrivateChannel: async (): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: 'fdc3CreatePrivateChannel',
                     params: {}

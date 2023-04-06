@@ -1,3 +1,5 @@
+1.2.0
+feat: validated support for the legacy protocol
 1.1.1
 chore: dependencies bump
 1.1.0
