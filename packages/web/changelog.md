@@ -1,3 +1,5 @@
+2.19.1
+chore: bump due to dependencies update
 2.19.0
 feat: now recursively searches a gw in all parents and openers
 fix: iframes now have no window.my

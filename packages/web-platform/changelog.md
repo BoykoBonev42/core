@@ -1,3 +1,5 @@
+1.24.1
+chore: bump due to dependencies update
 1.24.0
 feat: added support for handling self-assigned glue windows
 1.23.1
