@@ -6,6 +6,7 @@ export interface WorkspaceWindowData {
     name: string;
     windowId: string;
     frameId: string;
+    workspaceId?: string;
     appName?: string;
     context?: any;
     title?: string;

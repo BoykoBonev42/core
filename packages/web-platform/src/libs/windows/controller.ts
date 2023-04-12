@@ -192,12 +192,16 @@ export class WindowsController implements LibController {
 
         this.sessionController.saveWindowData({ windowId: data.windowId, name: data.name });
 
-        this.sessionController.saveWorkspaceClient({ windowId: data.windowId, frameId: data.frameId, initialTitle: data.title });
+        this.sessionController.saveWorkspaceClient({ windowId: data.windowId, frameId: data.frameId, initialTitle: data.title, workspaceId: data.workspaceId });
 
         this.sessionController.saveNonGlue({ windowId: data.windowId });
 
-        if (data.context) {
-            await this.glueController.setStartContext(data.windowId, data.context, "window");
+        const hibernatedContext = await this.glueController.pullHibernatedContext(data.windowId);
+
+        const startContext = data.context || hibernatedContext;
+
+        if (startContext) {
+            await this.glueController.setStartContext(data.windowId, startContext, "window");
         }
 
         this.emitStreamData("windowAdded", { windowId: data.windowId, name: data.name });

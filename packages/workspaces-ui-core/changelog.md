@@ -1,3 +1,5 @@
+1.15.6
+fix: resuming a hibernated workspace now also restores all known contexts
 1.15.5
 chore: bump due to dependencies update
 1.15.4

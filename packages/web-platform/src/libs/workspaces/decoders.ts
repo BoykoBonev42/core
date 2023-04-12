@@ -76,6 +76,7 @@ export const workspaceWindowDataDecoder: Decoder<WorkspaceWindowData> = object({
     name: nonEmptyStringDecoder,
     windowId: nonEmptyStringDecoder,
     frameId: nonEmptyStringDecoder,
+    workspaceId: optional(nonEmptyStringDecoder),
     appName: optional(nonEmptyStringDecoder),
     context: optional(anyJson()),
     title: optional(nonEmptyStringDecoder)
@@ -575,7 +576,7 @@ export const simpleWindowOperationSuccessResultDecoder: Decoder<SimpleWindowOper
     windowId: nonEmptyStringDecoder
 });
 
-export const voidResultDecoder: Decoder<{}> = anyJson();
+export const voidResultDecoder: Decoder<any> = anyJson();
 
 export const frameStateResultDecoder: Decoder<FrameStateResult> = object({
     state: frameStateDecoder
@@ -840,7 +841,7 @@ export const setMaximizationBoundaryConfigDecoder: Decoder<SetMaximizationBounda
 export const workspaceWindowOnSaveDataDecoder: Decoder<WorkspaceWindowOnSaveData> = object({
     windowId: nonEmptyStringDecoder,
     windowContext: optional(anyJson())
-})
+});
 
 export const getWorkspaceWindowsOnLayoutSaveContextResult: Decoder<GetWorkspaceWindowsOnLayoutSaveContextResult> = object({
     windowsOnSaveData: array(workspaceWindowOnSaveDataDecoder)

@@ -119,6 +119,7 @@ export interface SessionWindowData {
 export interface WorkspaceWindowSession {
     windowId: string;
     frameId: string;
+    workspaceId?: string;
     initialTitle?: string;
 }
 

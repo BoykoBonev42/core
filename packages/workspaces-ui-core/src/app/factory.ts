@@ -281,7 +281,7 @@ export class ApplicationFactory {
         }
 
         try {
-            await this._platformCommunicator.notifyFrameWillStart(windowId, appName, windowContext, windowTitle);
+            await this._platformCommunicator.notifyFrameWillStart(windowId, appName, windowContext, windowTitle, workspace.id);
             await this._frameController.startFrame(componentId, url, undefined, windowId);
             const newlyAddedWindow = store.getWindow(componentId) as Window;
 

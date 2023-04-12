@@ -221,6 +221,8 @@ export class WorkspacesController implements LibController {
 
         this.logger?.trace(`[${commandId}] targeting frame ${frame.windowId}`);
 
+        await this.glueController.preserveAllWorkspaceWindowsContext(config.workspaceId);
+
         await this.glueController.callFrame<WorkspaceSelector, void>(this.operations.hibernateWorkspace, config, frame.windowId);
 
         this.logger?.trace(`[${commandId}] frame ${frame.windowId} gave a success signal, responding to caller`);

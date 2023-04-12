@@ -145,7 +145,7 @@ export class WorkspacesManager {
         if (!this._frameController) {
             // tslint:disable-next-line: no-console
             console.warn("Your subscription to window clicked wasn't successful, because the Workspaces library isn't initialized yet");
-            return (): void => { };
+            return (): void => {};
         }
         return this._frameController.onFrameContentClicked(cb);
     };
@@ -866,6 +866,10 @@ export class WorkspacesManager {
         workspace.hibernatedWindows = workspace.windows;
         (snapshot.workspacesOptions as any).isHibernated = true;
         workspace.hibernateConfig = snapshot;
+
+        const currentWorkspaceContext = await this.getWorkspaceContext(workspace.id);
+        // done as a more stylish way to handle the possibly undefined workspaceOptions
+        workspace.hibernateConfig.workspacesOptions = Object.assign({}, { ...workspace.hibernateConfig.workspacesOptions }, { context: currentWorkspaceContext });
 
         workspace.windows.map((w) => store.getWindowContentItem(w.id)).forEach((w) => this.closeTab(w, false));
 

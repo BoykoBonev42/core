@@ -203,7 +203,7 @@ describe("resume() Should", () => {
 
     it("not trigger onWindowAdded after being resumed", (done) => {
         workspace.frame.createWorkspace(basicConfig).then(() => {
-            return gtf.wait(3000, () => { });
+            return gtf.wait(3000, () => {});
         }).then(() => {
             return workspace.onWindowAdded(() => {
                 done("Should not resolve");
@@ -252,6 +252,154 @@ describe("resume() Should", () => {
             done("Should not resolve");
         }).catch(() => {
             done()
+        });
+    });
+
+    describe("contexts", () => {
+
+        it("should restore a previously set workspace context", async () => {
+
+            const context = { test: 42 };
+
+            await workspace.setContext(context);
+
+            const secondWorkspace = await workspace.frame.createWorkspace(basicConfig);
+
+            await workspace.hibernate();
+            await workspace.resume();
+            await workspace.refreshReference();
+
+            const wspContext = await workspace.getContext();
+
+            expect(wspContext).to.eql(context);
+        });
+
+        it("should restore a previously set window context in one of the workspace windows", async () => {
+            const context = { test: 42 };
+
+            await Promise.all(workspace.getAllWindows().map((w) => w.forceLoad()));
+
+            const firstWindow = workspace.getWindow(() => true);
+
+            const webWindow = glue.windows.findById(firstWindow.id);
+
+            await webWindow.setContext(context);
+
+            const secondWorkspace = await workspace.frame.createWorkspace(basicConfig);
+
+            await workspace.hibernate();
+            await workspace.resume();
+            await workspace.refreshReference();
+
+            const webWindowAfter = glue.windows.findById(firstWindow.id);
+
+            const webWindowCtxAfter = await webWindowAfter.getContext();
+
+            expect(webWindowCtxAfter).to.eql(context);
+        });
+
+        it("should restore a previously set window context in all of the workspace windows", async () => {
+            const windowIds = [];
+
+            await Promise.all(workspace.getAllWindows().map((w) => w.forceLoad()));
+
+            const allWindows = workspace.getAllWindows(() => true);
+
+            for (const workspaceWindow of allWindows) {
+                const webWindow = glue.windows.findById(workspaceWindow.id);
+
+                const ctx = { test: workspaceWindow.id };
+
+                windowIds.push(workspaceWindow.id)
+
+                await webWindow.setContext(ctx);
+            }
+
+            const secondWorkspace = await workspace.frame.createWorkspace(basicConfig);
+
+            await workspace.hibernate();
+            await workspace.resume();
+            await workspace.refreshReference();
+
+            for (const id of windowIds) {
+                const webWindowAfter = glue.windows.findById(id);
+
+                const webWindowCtxAfter = await webWindowAfter.getContext();
+
+                expect(webWindowCtxAfter).to.eql({ test: id });
+            }
+
+        });
+
+        it("should restore a previously set window context in one of the workspace windows during two hibernations", async () => {
+            const context = { test: 42 };
+
+            await Promise.all(workspace.getAllWindows().map((w) => w.forceLoad()));
+
+            const firstWindow = workspace.getWindow(() => true);
+
+            const webWindow = glue.windows.findById(firstWindow.id);
+
+            await webWindow.setContext(context);
+
+            const secondWorkspace = await workspace.frame.createWorkspace(basicConfig);
+
+            await workspace.hibernate();
+            await workspace.resume();
+            await workspace.refreshReference();
+
+            const webWindowAfter = glue.windows.findById(firstWindow.id);
+
+            const webWindowCtxAfter = await webWindowAfter.getContext();
+
+            expect(webWindowCtxAfter).to.eql(context);
+
+            await workspace.hibernate();
+            await workspace.resume();
+            await workspace.refreshReference();
+
+            const webWindowAfter2 = glue.windows.findById(firstWindow.id);
+
+            const webWindowCtxAfter2 = await webWindowAfter2.getContext();
+
+            expect(webWindowCtxAfter2).to.eql(context);
+        });
+
+        it("should restore a previously set window context in one of the workspace windows during two hibernations when the context was changed inbetween hibernations", async () => {
+            const context = { test: 42 };
+
+            await Promise.all(workspace.getAllWindows().map((w) => w.forceLoad()));
+
+            const firstWindow = workspace.getWindow(() => true);
+
+            const webWindow = glue.windows.findById(firstWindow.id);
+
+            await webWindow.setContext(context);
+
+            const secondWorkspace = await workspace.frame.createWorkspace(basicConfig);
+
+            await workspace.hibernate();
+            await workspace.resume();
+            await workspace.refreshReference();
+
+            const webWindowAfter = glue.windows.findById(firstWindow.id);
+
+            const webWindowCtxAfter = await webWindowAfter.getContext();
+
+            expect(webWindowCtxAfter).to.eql(context);
+
+            const contextChanged = { test: 66 };
+            await webWindowAfter.setContext(contextChanged);
+
+            await workspace.hibernate();
+            await workspace.resume();
+            await workspace.refreshReference();
+
+            const webWindowAfter2 = glue.windows.findById(firstWindow.id);
+
+            const webWindowCtxAfter2 = await webWindowAfter2.getContext();
+
+            expect(webWindowCtxAfter2).to.eql(contextChanged);
         });
     });
 });

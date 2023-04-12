@@ -37,7 +37,7 @@ export class PlatformCommunicator {
 
     }
 
-    public notifyFrameWillStart(windowId: string, appName?: string, context?: any, title?: string) {
+    public notifyFrameWillStart(windowId: string, appName?: string, context?: any, title?: string, workspaceId?: string) {
         const systemId = (window as any).glue42core.communicationId;
 
         return this._glue.interop.invoke(PlatformControlMethod, {
@@ -49,7 +49,8 @@ export class PlatformCommunicator {
                 frameId: this._frameId,
                 appName,
                 context,
-                title
+                title,
+                workspaceId
             }
         }, systemId ? { instance: systemId } : undefined);
     }

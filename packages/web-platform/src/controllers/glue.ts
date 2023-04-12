@@ -257,6 +257,35 @@ export class GlueController {
 
     }
 
+    public async preserveAllWorkspaceWindowsContext(workspaceId: string): Promise<void> {
+        const allWorkspaceClients = this.sessionStorage.pickWorkspaceClients((client) => client.workspaceId === workspaceId);
+
+        for (const workspaceClient of allWorkspaceClients) {
+            const clientCtx = await this._systemGlue.contexts.get(`___window___${workspaceClient.windowId}`);
+
+            if (!clientCtx || (typeof clientCtx === "object" && !Object.keys(clientCtx).length)) {
+                continue;
+            }
+
+            await this._systemGlue.contexts.set(`___window-hibernation___${workspaceClient.windowId}`, clientCtx);
+        }
+    }
+
+    public async pullHibernatedContext(windowId: string): Promise<any> {
+        const key = `___window-hibernation___${windowId}`;
+
+        const keyExist = this._systemGlue.contexts.all().some((context) => context === key);
+
+        if (!keyExist) {
+            return;
+        }
+        const ctx = await this._systemGlue.contexts.get(key);
+
+        await this._systemGlue.contexts.destroy(key);
+
+        return ctx;
+    }
+
     public getServers(): Glue42Web.Interop.Instance[] {
         return this._clientGlue.interop.servers();
     }
