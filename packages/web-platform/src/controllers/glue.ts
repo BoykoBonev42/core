@@ -337,10 +337,6 @@ export class GlueController {
             application: "Platform-System",
             gateway: { webPlatform: { port } },
             logger: logLevel,
-            contexts: {
-                reAnnounceKnownContexts: false,
-                trackAllContexts: false
-            },
             identity: {
                 instance: this._systemSettings.systemInstanceId
             }

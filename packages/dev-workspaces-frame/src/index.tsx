@@ -37,6 +37,13 @@ ReactDOM.render(
 
 // Platform Workspace:
 
+// const connection = {
+//   preferred: {
+//     url: "ws://localhost:8385/gw",
+//     discoveryIntervalMS: 5000
+//   }
+// };
+
 // const layouts = {
 //   mode: "session",
 //   local: [
@@ -108,7 +115,8 @@ ReactDOM.render(
 //   workspaces: {
 //     src: "/",
 //     isFrame: true
-//   }
+//   },
+//   connection
 // };
 
 // ReactDOM.render(
@@ -116,7 +124,14 @@ ReactDOM.render(
 //     <GlueProvider settings={{
 //       webPlatform: {
 //         config: platformConfig as any,
-//         factory: GlueWebPlatform
+//         factory: async (config) => {
+//           const { glue, platform } = await GlueWebPlatform(config);
+
+//           (window as any).platform = platform;
+//           (window as any).glue = glue;
+
+//           return { glue, platform };
+//         }
 //       }
 //     }}>
 //       <App />

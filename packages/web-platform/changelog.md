@@ -1,3 +1,5 @@
+1.24.3
+fix: the system glue now correctly tracks the different contexts when using preferred connection
 1.24.2
 fix: resuming a hibernated workspace now also restores all known contexts
 1.24.1
