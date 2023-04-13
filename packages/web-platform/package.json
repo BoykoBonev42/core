@@ -1,6 +1,6 @@
 {
     "name": "@glue42/web-platform",
-    "version": "1.24.2",
+    "version": "1.24.3",
     "description": "Glue42 Core main application package",
     "main": "dist/platform.web.umd.js",
     "module": "dist/platform.web.es.js",
