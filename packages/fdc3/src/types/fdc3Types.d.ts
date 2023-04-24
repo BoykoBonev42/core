@@ -97,3 +97,11 @@ export interface AddCallbackInRegistryConfig {
     handler: (contextType?: string) => void;
     replayArgs?: string[]
 }
+
+export interface GlueStartContextOnOpen {
+    meta: {
+        responseMethodName: string;
+        instance: string;
+    },
+    context: Context;
+}

@@ -128,6 +128,7 @@ type PathValue = {
 }
 
 type GDWindow = {
+    id: string;
     getContext(): Promise<any>;
 }
 

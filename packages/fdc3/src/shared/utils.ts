@@ -29,8 +29,8 @@ export const fetchTimeout = (url: string, timeoutMilliseconds = 3000): Promise<R
     });
 };
 
-export const isEmptyObject = (obj: object): boolean => {
-    return typeof obj === "object" && !Array.isArray(obj) && Object.keys(obj).length === 0;
+export const isValidNonEmptyObject = (obj: object): boolean => {
+    return typeof obj === "object" && !Array.isArray(obj) && Object.keys(obj).length !== 0;
 };
 
 export const AsyncListener = (actualUnsub:

@@ -1,6 +1,6 @@
 import { Context, Listener, ContextMetadata } from "@finos/fdc3";
-import { isEmptyObject } from "../shared/utils";
-import { AddIntentListenerRequest, Application, ChannelContext, Glue42, SystemMethodEventArgument, GlueValidator, Instance, GlueIntent, IntentContext, IntentFilter, GlueIntentRequest, IntentResult, ServerInstance, InteropMethodFilter, InteropMethod, UnsubscribeFunction, InvocationResult, ContextListenerInvokedArgument, ServerMethodFilter, Logger, didCallbackReplayed, SubscriptionConfig } from "../types/glue42Types";
+import { isValidNonEmptyObject } from "../shared/utils";
+import { AddIntentListenerRequest, Application, ChannelContext, Glue42, SystemMethodEventArgument, GlueValidator, Instance, GlueIntent, IntentContext, IntentFilter, GlueIntentRequest, IntentResult, ServerInstance, InteropMethodFilter, InteropMethod, UnsubscribeFunction, InvocationResult, ContextListenerInvokedArgument, ServerMethodFilter, Logger, didCallbackReplayed, SubscriptionConfig, GDWindow } from "../types/glue42Types";
 import { ChannelsParser } from "../channels/parser";
 import { promisePlus } from "../shared/utils";
 import { defaultGlue42APIs, glueChannelNamePrefix } from "../shared/constants";
@@ -109,7 +109,7 @@ export class GlueController {
     public async updateContextWithLatestFdc3Type(contextId: string, context: Context): Promise<void> {
         const prevContextData = await this.getContext(contextId);
     
-        if (isEmptyObject(prevContextData)) {
+        if (!isValidNonEmptyObject(prevContextData)) {
             return this.updateContext(contextId, {
                 data: this.channelsParser.parseFDC3ContextToGlueContexts(context),
                 latest_fdc3_type: this.channelsParser.mapFDC3TypeToChannelsDelimiter(context.type)
@@ -157,12 +157,10 @@ export class GlueController {
         return this.glue.channels.get(channelId);
     }
 
-    public getContextForMyWindow(): Promise<any> {
-        return this.glue.windows.my().getContext();
-    }
+    public getMyWindow(): GDWindow | undefined {
+        const win = this.glue.windows.my();
 
-    public getMyWindowId(): string {
-        return this.glue.windows.my().id;
+        return isValidNonEmptyObject(win) ? win : undefined;
     }
 
     public getMyInteropInstanceId(): string {
@@ -287,7 +285,7 @@ export class GlueController {
 
     private checkIfUserChannelShouldInvokeInitialReplay(didReplay: didCallbackReplayed, contextData: any, addedData: any): boolean {
         /* skip the initial replay when there's no data broadcasted on the channel */
-        if (isEmptyObject(contextData.data)) {
+        if (!isValidNonEmptyObject(contextData.data)) {
             didReplay.replayed = true;
             return false;
         }

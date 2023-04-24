@@ -2798,4 +2798,169 @@ describe("addContextListener() ", function () {
             });
         });
     });
+
+    describe("when invoked in an iframe within a non-glue window", () => {
+        const supportControlMethodName = 'G42Core.E2E.Lightweight.Control';
+        
+        /* 
+        NB!!! 
+        Always send instructions to iframe app to close window since there's no way to do it
+        with glue methods (parent app is not a Glue window)
+        */
+        it("Should add context listener while not on a channel and not throw", async () => {
+            const serverMethodAddedPromise = gtf.wrapPromise();
+            const serverMethodRemovedPromise = gtf.wrapPromise();
+
+            let instance;
+
+            const unServerMethodAdded = glue.interop.serverMethodAdded(({ server, method }) => {           
+                if (method.name === supportControlMethodName && server.applicationName.includes("Glue IFrame App")) {
+                    instance = server.instance;
+                    serverMethodAddedPromise.resolve();
+                }
+            });
+
+            gtf.addWindowHook(unServerMethodAdded);
+
+            const unServerMethodRemoved = glue.interop.serverMethodRemoved(({ server, method }) => {
+                if (method.name === supportControlMethodName && server.applicationName.includes("Glue IFrame App")) {
+                    serverMethodRemovedPromise.resolve();
+                }
+            });
+
+            gtf.addWindowHook(unServerMethodRemoved);
+            
+            // open window which has an iframe with Glue in it
+            await glue.windows.open(`iframe-${Date.now()}`, "http://localhost:4242/iframe/index.html");;
+
+            await serverMethodAddedPromise.promise;
+
+            const addContextListenerControlParams = {
+                operation: "fdc3AddContextListener",
+                params: { contextType: "test" }
+            };
+
+            // send instructions to iframe to add a context listener
+            await glue.interop.invoke(supportControlMethodName, addContextListenerControlParams, { instance });
+
+            const closeWindowControlParams = {
+                operation: "closeWindow",
+                params: {}
+            };
+
+            // send instructions to iframe window to close
+            await glue.interop.invoke(supportControlMethodName, closeWindowControlParams, { instance });
+
+            // await iframe app to close
+            await serverMethodRemovedPromise.promise;
+        });
+
+        it("Should add a context listener while on a system channel and not throw", async () => {
+            const serverMethodAddedPromise = gtf.wrapPromise();
+            const serverMethodRemovedPromise = gtf.wrapPromise();
+
+            let instance;
+
+            const unServerMethodAdded = glue.interop.serverMethodAdded(({ server, method }) => {           
+                if (method.name === supportControlMethodName) {
+                    instance = server.instance;
+                    serverMethodAddedPromise.resolve();
+                }
+            });
+
+            gtf.addWindowHook(unServerMethodAdded);
+
+            const unServerMethodRemoved = glue.interop.serverMethodAdded(({ server, method }) => {           
+                if (method.name === supportControlMethodName) {
+                    serverMethodRemovedPromise.resolve();
+                }
+            });
+
+            gtf.addWindowHook(unServerMethodRemoved);
+            
+            // open window which has an iframe with Glue in it
+            await glue.windows.open(`iframe-${Date.now()}`, "http://localhost:4242/iframe/index.html");
+
+            await serverMethodAddedPromise.promise;
+
+            const allChannels = await fdc3.getUserChannels();
+
+            const channelIdToJoin = allChannels[0].id;
+
+            // send instructions to iframe to join a channel
+            const joinUserChannelControlParams = {
+                operation: "fdc3JoinUserChannel",
+                params: { channelId: channelIdToJoin }
+            };
+
+            await glue.interop.invoke(supportControlMethodName, joinUserChannelControlParams, { instance });
+
+            // send instructions to iframe to add a context listener while on a channel
+            const addContextListenerControlParams = {
+                operation: "fdc3AddContextListener",
+                params: { contextType: "test" }
+            };
+
+            await glue.interop.invoke(supportControlMethodName, addContextListenerControlParams, { instance });
+
+            const closeWindowControlParams = {
+                operation: "closeWindow",
+                params: {}
+            };
+
+            // tell iframe to close
+            await glue.interop.invoke(supportControlMethodName, closeWindowControlParams, { instance });
+
+            await serverMethodRemovedPromise.promise;
+        });
+
+        it("Should add a context listener on an app channel and not throw", async() => {
+            const serverMethodAddedPromise = gtf.wrapPromise();
+            const serverMethodRemovedPromise = gtf.wrapPromise();
+
+            let instance;
+
+            const unServerMethodAdded = glue.interop.serverMethodAdded(({ server, method }) => {           
+                if (method.name === supportControlMethodName) {
+                    instance = server.instance;
+                    serverMethodAddedPromise.resolve();
+                }
+            });
+
+            gtf.addWindowHook(unServerMethodAdded);
+
+            const unServerMethodRemoved = glue.interop.serverMethodAdded(({ server, method }) => {           
+                if (method.name === supportControlMethodName) {
+                    serverMethodRemovedPromise.resolve();
+                }
+            });
+
+            gtf.addWindowHook(unServerMethodRemoved);
+            
+            // open window which has an iframe with Glue in it
+            await glue.windows.open(`iframe-${Date.now()}`, "http://localhost:4242/iframe/index.html");
+
+            await serverMethodAddedPromise.promise;
+
+            const appChannel = await fdc3.getOrCreateChannel("iframe-app-channel");
+
+            const addContextListenerOnAppChannelControlParams = {
+                operation: "fdc3AddContextListenerOnAppChannel",
+                params: { channelId: appChannel.id, contextType: "test" }
+            };
+
+            // send instructions to iframe to add a context listener on an app channel
+            await glue.interop.invoke(supportControlMethodName, addContextListenerOnAppChannelControlParams, { instance });
+
+            const closeWindowControlParams = {
+                operation: "closeWindow",
+                params: {}
+            };
+
+            // send instructions to iframe to close the window
+            await glue.interop.invoke(supportControlMethodName, closeWindowControlParams, { instance });
+
+            await serverMethodRemovedPromise.promise;
+        });
+    });
 });

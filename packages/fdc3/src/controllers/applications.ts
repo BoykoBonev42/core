@@ -4,7 +4,7 @@ import { GlueController } from "./glue";
 import { version } from "../../package.json";
 import { responseInteropMethodPrefix } from "../shared/constants";
 import { nanoid } from "nanoid";
-import { AppIdentifierConfig, CommandIdConfig, ContextListenerInvokedPromise, OpenConfig } from "../types/fdc3Types";
+import { AppIdentifierConfig, CommandIdConfig, ContextListenerInvokedPromise, GlueStartContextOnOpen, OpenConfig } from "../types/fdc3Types";
 import { promisePlus } from "../shared/utils";
 import { ContextListenerResponseDecoder } from "../shared/decoder";
 
@@ -202,11 +202,11 @@ export class ApplicationsController {
         }
     }
 
-    private buildGlueStartContext(fdc3Context: Context, responseMethodName: string) {
+    private buildGlueStartContext(fdc3Context: Context, responseMethodName: string): GlueStartContextOnOpen {
         return {
             meta: {
                 responseMethodName,
-                windowId: this.glueController.getMyWindowId()
+                instance: this.glueController.interopInstance().instance
             },
             context: fdc3Context
         };

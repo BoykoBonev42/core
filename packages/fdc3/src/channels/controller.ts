@@ -9,8 +9,8 @@ import { PrivateChannelEventMethods, PrivateChannelPrefix } from "./privateChann
 import { ChannelsCallbackRegistry } from "./callbackRegistry";
 import { ChannelsPendingListenersStore } from "./pendingListenersStore";
 import { ChannelTypes, fdc3ChannelNames } from "../shared/constants";
-import { isEmptyObject } from "../shared/utils";
-import { AddContextListenerConfig, AddPrivateChannelEventConfig, ChannelsConfig, GetContextForChannelConfig } from "../types/fdc3Types";
+import { isValidNonEmptyObject } from "../shared/utils";
+import { AddContextListenerConfig, AddPrivateChannelEventConfig, ChannelsConfig, GetContextForChannelConfig, GlueStartContextOnOpen } from "../types/fdc3Types";
 
 export class ChannelsController {
     private _logger?: Logger;
@@ -48,7 +48,7 @@ export class ChannelsController {
         if (this.invokeContextHandlerWithStartupContext) {
             this.logger.info(`[${commandId}] - trying to invoke context handler with window context`);
 
-            this.handleWindowContextOnOpening(commandId, handler, contextType);
+            this.handleWindowContextOnOpening(commandId, handler, contextType).catch((err) => this.logger.warn(`[${commandId}] - ${err}`));
         }
 
         const channelIdToSubscribeTo = channelId || this.channelsStateStore.currentChannel?.id;
@@ -355,9 +355,19 @@ export class ChannelsController {
     }
 
     private async handleWindowContextOnOpening(commandId: string, handler: (context: Context) => void, contextType?: string): Promise<void> {
-        const windowContext = await this.glueController.getContextForMyWindow();
+        const myWindow = this.glueController.getMyWindow();
 
-        if (isEmptyObject(windowContext)) {
+        if (!myWindow) {
+            this.logger.log(`[${commandId}] - Cannot get window context because this is not a Glue window, it's probably an iframe`);
+
+            this.invokeContextHandlerWithStartupContext = false;
+
+            return;
+        }
+        
+        const windowContext = await myWindow.getContext();
+
+        if (!isValidNonEmptyObject(windowContext)) {
             this.logger.info(`[${commandId}] - addContextListener handler won't be invoked - startup context is empty`);
 
             this.invokeContextHandlerWithStartupContext = false;
@@ -365,8 +375,7 @@ export class ChannelsController {
             return;
         }
 
-        // startup context is passed to the applications as { meta: { responseMethodName: string, windowId: string }, context: Context }
-        const { context, meta } = windowContext;
+        const { context, meta } = windowContext as GlueStartContextOnOpen;
 
         const isSameContextType = contextType ? context?.type === contextType : true;
 
@@ -382,25 +391,25 @@ export class ChannelsController {
 
         this.invokeContextHandlerWithStartupContext = false;
 
-        const { responseMethodName, windowId } = meta;
+        const { responseMethodName, instance } = meta;
 
-        const responseMethodExists = this.doesServerMethodExist(responseMethodName, windowId);
+        const responseMethodExists = this.doesServerMethodExist(responseMethodName, instance);
 
         if (!responseMethodExists) {
-            this.logger.info(`[${commandId}] - response method for window with id ${windowId} does not exist anymore. returning`);
+            this.logger.info(`[${commandId}] - response method for instance ${instance} does not exist anymore. returning`);
 
             return;
         }
 
-        this.logger.info(`[${commandId}] - invoking response method for window with id ${windowId}`);
+        this.logger.info(`[${commandId}] - invoking response method for instance ${instance}`);
 
-        await this.glueController.invokeMethod(responseMethodName, windowId, { listenerInvoked: true });
+        await this.glueController.invokeMethod(responseMethodName, instance, { listenerInvoked: true });
     }
 
-    private doesServerMethodExist(methodName: string, windowId: string): boolean {
+    private doesServerMethodExist(methodName: string, instance: string): boolean {
         const serversForMethodName = this.glueController.getInteropServers({ name: methodName });
 
-        return !!serversForMethodName.find(server => server.windowId === windowId);
+        return !!serversForMethodName.find(server => server.instance === instance);
     }
 
     private async getOrCreateAppChannel(commandId: string, channelId: string): Promise<Channel> {
