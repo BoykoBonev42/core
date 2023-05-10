@@ -588,5 +588,22 @@ describe('update() ', () => {
       expect(contextFromSecondApp.first.b).to.eql([...secondContext.first.b, ...firstContext.first.b]);
       expect(contextFromSecondApp.first.c).to.eql(secondContext.first.c);
     });
+
+    // https://jira.tick42.com/browse/G4E-6022
+    it("concurrent updates", async () => {
+        const name = gtf.contexts.getContextName();
+
+        const promises = [
+            glue.contexts.update(name, { my: "a" }),
+            glue.contexts.update(name, { your: "b" })
+        ];
+
+        await Promise.allSettled(promises);
+        const result = await glue.contexts.get(name);
+        expect(result).to.deep.equal({
+            my : "a",
+            your : "b"
+        });
+    });
   });
 });

@@ -189,6 +189,12 @@ export class GW3Bridge implements ContextBridge {
     // increment for every bridge-subscribe; used to unsubscribe()
     private _nextCallbackSubscriptionNumber = 0;
 
+    // since some operations fall back to creating a new context if
+    // the requested one doesn't already exist, we use this map to
+    // serialize them by waiting for the context to be created, in
+    // order to avoid losing updates
+    private _creationPromises: { [contextName: string]: Promise<string> } = {};
+
     // mapping announced contexts' name <-> id
     private _contextNameToId: { [contextName: string]: string } = {};
     private _contextIdToName: { [contextId: string]: string } = {};
@@ -282,7 +288,13 @@ export class GW3Bridge implements ContextBridge {
     }
 
     public createContext(name: ContextName, data: any): Promise<string> {
-        return this._gw3Session
+
+        if (name in this._creationPromises) {
+            return this._creationPromises[name];
+        }
+
+        this._creationPromises[name] =
+            this._gw3Session
             .send<ContextMessage>({
                 type: msg.GW_MESSAGE_CREATE_CONTEXT,
                 domain: "global",
@@ -301,8 +313,12 @@ export class GW3Bridge implements ContextBridge {
                 contextData.hasReceivedSnapshot = true;
                 this._contextNameToData[name] = contextData;
 
+                delete this._creationPromises[name];
                 return createContextMsg.context_id;
             });
+
+        return this._creationPromises[name];
+
     }
 
     public all(): ContextName[] {
@@ -318,15 +334,20 @@ export class GW3Bridge implements ContextBridge {
 
         // should we implicitly create the context?
 
+        // NB: await always causes a context switch, even if the promise is undefined
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
+
         const contextData = this._contextNameToData[name];
 
         if (!contextData || !contextData.isAnnounced) {
             return this.createContext(name, delta) as any as Promise<void>;
         }
 
-        // TODO: explain why --> because this
         let currentContext = contextData.context;
         if (!contextData.hasCallbacks()) {
+            // fetch data since haven't subscribed to this context yet
             currentContext = await this.get(contextData.name);
         }
 
@@ -356,7 +377,12 @@ export class GW3Bridge implements ContextBridge {
             });
     }
 
-    public set(name: ContextName, data: any): Promise<void> {
+    public async set(name: ContextName, data: any): Promise<void> {
+
+        // NB: await always causes a context switch, even if the promise is undefined
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
 
         const contextData = this._contextNameToData[name];
 
@@ -373,7 +399,17 @@ export class GW3Bridge implements ContextBridge {
                 delta: { reset: data },
             }, {}, { skipPeerId: false })
             .then((gwResponse: any) => {
-                this.handleUpdated(contextData, { reset: data, added: {}, removed: [], updated: {} }, { updaterId: gwResponse.peer_id });
+                this.handleUpdated(
+                    contextData,
+                    {
+                        reset: data,
+                        added: {},
+                        removed: [],
+                        updated: {}
+                   },
+                   {
+                        updaterId: gwResponse.peer_id
+                   });
             });
     }
 
@@ -384,10 +420,16 @@ export class GW3Bridge implements ContextBridge {
         return this.setPaths(name, [{ path, value }]);
     }
 
-    public setPaths(name: ContextName, pathValues: Glue42Core.Contexts.PathValue[]): Promise<void> {
+    public async setPaths(name: ContextName, pathValues: Glue42Core.Contexts.PathValue[]): Promise<void> {
         if (!this.setPathSupported) {
             return Promise.reject("glue.contexts.setPaths operation is not supported, use Glue42 3.10 or later");
         }
+
+        // NB: await always causes a context switch, even if the promise is undefined
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
+
         const contextData = this._contextNameToData[name];
 
         if (!contextData || !contextData.isAnnounced) {
@@ -415,14 +457,29 @@ export class GW3Bridge implements ContextBridge {
                 delta: { commands }
             }, {}, { skipPeerId: false })
             .then((gwResponse: any) => {
-                this.handleUpdated(contextData, { added: {}, removed: [], updated: {}, commands }, { updaterId: gwResponse.peer_id });
+                this.handleUpdated(
+                    contextData,
+                    {
+                        added: {},
+                        removed: [],
+                        updated: {},
+                        commands
+                    },
+                    {
+                        updaterId: gwResponse.peer_id
+                    });
             });
     }
 
     /**
-     * Return a context's data asynchronously as soon as any becomes available
+     * Return a context's data asynchronously
      */
-    public get(name: ContextName): Promise<any> {
+    public async get(name: ContextName): Promise<any> {
+
+        // NB: await always causes a context switch, even if the promise is undefined
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
 
         const contextData = this._contextNameToData[name];
         // Three cases here:
@@ -447,7 +504,7 @@ export class GW3Bridge implements ContextBridge {
 
         // 3)
         const context = contextData?.context ?? {};
-        return Promise.resolve(context);
+        return Promise.resolve(deepClone(context));
     }
 
     /**
@@ -460,7 +517,7 @@ export class GW3Bridge implements ContextBridge {
      * to unsubscribe from within the subscription callback, use the key argument
      * of the callback.
      */
-    public subscribe(
+    public async subscribe(
         name: ContextName,
         callback: (
             data: any,
@@ -470,6 +527,11 @@ export class GW3Bridge implements ContextBridge {
             extraData?: any) => void,
         subscriptionKey?: ContextSubscriptionKey)
         : Promise<ContextSubscriptionKey> {
+
+        // NB: await always causes a context switch, even if the promise is undefined
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
 
         // - populate contextData's updateCallbacks with new entry
         //
@@ -589,7 +651,13 @@ export class GW3Bridge implements ContextBridge {
         }
     }
 
-    public destroy(name: string) {
+    public async destroy(name: string) {
+
+        // NB: await always causes a context switch, even if the promise is undefined
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
+
         const contextData = this._contextNameToData[name];
         if (!contextData) {
             return Promise.reject(`context with ${name} does not exist`);
@@ -874,7 +942,16 @@ export class GW3Bridge implements ContextBridge {
             if (contextData.updateCallbacks.hasOwnProperty(updateCallbackIndex)) {
                 try {
                     const updateCallback = contextData.updateCallbacks[updateCallbackIndex];
-                    updateCallback(deepClone(contextData.context), Object.assign({}, delta.added || {}, delta.updated || {}, delta.reset || {}), delta.removed, parseInt(updateCallbackIndex, 10), extraData);
+                    updateCallback(
+                        deepClone(contextData.context),
+                        Object.assign(
+                            {},
+                            delta.added || {},
+                            delta.updated || {},
+                            delta.reset || {}),
+                        delta.removed,
+                        parseInt(updateCallbackIndex, 10),
+                        extraData);
                 } catch (err) {
                     this._logger.debug("callback error: " + JSON.stringify(err));
                 }
