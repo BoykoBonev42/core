@@ -1,3 +1,5 @@
+1.2.1
+chore: bump due to dependencies update
 1.2.0
 feat: validated support for the legacy protocol
 1.1.1

@@ -1,3 +1,5 @@
+2.20.0
+chore: bump due to dependencies update
 2.19.3
 chore: bump due to dependencies update
 2.19.2

@@ -1,6 +1,6 @@
 {
     "name": "@glue42/react-hooks",
-    "version": "2.19.3",
+    "version": "2.20.0",
     "description": "React Hooks Wrapper for Glue42 Web and Enterprise",
     "main": "dist/npm/index.js",
     "module": "dist/es/index.js",
@@ -52,8 +52,8 @@
     },
     "dependencies": {
         "@glue42/desktop": "^5.18.2",
-        "@glue42/web": "^2.19.1",
-        "@glue42/web-platform": "^1.24.3",
+        "@glue42/web": "^2.20.0",
+        "@glue42/web-platform": "^1.25.0",
         "prop-types": "^15.7.2"
     },
     "devDependencies": {

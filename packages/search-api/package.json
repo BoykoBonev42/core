@@ -1,6 +1,6 @@
 {
     "name": "@glue42/search-api",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "description": "Glue42 Search API",
     "main": "./dist/search-api.umd.js",
     "module": "./dist/search-api.es.js",
@@ -40,7 +40,7 @@
         "access": "public"
     },
     "dependencies": {
-        "@glue42/core": "^5.10.1",
+        "@glue42/core": "^5.10.2",
         "callback-registry": "^2.5.2",
         "decoder-validate": "0.0.2",
         "nanoid": "^4.0.0"
