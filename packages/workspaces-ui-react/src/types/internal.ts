@@ -119,7 +119,7 @@ export interface ElementCreationWrapperState {
   workspaceLoadingAnimations: { [workspaceId: string]: CreateWorkspaceLoadingAnimationRequestOptions };
 }
 
-export interface WorkspacesWrapperProps {
+export interface WorkspacesWrapperProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
   onCreateLogoRequested?: (options: CreateElementRequestOptions) => void;
   onCreateWorkspaceTabRequested?: (options: CreateWorkspaceTabRequestOptions) => void;
   onCreateAddWorkspaceRequested?: (options: CreateElementRequestOptions) => void;

@@ -1,3 +1,18 @@
 @import "@glue42/theme/dist/components/icons.css";
 @import "@glue42/theme/dist/components/buttons.css";
 @import "@glue42/theme/dist/components/forms.css";
+
+.workspace-tab-popup {
+    position: absolute;
+    background-color: rgb(var(--t42-bg-mid));
+    z-index: 99;
+    border: var(--t42-border)
+}
+
+.list-group {
+    width: 230px;
+}
+
+.lock-options-list{
+    width: 400px;
+}

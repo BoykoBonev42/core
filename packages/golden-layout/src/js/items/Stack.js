@@ -45,8 +45,9 @@ lm.utils.extend(lm.items.Stack, lm.items.AbstractContentItem);
 lm.utils.copy(lm.items.Stack.prototype, {
 
 	setSize: function () {
+		var headerBoundingRect = lm.utils.getBounds(this.header.element);
 		var i,
-			headerSize = this._header.show ? this.header.element.height() : 0,
+			headerSize = this._header.show ? headerBoundingRect.height : 0,
 			contentWidth = this.element.width() - (this._sided ? headerSize : 0),
 			contentHeight = this.element.height() - (!this._sided ? headerSize : 0);
 

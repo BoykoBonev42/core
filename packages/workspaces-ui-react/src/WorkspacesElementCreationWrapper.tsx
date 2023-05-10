@@ -254,7 +254,7 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
     }
 
     return (
-        <div {...additionalProperties} style={{ overflow: "hidden", width: "100%", height: "100%" }}>
+        <>
             {renderLogoComponent()}
             {renderWorkspaceTabs()}
             {renderAddWorkspaceComponent()}
@@ -311,8 +311,9 @@ const WorkspacesElementCreationWrapper: React.FC<WorkspacesProps> = ({ component
                 externalPopupApplications={externalPopupApplications}
                 shouldInit={shouldInit}
                 glue={glue}
+                {...additionalProperties}
             />
-        </div>
+        </>
     );
 }
 

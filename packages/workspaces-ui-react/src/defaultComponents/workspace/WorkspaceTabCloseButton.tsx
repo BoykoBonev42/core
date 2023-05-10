@@ -16,7 +16,7 @@ const WorkspaceTabCloseButton: React.FC<WorkspaceTabCloseButtonProps> = ({ close
         }
     }, [closeBtn]);
 
-    return <div title="close" ref={closeBtn} className="lm_close_tab"></div>
+    return <div title="Close workspace" ref={closeBtn} className="lm_close_tab"></div>
 };
 
 export default WorkspaceTabCloseButton;

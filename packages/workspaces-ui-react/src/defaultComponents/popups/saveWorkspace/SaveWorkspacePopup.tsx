@@ -24,7 +24,7 @@ const SaveWorkspacePopup: React.FC<SaveWorkspacePopupProps> = ({ workspaceId, re
         const bounds = containerRef.current.getBoundingClientRect();
         resizePopup({
             height: bounds.height,
-            width: 300
+            width: 280
         });
     }
 

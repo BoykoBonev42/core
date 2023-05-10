@@ -14,7 +14,7 @@ const WorkspaceLayoutItem: React.FC<WorkspaceLayoutItemProps> = ({ name, onClick
                 <div className="workspace__description">
                     <h5 className="mb-0 text-truncate">{name}</h5>
                 </div>
-                <div onClick={onCloseClick} className="close-icon ml-auto"></div>
+                <div onClick={onCloseClick} className="close-icon ml-auto" title="Delete workspace"></div>
             </div>
         </a>
     );

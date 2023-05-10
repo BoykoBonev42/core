@@ -88,7 +88,7 @@ const LockOptions: React.FC<LockOptionsProps> = ({ workspaceId, lockConfig, onBa
 
     return <>
         {showBackButton && <BackButton onClick={onBackClick} />}
-        <div ref={ref} className="p-3" style={{ width: 400 }}>
+        <div ref={ref} className="p-3 lock-options-list">
             <div className="mb-2">
                 <LockOption name={isLocked() ? enableName : disableName} value={isLocked()} onChange={toggleAll} />
             </div>

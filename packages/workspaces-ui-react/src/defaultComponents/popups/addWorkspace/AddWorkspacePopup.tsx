@@ -11,7 +11,7 @@ const AddWorkspacePopup: React.FC<AddWorkspacePopupProps> = ({ frameId, hidePopu
     const resizePopupWithContainerHeight = () => {
         const containerHeight = containerRef.current?.getBoundingClientRect().height;
         resizePopup({
-            width: 300,
+            width: 280,
             height: containerHeight
         });
     }
@@ -38,7 +38,7 @@ const AddWorkspacePopup: React.FC<AddWorkspacePopupProps> = ({ frameId, hidePopu
             </div>
             <div className="row">
                 <div className="col">
-                    <h5 onClick={onCreateNewClicked} itemType="h5" id="createNewButton" className="btn btn-primary mb-3 w-100">Create New</h5>
+                    <h5 onClick={onCreateNewClicked} itemType="h5" id="createNewButton" className="btn btn-primary mb-3 w-100">Create New Workspace</h5>
                 </div>
             </div>
             <div className="row">

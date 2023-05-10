@@ -44,7 +44,7 @@ const AddApplicationPopup: React.FC<AddApplicationPopupProps> = ({ workspaceId, 
     const refreshPopupHeight = () => {
         const containerHeight = containerRef.current?.getBoundingClientRect().height;
         resizePopup({
-            width: 300,
+            width: 280,
             height: containerHeight
         });
     }

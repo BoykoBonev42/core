@@ -43,14 +43,10 @@ const WorkspaceTabV2Popup: React.FC<PopupProps> = ({ workspaceId, buttonBounds, 
     }
     const normalizedBounds = normalizeBounds(buttonBounds.left, buttonBounds.bottom, size);
     const style: React.HTMLAttributes<HTMLDivElement>["style"] = {
-        position: "absolute",
-        backgroundColor: "rgb(var(--t42-bg-mid))",
         left: normalizedBounds.left,
         top: normalizedBounds.top,
-        zIndex: 99,
         height: size.height,
         width: size.width,
-        border: "var(--t42-border)"
     };
 
     const backgroundElementStyle: React.HTMLAttributes<HTMLDivElement>["style"] = {
@@ -93,7 +89,7 @@ const WorkspaceTabV2Popup: React.FC<PopupProps> = ({ workspaceId, buttonBounds, 
     });
 
     return ReactDOM.createPortal(<div onClick={() => hidePopup()} style={backgroundElementStyle}>
-        <div onClick={(e) => e.stopPropagation()} style={style}>
+        <div onClick={(e) => e.stopPropagation()} style={style} className="workspace-tab-popup">
             {childrenWithProps}
         </div>
     </div>

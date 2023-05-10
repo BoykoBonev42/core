@@ -23,10 +23,10 @@ const WorkspaceTabOptionsList: React.FC<WorkspaceTabOptionsListProps> = ({ onSav
         });
     }, [ref, resizePopup]);
 
-    return <div ref={ref} className="list-group" style={{ width: 200 }}>
-        {showSaveButton && <button onClick={onSaveClicked} className="list-group-item list-group-item-action"><i className="icon-floppy mr-3"></i>Save</button>}
+    return <div ref={ref} className="list-group">
+        {showSaveButton && <button onClick={onSaveClicked} className="list-group-item list-group-item-action"><i className="icon-floppy mr-3"></i>Save workspace changes</button>}
         <button onClick={onLockClicked} className="list-group-item list-group-item-action"><i className="icon-lock mr-3"></i>Lock Settings</button>
-        <button onClick={onCloseClicked} className="list-group-item list-group-item-action"><i className="icon-cancel mr-3"></i>Close</button>
+        <button onClick={onCloseClicked} className="list-group-item list-group-item-action"><i className="icon-cancel mr-3"></i>Close workspace</button>
     </div>
 }
 

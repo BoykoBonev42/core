@@ -4,7 +4,8 @@ import "@glue42/workspaces-ui-react/dist/styles/popups.css";
 import "@glue42/workspaces-ui-react/dist/styles/goldenlayout-base.css";
 import "@glue42/workspaces-ui-react/dist/styles/glue42-theme.css";
 import "@glue42/workspaces-ui-react/dist/styles/workspaceTabV2.css";
-import "./index.css";
+// import "@glue42/workspaces-ui-react/dist/styles/workspaces.css"
+// import "./index.css";
 // import { GlueContext, useGlue } from '@glue42/react-hooks';
 // import { Glue42Workspaces } from '@glue42/workspaces-api';
 // import { Glue42Web } from "@glue42/web";
