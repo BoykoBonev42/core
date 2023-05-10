@@ -66,11 +66,11 @@ export class PlatformController {
 
         await this.domainsController.startAllDomains(config);
 
-        await this.glueController.initClientGlue(config?.glue, config?.glueFactory, config?.workspaces?.isFrame);
-
-        await this.serviceWorkerController.connect(config);
-
         this._platformApi = this.buildPlatformApi(config);
+        
+        await this.glueController.initClientGlue(config?.glue, config?.glueFactory, config?.workspaces?.isFrame, this._platformApi);
+        
+        await this.serviceWorkerController.connect(config);
 
         await this.pluginsController.startCorePlus(config);
 

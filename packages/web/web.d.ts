@@ -118,6 +118,7 @@ export namespace Glue42Web {
         themes?: Glue42Web.Themes.API;
         workspaces?: Glue42Workspaces.API;
         search?: Glue42Search.API;
+        webPlatform?: Glue42Web.WebPlatform.API;
     }
 
     /**
@@ -1540,6 +1541,30 @@ export namespace Glue42Web {
         export interface Theme {
             displayName: string;
             name: string;
+        }
+    }
+
+    /**
+     * @ignore
+     */
+    namespace WebPlatform {
+        export interface API {
+            version: string;
+
+            system: System;
+
+            corePlus?: CorePlus;
+        }
+
+        export interface System {
+            /**
+             * Shuts down the web platform, clears the Glue session data and closes all windows.
+             */
+            shutdown(): Promise<void>;
+        }
+
+        export interface CorePlus {
+            version: string;
         }
     }
 }

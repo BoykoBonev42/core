@@ -67,7 +67,7 @@ export class GlueController {
         this._contextsTrackingGlue = await this.setUpCtxTracking(config);
     }
 
-    public async initClientGlue(config?: Glue42Web.Config, factory?: Glue42WebFactoryFunction, isWorkspaceFrame?: boolean): Promise<Glue42Web.API> {
+    public async initClientGlue(config?: Glue42Web.Config, factory?: Glue42WebFactoryFunction, isWorkspaceFrame?: boolean, platformApi?: Glue42WebPlatform.API): Promise<Glue42Web.API> {
         const port = await this.portsBridge.createInternalClient();
 
         this.registerClientWindow(isWorkspaceFrame);
@@ -80,6 +80,8 @@ export class GlueController {
         const c = Object.assign({}, config, webConfig);
 
         this._clientGlue = factory ? await factory(c) : await GlueWeb(c) as any;
+
+        this._clientGlue.webPlatform = platformApi;
 
         return this._clientGlue;
     }
