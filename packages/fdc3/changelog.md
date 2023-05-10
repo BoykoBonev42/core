@@ -1,3 +1,5 @@
+3.2.1
+fix: expecting of iframes to always have glue window
 3.2.0
 feat: added support for targeting intent handlers with no appD
 3.1.1.

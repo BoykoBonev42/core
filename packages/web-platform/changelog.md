@@ -1,3 +1,5 @@
+1.25.0
+feat: added webPlatform to the client glue api
 1.24.3
 fix: the system glue now correctly tracks the different contexts when using preferred connection
 1.24.2

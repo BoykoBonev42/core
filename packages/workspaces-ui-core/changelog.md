@@ -1,3 +1,5 @@
+1.16.0
+feat: update tabs design
 1.15.6
 fix: resuming a hibernated workspace now also restores all known contexts
 1.15.5

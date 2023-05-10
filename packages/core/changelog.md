@@ -1,3 +1,5 @@
+5.10.2
+fix: fixed contexts edge cases G4E-6022, G4E-6023
 5.10.1
 chore: fixed linting errors
 5.10.0

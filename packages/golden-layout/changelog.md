@@ -1,3 +1,5 @@
+2.5.2
+feat: update tabs design
 2.5.1
 fix: prevent mutating the default config
 2.5.0

@@ -1,3 +1,5 @@
+2.20.0
+feat: added typings for webPlatform api
 2.19.1
 chore: bump due to dependencies update
 2.19.0
