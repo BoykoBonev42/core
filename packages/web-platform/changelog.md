@@ -1,3 +1,5 @@
+1.25.1
+fix: improved the shutdown logic
 1.25.0
 feat: added webPlatform to the client glue api
 1.24.3

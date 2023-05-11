@@ -1,3 +1,6 @@
+1.16.1
+chore: improved some styling
+fix: the session storage for the cache now matches the g42 convention
 1.16.0
 feat: update tabs design
 1.15.6
