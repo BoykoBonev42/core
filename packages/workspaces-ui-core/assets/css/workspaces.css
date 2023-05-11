@@ -1287,7 +1287,7 @@ button.g42-list-item, button.list-group-item, .add-application button.btn {
 
 /*# sourceMappingURL=glue42-product-theme.css.map*/
 .dark {
-  --g42-active-subtab: var(--g42-bg-02);
+  --g42-active-subtab: var(--g42-bg-03);
 }
 
 .light {
@@ -1670,6 +1670,8 @@ button.g42-list-item, button.list-group-item, .add-application button.btn {
   width: auto;
   height: var(--spacing-24);
   max-width: 150px;
+  padding-left: var(--spacing-8);
+  padding-right: var(--spacing-6);
 }
 
 .lm_header:not(.header_double) .lm_tab .lm_title {
@@ -1839,7 +1841,6 @@ button.g42-list-item, button.list-group-item, .add-application button.btn {
 .add-workspace,
 .add-application,
 .workspace-tab-popup {
-  box-shadow: var(--spacing-2) var(--spacing-2) var(--spacing-4) var(--g42-bg-01);
   background-color: Hsl(var(--g42-bg-primary));
   border: var(--spacing-1) solid Hsl(var(--g42-border-primary));
   position: relative;
