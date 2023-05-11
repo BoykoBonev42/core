@@ -1,5 +1,5 @@
 class Storage {
-    public readonly LAST_SESSION_KEY = "lastSession";
+    public readonly LAST_SESSION_KEY = "g42_workspace_frame_cache";
 
     public get(key: string) {
         return JSON.parse(sessionStorage.getItem(key));

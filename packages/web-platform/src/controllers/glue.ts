@@ -159,7 +159,15 @@ export class GlueController {
 
         const baseErrorMessage = `Internal Platform-> ${messageData.domain} Domain Communication Error. Attempted sending shutdown signal to all clients.`;
 
-        await this.transmitMessage(GlueClientControlName, messageData, baseErrorMessage, "all", { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
+        const targets: Glue42Core.AGM.InstanceTarget = this.clientGlue.interop.servers()
+            .filter((server) => allNonMeWindows.every((webWindow) => webWindow.id !== server.windowId))
+            .map((server) => ({ instance: server.instance }));
+
+        try {
+            await this.transmitMessage(GlueClientControlName, messageData, baseErrorMessage, targets, { methodResponseTimeoutMs: 30000, waitTimeoutMs: 30000 });
+        } catch (error) {
+            console.warn("Failed to send shutdown signal to all clients", error);
+        }
 
     }
 
@@ -406,7 +414,7 @@ export class GlueController {
         return this._systemGlue.interop.createStream(name);
     }
 
-    private async transmitMessage<T>(methodName: string, messageData: any, baseErrorMessage: string, target?: "best" | "all" | Glue42Core.Interop.Instance, options?: Glue42Core.Interop.InvokeOptions): Promise<T> {
+    private async transmitMessage<T>(methodName: string, messageData: any, baseErrorMessage: string, target?: Glue42Core.AGM.InstanceTarget, options?: Glue42Core.Interop.InvokeOptions): Promise<T> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let invocationResult: Glue42Core.Interop.InvocationResult<T>;
 

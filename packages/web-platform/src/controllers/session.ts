@@ -21,6 +21,7 @@ export class SessionStorageController {
     private readonly appDefsInmemoryNamespace = "g42_core_app_definitions_inmemory";
     private readonly notificationsNamespace = "g42_core_notifications";
     private readonly systemNamespace = "g42_system";
+    private readonly workspaceFrameCache = "g42_workspace_frame_cache";
     private readonly allNamespaces = [
         this.bridgeInstancesNamespace,
         this.windowsNamespace,
@@ -33,7 +34,8 @@ export class SessionStorageController {
         this.appDefsNamespace,
         this.workspaceHibernationNamespace,
         this.appDefsInmemoryNamespace,
-        this.notificationsNamespace
+        this.notificationsNamespace,
+        this.workspaceFrameCache
     ];
 
     private get logger(): Glue42Core.Logger.API | undefined {
