@@ -1,11 +1,12 @@
 import { Context, Listener, ContextMetadata } from "@finos/fdc3";
 import { isValidNonEmptyObject } from "../shared/utils";
-import { AddIntentListenerRequest, Application, ChannelContext, Glue42, SystemMethodEventArgument, GlueValidator, Instance, GlueIntent, IntentContext, IntentFilter, GlueIntentRequest, IntentResult, ServerInstance, InteropMethodFilter, InteropMethod, UnsubscribeFunction, InvocationResult, ContextListenerInvokedArgument, ServerMethodFilter, Logger, didCallbackReplayed, SubscriptionConfig, GDWindow } from "../types/glue42Types";
+import { AddIntentListenerRequest, Application, ChannelContext, Glue42, SystemMethodEventArgument, GlueValidator, Instance, GlueIntent, IntentContext, IntentFilter, GlueIntentRequest, IntentResult, ServerInstance, InteropMethodFilter, InteropMethod, UnsubscribeFunction, InvocationResult, ContextListenerInvokedArgument, ServerMethodFilter, Logger, didCallbackReplayed, GDWindow } from "../types/glue42Types";
 import { ChannelsParser } from "../channels/parser";
 import { promisePlus } from "../shared/utils";
-import { defaultGlue42APIs, glueChannelNamePrefix } from "../shared/constants";
+import { defaultGlue42APIs } from "../shared/constants";
 import { Glue42FDC3SystemMethod } from "../channels/privateChannelConstants";
 import { ContextListenerResponseDecoder, SystemMethodInvocationArgumentDecoder } from "../shared/decoder";
+import { glueChannelNamePrefix } from "../shared/constants";
 
 export class GlueController {
     private glue!: Glue42;
@@ -201,37 +202,35 @@ export class GlueController {
         return this.glue.interop.methods(filter);
     }
 
-    public contextsSubscribe(contextName: string, callback: (data: any, metadata?: ContextMetadata) => void): Promise<UnsubscribeFunction> {
-        const didReplay: didCallbackReplayed = { replayed: false };
-
-        const isUserChannel = contextName.startsWith(glueChannelNamePrefix);
-
-        return this.glue.contexts.subscribe(contextName, (contextData: any, addedData: any, removed: string[], _, extraData?: { updaterId?: string }) => {
-            /* Check if it's the initial replay and act accordingly */
-            if (!didReplay.replayed) {
-                return this.handleSubscribeInitialReplay({ isUserChannel, callback, didReplay, contextData, addedData });
-            }
-
-            const updateFromMe = extraData?.updaterId === this.glue.interop.instance.peerId;
-
-            if (updateFromMe) {
+    public channelsSubscribe(callback: (data: any, metadata?: ContextMetadata) => void) {
+        return this.glue.channels.subscribe(async(_, context: ChannelContext, updaterId: string) => {
+            if (this.isUpdateFromMe(updaterId)) {
                 return;
             }
 
-            let contextMetadata: ContextMetadata | undefined;
+            const contextData = await this.glue.contexts.get(`${glueChannelNamePrefix}${context.name}`);
 
-            const instanceServer = this.glue.interop.servers().find((server: ServerInstance) => server.peerId === extraData?.updaterId);
-
-            if (instanceServer) {
-                contextMetadata = {
-                    source: {
-                        appId: instanceServer.applicationName,
-                        instanceId: instanceServer.instance
-                    }
-                };
+            if (!contextData.latest_fdc3_type) {
+                return;
             }
 
-            this.parseDataAndInvokeSubscribeCallback(callback, contextData, contextMetadata);
+            this.parseDataAndInvokeSubscribeCallback(callback, contextData, this.getContextMetadata(updaterId));
+        });
+    }
+
+    public contextsSubscribe(contextName: string, callback: (data: any, metadata?: ContextMetadata) => void): Promise<UnsubscribeFunction> {
+        const didReplay: didCallbackReplayed = { replayed: false };
+
+        return this.glue.contexts.subscribe(contextName, (contextData: any, addedData: any, removed: string[], _, extraData?: { updaterId?: string }) => {
+            if (this.isUpdateFromMe(extraData?.updaterId)) {
+                return;
+            }
+
+            if (!this.checkIfAppChannelShouldInvokeInitialReplay(didReplay, contextData)) {
+                return;
+            }
+
+            this.parseDataAndInvokeSubscribeCallback(callback, contextData, this.getContextMetadata(extraData?.updaterId));
         });
     }
 
@@ -241,6 +240,25 @@ export class GlueController {
 
     public initSubLogger(name: string): Logger{
         return this.logger.subLogger(name);
+    }
+
+    private isUpdateFromMe(updaterId?: string): boolean {
+        return this.glue.interop.instance.peerId === updaterId;
+    }
+
+    private getContextMetadata(updaterId?: string): ContextMetadata | undefined {
+        const instanceServer = this.glue.interop.servers().find((server: ServerInstance) => server.peerId === updaterId);
+
+        if (!instanceServer) {
+            return;
+        }
+
+        return {
+            source: {
+                appId: instanceServer.applicationName,
+                instanceId: instanceServer.instance
+            }
+        };
     }
 
     private initializeLogger() {
@@ -253,19 +271,6 @@ export class GlueController {
         callback(parsedData, metadata);
     }
 
-    private handleSubscribeInitialReplay({ isUserChannel, callback, didReplay, contextData, addedData }: SubscriptionConfig) {
-        const shouldReplay = isUserChannel
-            ? this.checkIfUserChannelShouldInvokeInitialReplay(didReplay, contextData, addedData)
-            : this.checkIfAppChannelShouldInvokeInitialReplay(didReplay, contextData);
-
-        if (!shouldReplay) {
-            return;
-        }
-
-        this.parseDataAndInvokeSubscribeCallback(callback, contextData);
-
-        didReplay.replayed = true;
-    }
 
     private checkIfAppChannelShouldInvokeInitialReplay(didReplay: didCallbackReplayed, contextData: any): boolean {
         /* Skip initial replays on App Channels */
@@ -281,21 +286,5 @@ export class GlueController {
         }
 
         return true;
-    }
-
-    private checkIfUserChannelShouldInvokeInitialReplay(didReplay: didCallbackReplayed, contextData: any, addedData: any): boolean {
-        /* skip the initial replay when there's no data broadcasted on the channel */
-        if (!isValidNonEmptyObject(contextData.data)) {
-            didReplay.replayed = true;
-            return false;
-        }
-
-        /* if there's no latest_fdc3_type set on the channel => no FDC3 compliant data has been broadcasted */
-        if (!addedData.latest_fdc3_type) {
-            return false;
-        }
-
-        /* if it's the initial replay and there's an already broadcasted FDC3 compliant data on the channel */ 
-        return !didReplay.replayed && contextData.latest_fdc3_type;
     }
 }

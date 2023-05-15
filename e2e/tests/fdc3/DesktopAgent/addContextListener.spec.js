@@ -240,11 +240,11 @@ describe("addContextListener() ", function () {
                 await secondInvocationPromise.promise;
             });
 
-            it("Should stop firing the callback on the channel when listener.unsubscribe is invoked on the current channel but continue to fire the callback in another channel", async () => {
+            it("Should stop firing the callback on other channels when listener.unsubscribe is invoked on the current channel", async () => {
                 const firstChannelInvocationHeard = gtf.wrapPromise();
                 const firstChannelInvocationNotHeard = gtf.wrapPromise();
 
-                const secondChannelInvocationPromiseHeard = gtf.wrapPromise();
+                const secondChannelInvocationPromiseNotHeard = gtf.wrapPromise();
 
                 const firstChannelContext1 = gtf.fdc3.getContext();
                 const firstChannelContext2 = gtf.fdc3.getContext();
@@ -260,7 +260,7 @@ describe("addContextListener() ", function () {
                     }
 
                     if (ctx.name === secondChannelContext.name) {
-                        secondChannelInvocationPromiseHeard.resolve();
+                        secondChannelInvocationPromiseNotHeard.reject("Should not have been fired");
                     }
                 });
 
@@ -286,7 +286,9 @@ describe("addContextListener() ", function () {
 
                 await supportApp.fdc3.broadcast(secondChannelContext);
 
-                await secondChannelInvocationPromiseHeard.promise;
+                gtf.wait(3000, secondChannelInvocationPromiseNotHeard.resolve);
+
+                await secondChannelInvocationPromiseNotHeard.promise;
             });
 
             it("Should invoke the callback when there's an already broadcasted fdc3 compliant data on the channel", async() => {
@@ -755,11 +757,11 @@ describe("addContextListener() ", function () {
                 await secondInvocationPromise.promise;
             });
 
-            it("Should stop firing the callback on the channel when listener.unsubscribe is invoked on the current channel but continue to fire the callback in another channel", async () => {
+            it("Should stop firing the callback on other channels when listener.unsubscribe() is invoked on the current channel", async () => {
                 const firstChannelInvocationHeard = gtf.wrapPromise();
                 const firstChannelInvocationNotHeard = gtf.wrapPromise();
 
-                const secondChannelInvocationPromiseHeard = gtf.wrapPromise();
+                const secondChannelInvocationPromiseNotHeard = gtf.wrapPromise();
 
                 const firstChannelContext1 = gtf.fdc3.getContext();
                 const firstChannelContext2 = gtf.fdc3.getContext();
@@ -775,7 +777,7 @@ describe("addContextListener() ", function () {
                     }
 
                     if (ctx.name === secondChannelContext.name) {
-                        secondChannelInvocationPromiseHeard.resolve();
+                        secondChannelInvocationPromiseNotHeard.reject("Should not have been fired");
                     }
                 });
 
@@ -801,7 +803,9 @@ describe("addContextListener() ", function () {
 
                 await supportApp.fdc3.broadcast(secondChannelContext);
 
-                await secondChannelInvocationPromiseHeard.promise;
+                gtf.wait(3000, secondChannelInvocationPromiseNotHeard.resolve);
+
+                await secondChannelInvocationPromiseNotHeard.promise;
             });
 
             it("Should invoke the callback when there's an already broadcasted fdc3 compliant data on the channel", async() => {
@@ -1279,18 +1283,16 @@ describe("addContextListener() ", function () {
                 await secondInvocationPromise.promise;
             });
 
-            it("Should stop firing the callback on the channel when listener.unsubscribe is invoked on the current channel but continue to fire the callback in another channel", async () => {
+            it("Should stop firing the callback on other channels when listener.unsubscribe() is invoked on the current channel", async () => {
                 const firstChannelInvocationHeard = gtf.wrapPromise();
                 const firstChannelInvocationNotHeard = gtf.wrapPromise();
 
-                const secondChannelInvocationPromiseHeard = gtf.wrapPromise();
                 const secondChannelInvocationPromiseNotHeard = gtf.wrapPromise();
 
                 const contextType = `fdc3.context.type.${Date.now()}`;
                 const firstChannelContext1 = { ...gtf.fdc3.getContext(), type: contextType };
                 const firstChannelContext2 = { ...gtf.fdc3.getContext(), type: contextType };
                 const secondChannelContext1 = { ...gtf.fdc3.getContext(), type: contextType };
-                const secondChannelContext2 = gtf.fdc3.getContext();
 
                 const listener = await fdc3.addContextListener(contextType, (ctx) => {
                     if (ctx.name === firstChannelContext1.name) {
@@ -1302,11 +1304,7 @@ describe("addContextListener() ", function () {
                     }
 
                     if (ctx.name === secondChannelContext1.name) {
-                        secondChannelInvocationPromiseHeard.resolve();
-                    }
-
-                    if (ctx.name === secondChannelContext2.name) {
-                        secondChannelInvocationPromiseNotHeard.reject("Should not have been fired because context has a different type");
+                        secondChannelInvocationPromiseNotHeard.reject("Should not have been fired");
                     }
                 });
 
@@ -1331,10 +1329,6 @@ describe("addContextListener() ", function () {
                 await supportApp.fdc3.joinUserChannel(anotherUserChannelIdToJoin);
 
                 await supportApp.fdc3.broadcast(secondChannelContext1);
-
-                await secondChannelInvocationPromiseHeard.promise;
-
-                await supportApp.fdc3.broadcast(secondChannelContext2);
 
                 gtf.wait(3000, secondChannelInvocationPromiseNotHeard.resolve);
 
@@ -1767,9 +1761,9 @@ describe("addContextListener() ", function () {
                 await secondContextHeard.promise;
             });
 
-            it("Should not invoke the callback in another system channel", async () => {
+            it("Should invoke the callback in another system channel", async () => {
                 const currentChannelContextHeard = gtf.wrapPromise();
-                const anotherChannelContextNotHeard = gtf.wrapPromise();
+                const anotherChannelContextHeard = gtf.wrapPromise();
 
                 const currentChannelContextToBroadcast = gtf.fdc3.getContext();
                 const anotherChannelContextToBroadcast = gtf.fdc3.getContext();
@@ -1780,7 +1774,7 @@ describe("addContextListener() ", function () {
                     }
 
                     if (ctx.name === anotherChannelContextToBroadcast.name) {
-                        anotherChannelContextNotHeard.reject("Should not have fired");
+                        anotherChannelContextHeard.resolve();
                     }
                 });
 
@@ -1800,9 +1794,56 @@ describe("addContextListener() ", function () {
                 // support app broadcasts context on the other system channel
                 await supportApp.fdc3.broadcast(anotherChannelContextToBroadcast);
 
-                gtf.wait(3000, anotherChannelContextNotHeard.resolve);
+                await anotherChannelContextHeard.promise;
+            });
 
-                await anotherChannelContextNotHeard.promise;
+            it("Should stop firing the callback on other channels when listener.unsubscribe() is invoked on the current channel", async () => {
+                const firstChannelInvocationHeard = gtf.wrapPromise();
+                const firstChannelInvocationNotHeard = gtf.wrapPromise();
+
+                const secondChannelInvocationPromiseNotHeard = gtf.wrapPromise();
+
+                const firstChannelContext1 = gtf.fdc3.getContext();
+                const firstChannelContext2 = gtf.fdc3.getContext();
+                const secondChannelContext1 = gtf.fdc3.getContext();
+
+                const listener = await fdc3.addContextListener((ctx) => {
+                    if (ctx.name === firstChannelContext1.name) {
+                        firstChannelInvocationHeard.resolve();
+                    }
+
+                    if (ctx.name === firstChannelContext2.name) {
+                        firstChannelInvocationNotHeard.reject("Should not have been fired");
+                    }
+
+                    if (ctx.name === secondChannelContext1.name) {
+                        secondChannelInvocationPromiseNotHeard.reject("Should not have been fired");
+                    }
+                });
+
+                gtf.fdc3.addActiveListener(listener);
+
+                await supportApp.fdc3.broadcast(firstChannelContext1);
+
+                await firstChannelInvocationHeard.promise;
+
+                listener.unsubscribe();
+
+                await supportApp.fdc3.broadcast(firstChannelContext2);
+
+                gtf.wait(3000, firstChannelInvocationNotHeard.resolve);
+
+                await firstChannelInvocationNotHeard.promise;
+
+                await fdc3.joinUserChannel(anotherUserChannelIdToJoin);
+
+                await supportApp.fdc3.joinUserChannel(anotherUserChannelIdToJoin);
+
+                await supportApp.fdc3.broadcast(secondChannelContext1);
+
+                gtf.wait(3000, secondChannelInvocationPromiseNotHeard.resolve);
+
+                await secondChannelInvocationPromiseNotHeard.promise;
             });
 
             it("Should stop invoking the callback after invoking listener.unsubscribe()", async () => {
@@ -2138,9 +2179,9 @@ describe("addContextListener() ", function () {
                 await secondContextHeard.promise;
             });
 
-            it("Should not invoke the callback in another system channel", async () => {
+            it("Should invoke the callback in another system channel", async () => {
                 const currentChannelContextHeard = gtf.wrapPromise();
-                const anotherChannelContextNotHeard = gtf.wrapPromise();
+                const anotherChannelContextHeard = gtf.wrapPromise();
 
                 const currentChannelContextToBroadcast = gtf.fdc3.getContext();
                 const anotherChannelContextToBroadcast = gtf.fdc3.getContext();
@@ -2151,7 +2192,7 @@ describe("addContextListener() ", function () {
                     }
 
                     if (ctx.name === anotherChannelContextToBroadcast.name) {
-                        anotherChannelContextNotHeard.reject("Should not have fired");
+                        anotherChannelContextHeard.resolve();
                     }
                 });
 
@@ -2171,9 +2212,56 @@ describe("addContextListener() ", function () {
                 // support app broadcasts context on the other system channel
                 await supportApp.fdc3.broadcast(anotherChannelContextToBroadcast);
 
-                gtf.wait(3000, anotherChannelContextNotHeard.resolve);
+                await anotherChannelContextHeard.promise;
+            });
 
-                await anotherChannelContextNotHeard.promise;
+            it("Should stop firing the callback on other channels when listener.unsubscribe() is invoked on the current channel", async () => {
+                const firstChannelInvocationHeard = gtf.wrapPromise();
+                const firstChannelInvocationNotHeard = gtf.wrapPromise();
+
+                const secondChannelInvocationPromiseNotHeard = gtf.wrapPromise();
+
+                const firstChannelContext1 = gtf.fdc3.getContext();
+                const firstChannelContext2 = gtf.fdc3.getContext();
+                const secondChannelContext1 = gtf.fdc3.getContext();
+
+                const listener = await fdc3.addContextListener(null, (ctx) => {
+                    if (ctx.name === firstChannelContext1.name) {
+                        firstChannelInvocationHeard.resolve();
+                    }
+
+                    if (ctx.name === firstChannelContext2.name) {
+                        firstChannelInvocationNotHeard.reject("Should not have been fired");
+                    }
+
+                    if (ctx.name === secondChannelContext1.name) {
+                        secondChannelInvocationPromiseNotHeard.reject("Should not have been fired");
+                    }
+                });
+
+                gtf.fdc3.addActiveListener(listener);
+
+                await supportApp.fdc3.broadcast(firstChannelContext1);
+
+                await firstChannelInvocationHeard.promise;
+
+                listener.unsubscribe();
+
+                await supportApp.fdc3.broadcast(firstChannelContext2);
+
+                gtf.wait(3000, firstChannelInvocationNotHeard.resolve);
+
+                await firstChannelInvocationNotHeard.promise;
+
+                await fdc3.joinUserChannel(anotherUserChannelIdToJoin);
+
+                await supportApp.fdc3.joinUserChannel(anotherUserChannelIdToJoin);
+
+                await supportApp.fdc3.broadcast(secondChannelContext1);
+
+                gtf.wait(3000, secondChannelInvocationPromiseNotHeard.resolve);
+
+                await secondChannelInvocationPromiseNotHeard.promise;
             });
 
             it("Should stop invoking the callback after invoking listener.unsubscribe()", async () => {
@@ -2506,9 +2594,9 @@ describe("addContextListener() ", function () {
                 await contextNotHeard.promise;
             });
 
-            it("Should not invoke the callback in another system channel", async () => {
-                const contextHeard = gtf.wrapPromise();
-                const contextNotHeard = gtf.wrapPromise();
+            it("Should invoke the callback in another system channel", async () => {
+                const firstChannelContextHeard = gtf.wrapPromise();
+                const secondChannelContextHeard = gtf.wrapPromise();
 
                 const contextType = "fdc3.context.type";
 
@@ -2517,11 +2605,11 @@ describe("addContextListener() ", function () {
 
                 const listener = await fdc3.addContextListener(contextType, (ctx) => {
                     if (ctx.name === firstContext.name) {
-                        contextHeard.resolve();
+                        firstChannelContextHeard.resolve();
                     }
 
                     if (ctx.name === secondContext.name) {
-                        contextNotHeard.reject("Should not have fired");
+                        secondChannelContextHeard.resolve();
                     }
                 });
 
@@ -2530,20 +2618,68 @@ describe("addContextListener() ", function () {
                 // support app broadcasts a context on the current channel
                 await supportApp.fdc3.broadcast(firstContext);
 
-                await contextHeard.promise;
+                await firstChannelContextHeard.promise;
 
-                // current app joins another system channel
+                // current app joins another user channel
                 await fdc3.joinUserChannel(anotherUserChannelIdToJoin);
 
-                // support app joins another system channel
+                // support app joins another user channel
                 await supportApp.fdc3.joinUserChannel(anotherUserChannelIdToJoin);
 
-                // support app broadcasts context on the other system channel
+                // support app broadcasts context on the other user channel
                 await supportApp.fdc3.broadcast(secondContext);
 
-                gtf.wait(3000, contextNotHeard.resolve);
+                await secondChannelContextHeard.promise;
+            });
 
-                await contextNotHeard.promise;
+            it("Should stop firing the callback on other channels when listener.unsubscribe() is invoked on the current channel", async () => {
+                const firstChannelInvocationHeard = gtf.wrapPromise();
+                const firstChannelInvocationNotHeard = gtf.wrapPromise();
+
+                const secondChannelInvocationPromiseNotHeard = gtf.wrapPromise();
+
+                const contextType = `fdc3.context.type.${Date.now()}`;
+                const firstChannelContext1 = { ...gtf.fdc3.getContext(), type: contextType };
+                const firstChannelContext2 = { ...gtf.fdc3.getContext(), type: contextType };
+                const secondChannelContext1 = { ...gtf.fdc3.getContext(), type: contextType };
+
+                const listener = await fdc3.addContextListener(contextType, (ctx) => {
+                    if (ctx.name === firstChannelContext1.name) {
+                        firstChannelInvocationHeard.resolve();
+                    }
+
+                    if (ctx.name === firstChannelContext2.name) {
+                        firstChannelInvocationNotHeard.reject("Should not have been fired");
+                    }
+
+                    if (ctx.name === secondChannelContext1.name) {
+                        secondChannelInvocationPromiseNotHeard.reject("Should not have been fired");
+                    }
+                });
+
+                gtf.fdc3.addActiveListener(listener);
+
+                await supportApp.fdc3.broadcast(firstChannelContext1);
+
+                await firstChannelInvocationHeard.promise;
+
+                listener.unsubscribe();
+
+                await supportApp.fdc3.broadcast(firstChannelContext2);
+
+                gtf.wait(3000, firstChannelInvocationNotHeard.resolve);
+
+                await firstChannelInvocationNotHeard.promise;
+
+                await fdc3.joinUserChannel(anotherUserChannelIdToJoin);
+
+                await supportApp.fdc3.joinUserChannel(anotherUserChannelIdToJoin);
+
+                await supportApp.fdc3.broadcast(secondChannelContext1);
+
+                gtf.wait(3000, secondChannelInvocationPromiseNotHeard.resolve);
+
+                await secondChannelInvocationPromiseNotHeard.promise;
             });
 
             it("Should stop invoking the callback after invoking listener.unsubscribe()", async () => {

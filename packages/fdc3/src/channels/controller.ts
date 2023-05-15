@@ -474,16 +474,13 @@ export class ChannelsController {
         const channelType = this.getChannelTypeById(channelId);
 
         if (channelType === ChannelTypes.User) {
-            const channelName = this.channelsStateStore.getGlueChannelNameByFdc3ChannelId(channelId);   // ex: returns "Red"
-            const contextChannelName = this.channelsParser.mapChannelNameToContextName(channelName);     // ex: returns ___channel___Red
+            this.logger.info(`[${commandId}] - subscribing for fdc3 user channel with id ${channelId}`);
 
-            this.logger.info(`[${commandId}] - subscribing for fdc3 user channel with id ${channelId} (underlying glue channel: ${channelName})`);
-
-            const unsubscribe = await this.glueController.contextsSubscribe(contextChannelName, subHandler);
+            const unsubscribe = this.glueController.channelsSubscribe(subHandler);
 
             return {
                 unsubscribe: () => {
-                    this.logger.info(`[${commandId}] - invoking unsubscribe for fdc3 user channel with id ${channelId} (underlying glue channel: ${channelName})`);
+                    this.logger.info(`[${commandId}] - invoking unsubscribe for fdc3 user channel with id ${channelId}`);
 
                     unsubscribe();
                 }
@@ -511,7 +508,7 @@ export class ChannelsController {
 
             await this.addContextTypeInPrivateChannelContext(channelId, contextType);
 
-            const targetInstance = await this.getTargetedInstanceId(channelId!) as string;
+            const targetInstance = await this.getTargetedInstanceId(channelId) as string;
 
             const unsubscribe = () => {
                 this.logger.info(`[${commandId}] - unsubscribe invoked for private channel with id ${channelId}`);
@@ -525,7 +522,7 @@ export class ChannelsController {
 
             this.logger.info(`[${commandId}] - invoking onAddContextListener handler for private channel with id ${channelId}`);
 
-            this.invokeSystemMethod(targetInstance, PrivateChannelEventMethods.OnAddContextListener, { channelId: channelId!, clientId: targetInstance, contextType });
+            this.invokeSystemMethod(targetInstance, PrivateChannelEventMethods.OnAddContextListener, { channelId: channelId, clientId: targetInstance, contextType });
 
             return { unsubscribe };
         }

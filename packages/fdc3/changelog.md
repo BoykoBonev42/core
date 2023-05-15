@@ -1,3 +1,5 @@
+3.2.2
+fix: adding a context listener while on a user channel invokes the callback in other user channels when joined
 3.2.1
 fix: expecting of iframes to always have glue window
 3.2.0

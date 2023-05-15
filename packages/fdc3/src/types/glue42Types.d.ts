@@ -1,5 +1,3 @@
-import { ContextMetadata } from "@finos/fdc3";
-
 type ApplicationStartOptions = {
     waitForAGMReady?: boolean;
     ignoreSavedLayout?: boolean;
@@ -22,14 +20,6 @@ export type GlueIntentContext = {
 }
 
 export type didCallbackReplayed = { replayed: boolean };
-
-export type SubscriptionConfig = {
-    isUserChannel: boolean;
-    callback: (contextData: any, contextMetadata?: ContextMetadata) => void;
-    didReplay: didCallbackReplayed;
-    contextData: any;
-    addedData?: any;
-}
 
 type IntentContext = {
     type?: string;

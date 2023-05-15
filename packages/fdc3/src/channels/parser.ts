@@ -9,7 +9,7 @@ export class ChannelsParser {
         return `${glueChannelNamePrefix}${channelName}`;
     }
 
-    public parseContextsDataToInitialFDC3Data = (context: { data: any, latest_fdc3_type: string }): Context => {
+    public parseContextsDataToInitialFDC3Data (context: { data: any, latest_fdc3_type: string }): Context {
         const { data, latest_fdc3_type } = context;
 
         const parsedType = this.mapChannelsDelimiterToFDC3Type(latest_fdc3_type);

@@ -8,6 +8,7 @@ interface PendingListener {
     handler: ContextHandler;
     contextType?: string;
     listener: Listener;
+    unsubWithoutFilter(): void;
     setActualUnsub(unsub: UnsubscribeFunction): void;
 }
 
@@ -17,9 +18,7 @@ export class ChannelsPendingListenersStore {
     public createPendingListener(handler: ContextHandler, contextType?: string): Listener {
         const id = nanoid();
 
-        const unsubscribe = () => {
-            this.pendingListeners = this.pendingListeners.filter(listener => listener.id !== id);
-        };
+        const unsubscribe = () => this.filterPendingListenersById(id);
 
         const listener = { unsubscribe };
 
@@ -27,7 +26,7 @@ export class ChannelsPendingListenersStore {
             listener.unsubscribe = actualUnsub;
         };
 
-        this.pendingListeners.push({ id, handler, contextType, setActualUnsub, listener });
+        this.pendingListeners.push({ id, handler, contextType, setActualUnsub, listener, unsubWithoutFilter: () => {} });
 
         return listener;
     }
@@ -39,18 +38,30 @@ export class ChannelsPendingListenersStore {
             return addContextListenerFn({ commandId, handler, contextType, channelId });
         }));
 
-        Object.values(this.pendingListeners).forEach(({ setActualUnsub }, index) => setActualUnsub(listeners[index].unsubscribe));
+        Object.values(this.pendingListeners).forEach(({ id, setActualUnsub, unsubWithoutFilter }, index) => {
+            unsubWithoutFilter = listeners[index].unsubscribe;
+
+            const un = () => {
+                this.filterPendingListenersById(id);
+
+                unsubWithoutFilter();
+            };
+
+            setActualUnsub(un);
+        });
     }
 
-    public unsubscribePendingListeners(): void {
-        this.pendingListeners.forEach(({ listener, id, setActualUnsub }) => {
-            listener.unsubscribe();
+    public unsubscribePendingListeners(): void {       
+        this.pendingListeners.forEach(({ id, setActualUnsub, unsubWithoutFilter }) => {
+            unsubWithoutFilter();
 
-            const newUnsub = () => {
-                this.pendingListeners = this.pendingListeners.filter(listener => listener.id !== id);
-            };
+            const newUnsub = () => this.filterPendingListenersById(id);
 
             setActualUnsub(newUnsub);
         });
+    }
+
+    private filterPendingListenersById(id: string) {
+        this.pendingListeners = this.pendingListeners.filter((listener) => listener.id !== id);
     }
 }
