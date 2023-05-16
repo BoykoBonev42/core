@@ -58,6 +58,8 @@ export class SessionStorageController {
         this.allNamespaces.forEach((namespace) => {
             this.sessionStorage.setItem(namespace, JSON.stringify([]));
         });
+
+        this.sessionStorage.removeItem(this.systemNamespace);
     }
 
     public getSystemSettings(): SessionSystemSettings | undefined {
