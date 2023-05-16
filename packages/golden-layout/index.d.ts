@@ -808,6 +808,8 @@ declare module '@glue42/golden-layout' {
              */
             replaceChild(oldChild: ContentItem, newChild: ContentItem | ItemConfigType): void;
 
+            replaceChildren(newChildren: Array<ContentItem | ItemConfigType>): void;
+
             /**
              * Updates the items size. To actually assign a new size from within a component, use container.setSize( width, height )
              */

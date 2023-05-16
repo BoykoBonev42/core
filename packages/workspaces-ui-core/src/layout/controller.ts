@@ -1414,7 +1414,7 @@ export class LayoutController {
     }
 
     private reinitWorkspaceConfig(config: GoldenLayout.Config): void {
-        const stackConfig = config.content[0];
+        const stackConfig = config.content[0] as GoldenLayout.StackConfig;
 
         if (stackConfig.type !== "stack") {
             throw new Error(`Cannot reinitialize the frame with config ${JSON.stringify(config)}`);
@@ -1424,9 +1424,7 @@ export class LayoutController {
 
         const outerWorkspaceStack = store.workspaceLayout.root.getItemsByType("stack")[0];
 
-        outerWorkspaceStack.parent.replaceChild(outerWorkspaceStack, stackConfig);
-
-        (outerWorkspaceStack as any)._$destroy();
+        outerWorkspaceStack.replaceChildren(stackConfig.content);
     }
 
     private setupOuterLayout(): void {

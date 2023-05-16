@@ -1,5 +1,7 @@
-1.16.1
+1.16.2
+fix: updated the frame re-initialization logic
 chore: improved some styling
+1.16.1
 fix: the session storage for the cache now matches the g42 convention
 1.16.0
 feat: update tabs design

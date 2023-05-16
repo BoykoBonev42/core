@@ -329,13 +329,17 @@ export class ApplicationFactory {
 
         } catch (error) {
             this.raiseFailed(component, workspace.id);
-            // If a frame doesn't initialize properly remove its windowId
-            component.config.componentState.windowId = undefined;
+
             if (url) {
                 this._frameController.moveFrame(componentId, getElementBounds(component.element));
             } else {
+                // Making sure the windowId is set so the platform can remove the window as well
+                component.config.componentState.windowId = windowId;
                 this._manager.closeTab(component, false);
             }
+            // If a frame doesn't initialize properly remove its windowId
+            component.config.componentState.windowId = undefined;
+
             const wsp = store.getById(workspace.id);
             if (!wsp) {
                 throw new Error(`Workspace ${workspace.id} failed ot initialize because none of the specified windows were able to load

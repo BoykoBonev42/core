@@ -1,3 +1,5 @@
+2.5.3
+feat: added replaceChildren to the AbstractContentItem
 2.5.2
 feat: update tabs design
 2.5.1

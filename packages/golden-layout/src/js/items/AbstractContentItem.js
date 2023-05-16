@@ -207,6 +207,7 @@ lm.utils.copy(lm.items.AbstractContentItem.prototype, {
 		 */
 		if (this.isStack) {
 			this.header.tabs[index].contentItem = newChild;
+			newChild.tab = this.header.tabs[index];
 		}
 
 		//TODO This doesn't update the config... refactor to leave item nodes untouched after creation
@@ -220,7 +221,17 @@ lm.utils.copy(lm.items.AbstractContentItem.prototype, {
 
 		this.callDownwards('setSize');
 	},
+	replaceChildren: function (newChildren) {
+		newChildren = newChildren.map(c => this.layoutManager._$normalizeContentItem(c));
+		const oldChildren = this.contentItems;
 
+		this.addChild(newChildren[0]);
+
+		oldChildren.forEach((ci) => this.removeChild(ci));
+		newChildren.slice(1).forEach((nc) => this.addChild(nc));
+
+		this.callDownwards('setSize');
+	},
 	/**
 	 * Convenience method.
 	 * Shorthand for this.parent.removeChild( this )
