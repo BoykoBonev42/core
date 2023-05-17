@@ -5,7 +5,7 @@ import { generate } from "shortid";
 import { PromiseWrapper } from "../../src/utils/pw";
 // tslint:disable:no-unused-expression
 
-describe.only("contexts.complex-update", () => {
+describe("contexts.complex-update", () => {
 
     let glue!: Glue42Core.GlueCore;
 
@@ -18,7 +18,7 @@ describe.only("contexts.complex-update", () => {
     });
 
     // https://jira.tick42.com/browse/G4E-6142
-    it.only("writing to same object (update)", () => {
+    it("writing to same object (update)", () => {
 
       return new Promise(async (rs, rj) => {
 
@@ -129,7 +129,7 @@ describe.only("contexts.complex-update", () => {
     });
 
     // https://jira.tick42.com/browse/G4E-6023
-    it.only("writing to same object (set)", () => {
+    it("writing to same object (set)", () => {
 
       return new Promise(async (rs, rj) => {
 
