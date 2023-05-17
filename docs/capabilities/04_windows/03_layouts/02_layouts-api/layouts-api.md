@@ -21,7 +21,7 @@ const type = "Global";
 const myLayout = await glue.layouts.get(name, type);
 ```
 
-### Saving and Restoring
+### Save & Restore
 
 *Note that if you haven't already handled programmatically the process of [requesting a permission from the user for the Multi-Screen Window Placement browser functionality](#requesting_multiscreen_window_placement_permission), the first time either the [`save()`](../../../../reference/core/latest/layouts/index.html#API-save) or the [`restore()`](../../../../reference/core/latest/layouts/index.html#API-restore) method is invoked, the Global Layouts library will automatically ask the user for permission. This default behavior isn't recommended, as it's not ideal for the user experience.*
 
@@ -29,9 +29,7 @@ To save a Layout, use the [`save()`](../../../../reference/core/latest/layouts/i
 
 ```javascript
 const layoutConfig = {
-    name: "My Layout",
-    // Optionally specify a Layout type. Defaults to "Global".
-    type: "Workspace"
+    name: "My Layout"
 };
 
 const savedLayout = await glue.layouts.save(layoutConfig);
@@ -50,7 +48,7 @@ const restoreOptions = {
 await glue.layouts.restore(restoreOptions);
 ```
 
-### Removing
+### Remove
 
 To remove a Layout, use the [`remove()`](../../../../reference/core/latest/layouts/index.html#API-remove) method. You must pass the [`LayoutType`](../../../../reference/core/latest/layouts/index.html#LayoutType) and the name of the Layout as arguments:
 
@@ -58,7 +56,7 @@ To remove a Layout, use the [`remove()`](../../../../reference/core/latest/layou
 await glue.layouts.remove("Global", "My Layout");
 ```
 
-### Exporting and Importing
+### Export & Import
 
 You can export all currently available [`Layout`](../../../../reference/core/latest/layouts/index.html#Layout) objects with the [`export()`](../../../../reference/core/latest/layouts/index.html#API-export) method. Exported Layouts can be stored to a database and then be used as restore points, or can be sent to another user and imported on their machine.
 
@@ -104,7 +102,7 @@ To subscribe for the event which fires when a Layout is changed, use the [`onCha
 glue.layouts.onChanged(console.log);
 ```
 
-## Saving and Updating Context
+## Save & Update Context
 
 When a Layout is saved, apps can store context data in it. When the Layout is restored, the context data is also restored and returned to the apps. Context data can be saved in all Layout types.
 

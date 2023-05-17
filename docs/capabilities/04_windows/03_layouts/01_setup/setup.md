@@ -27,7 +27,7 @@ The Layout of a [Workspace](../../workspaces/overview/index.html#workspaces_conc
 
 Most of the [Layouts API](../../../../reference/core/latest/layouts/index.html) is available as part of the standard free [**Glue42 Core**](https://glue42.com/core/) APIs - users are able to import, export and listen for Layout events. However, saving and restoring Global Layouts is exclusive to [**Glue42 Core+**](https://glue42.com/core-plus/).
 
-The Global Layouts functionality is available by default when you activate the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) package in your [Main app](../../../../developers/core-plus-platform/index.html). Use the `layouts` property of the configuration object for the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) library to enable or disable Global Layouts:
+The Global Layouts functionality is available by default when you activate the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) package in your [Main app](../../../../developers/core-plus-platform/index.html). Use the `globalLayouts` property of the configuration object for the [`@glue42/core-plus`](https://www.npmjs.com/package/@glue42/core-plus) library to enable or disable Global Layouts:
 
 ```javascript
 import Glue42CorePlus from "@glue42/core-plus";
@@ -38,13 +38,13 @@ const config = {
     glue: { libraries: [GlueWorkspaces] },
     workspaces: { src: "http://localhost:3000" },
     // Global Layouts configuration.
-    layouts: { enabled: true }
+    globalLayouts: { enabled: true }
 };
 
 const { glue } = await Glue42CorePlus(config);
 ```
 
-The `layouts` object has the following properties:
+The `globalLayouts` object has the following properties:
 
 | Property | Type | Description |
 |----------|------|-------------|

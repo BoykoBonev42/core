@@ -2,13 +2,13 @@
 
 The [Workspaces API](../../../../reference/core/latest/workspaces/index.html) offers advanced window management functionalities. Using Workspaces, users are able to arrange multiple apps within the same visual window (called *Frame*). This arrangement can be performed programmatically or by dragging and dropping apps within the Frame. Users can also save Workspace Layouts and restore them within the same Frame or even in different Frames.
 
-The Glue42 Workspaces enable the users to compose a custom arrangement of apps by treating each app as an individual building block that can be added, removed, moved or resized within a Workspace. The Frame can hold multiple Workspaces (as tabs) and can also be maximized, minimized or resized.
+The Glue42 Workspaces enable the users to compose a custom arrangement of apps by treating each app as an individual building block that can be added, removed, moved or resized within a Workspace. The Frame can hold multiple Workspaces as tabs and can also be maximized, minimized or resized.
 
 ## Workspaces Concepts
 
 ### Frame
 
-The Frame is a web app (also called Workspaces App). It is the shell that can hold multiple Workspaces as tabs in a single or multiple windows (frames). The Frame app is a vital element in the Workspaces functionality as it handles opening and closing Workspaces, arranging windows in a Workspace, adding or removing Workspaces and windows.
+The Frame is a web app (also called Workspaces App). This app is the shell that can hold multiple Workspaces as tabs in a single or multiple windows (frames). The Frame app is a vital element in the Workspaces functionality as it handles opening and closing Workspaces, arranging windows in a Workspace, adding or removing Workspaces and windows.
 
 A fully functioning Workspaces App is available in [**Glue42 Enterprise**](https://glue42.com/enterprise/). For [**Glue42 Core**](https://glue42.com/core/) projects, however, you have to create your own [Workspaces App](../workspaces-app/index.html). This is extremely simple, as all Workspaces App functionalities are provided as a single React component by the [`@glue42/workspaces-ui-react`](https://www.npmjs.com/package/@glue42/workspaces-ui-react) library.
 
@@ -30,28 +30,36 @@ The example below shows the shape of a simple Workspace containing two apps:
 const layout = {
     children: [
         {
-            type: "column",
+            type: "row",
             children: [
                 {
                     type: "group",
                     children: [
                         {
                             type: "window",
-                            appName: "clientlist"
+                            config: {
+                                appName: "clientlist"
+                            }
                         }
-                    ]
+                    ],
+                    config: {}
                 },
                 {
                     type: "group",
                     children: [
                         {
                             type: "window",
-                            appName: "clientportfolio"
+                            config: {
+                                appName: "clientportfolio"
+                            }
                         }
-                    ]
+                    ],
+                    config: {}
                 }
-            ]
+            ],
+            config: {}
         }
-    ]
+    ],
+    config: {}
 };
 ```

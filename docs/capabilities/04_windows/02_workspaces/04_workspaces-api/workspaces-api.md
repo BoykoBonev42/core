@@ -176,18 +176,15 @@ await myWorkspace.refreshReference();
 
 ### Restoring Workspaces
 
-You can restore a Workspace by using the [`restoreWorkspace()`](../../../../reference/core/latest/workspaces/index.html#API-restoreWorkspace) method which is available at top level of the API. It accepts an optional [`RestoreWorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#RestoreWorkspaceConfig) object in which you can specify a title and a context for the restored Workspace, and also whether to restore it in a specific existing Frame or in a new Frame:
+You can restore a Workspace by using the [`restoreWorkspace()`](../../../../reference/core/latest/workspaces/index.html#API-restoreWorkspace) method which is available at top level of the API. It accepts an optional [`RestoreWorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#RestoreWorkspaceConfig) object in which you can specify a title and a context for the restored Workspace:
 
 ```javascript
-// Specify the Frame in which to restore the Workspace.
-const restoreOptions = {
-    frameId: "frame-id"
-};
+const restoreOptions = { title: "My Workspace" };
 
 const workspace = await glue.workspaces.restoreWorkspace("myWorkspace", restoreOptions);
 ```
 
-This method is also available on the frame instance:
+This method is also available on the [`Frame`](../../../../reference/core/latest/workspaces/index.html#Frame) instance:
 
 ```javascript
 const myFrame = await glue.workspaces.getMyFrame();
@@ -229,7 +226,7 @@ const definition = {
 const workspace = await glue.workspaces.createWorkspace(definition);
 ```
 
-*If you insert an empty [`Column`](../../../../reference/core/latest/workspaces/index.html#Column), [`Row`](../../../../reference/core/latest/workspaces/index.html#Row) or [`Group`](../../../../reference/core/latest/workspaces/index.html#Group) element in a Workspace (without a window as its content), it will be visually represented in the Workspace as an empty space with a grey background and a button in the middle from which the user will be able to add an app. The user won't be able to move or close this empty element.*
+*Note that if you insert an empty [`Column`](../../../../reference/core/latest/workspaces/index.html#Column), [`Row`](../../../../reference/core/latest/workspaces/index.html#Row) or [`Group`](../../../../reference/core/latest/workspaces/index.html#Group) element in a Workspace (without a window as its content), it will be visually represented in the Workspace as an empty space with a grey background and a button in the middle from which the user will be able to add an app. The user won't be able to move or close this empty element.*
 
 #### Workspaces Builder API
 
@@ -314,7 +311,7 @@ const restoreOptions = { newFrame: true };
 await glue.workspaces.restoreWorkspace("myWorkspace", restoreOptions);
 ```
 
-### Focusing a Workspace
+### Focusing Workspaces
 
 To specify whether a [`Workspace`](../../../../reference/core/latest/workspaces/index.html#Workspace) should be on focus when creating or restoring it, use the `isSelected` property of the [`WorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#WorkspaceConfig) or [`RestoreWorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#RestoreWorkspaceConfig) objects respectively:
 
@@ -344,7 +341,7 @@ const definition = {
 await glue.workspaces.createWorkspace(definition);
 ```
 
-### Positioning a Workspace
+### Positioning Workspaces
 
 To specify a position for the [`Workspace`](../../../../reference/core/latest/workspaces/index.html#Workspace) when creating or restoring it, use the `positionIndex` property of the [`WorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#WorkspaceConfig) or [`RestoreWorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#RestoreWorkspaceConfig) objects respectively:
 
@@ -358,7 +355,11 @@ await glue.workspaces.restoreWorkspace("myWorkspace", restoreOptions);
 
 ### Pinning & Unpinning Workspaces
 
-Workspaces can be pinned or unpinned programmatically in the [Workspaces App](../overview/index.html#workspaces_concepts-frame). Pinned Workspace tabs are placed before the regular Workspace tabs and are represented only by their icon - they don't have a title, nor Close and Save Workspace buttons, therefore they can't be closed and their initial Layout can't be overwritten by the end user.
+Workspaces can be pinned or unpinned programmatically in the [Workspaces App](../overview/index.html#workspaces_concepts-frame). Pinned Workspace tabs are placed before the regular Workspace tabs and are represented only by their icon - they don't have a title, nor a Workspace tab menu or a "Close" button, therefore they can't be closed and their initial Layout can't be overwritten by the end user.
+
+The following image shows a pinned Workspace with a custom icon followed by two regular unpinned Workspaces:
+
+![Pinned Workspace](../../../../images/workspaces/pinned-workspace.png)
 
 You must specify an icon for the Workspace in order to be able to pin it. To set an icon for a Workspace, use the `icon` property of the [`WorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#WorkspaceConfig) or [`RestoreWorkspaceConfig`](../../../../reference/core/latest/workspaces/index.html#RestoreWorkspaceConfig) objects when creating or restoring a Workspace respectively, or use the [`setIcon()`](../../../../reference/core/latest/workspaces/index.html#Workspace-setIcon) method of a [`Workspace`](../../../../reference/core/latest/workspaces/index.html#Workspace) instance. The icon must be in string format and you can pass either a path to a web resource or a string representation of an image, such as Base64.
 
@@ -384,7 +385,7 @@ To get the icon of a Workspace, use the [`getIcon()`](../../../../reference/core
 const icon = await myWorkspace.getIcon();
 ```
 
-To pin a Workspace, use the [`pin()`](../../../../reference/core/latest/workspaces/index.html#Workspace-pin) method and optionally pass an icon. The title and the Close and Save Workspace buttons of the Workspace tab will be removed and the icon of the Workspace will be shown as the last item in the pinned Workspaces group:
+To pin a Workspace, use the [`pin()`](../../../../reference/core/latest/workspaces/index.html#Workspace-pin) method and optionally pass an icon. The title, the Workspace tab menu and the "Close" button of the Workspace tab will be removed and the icon of the Workspace will be shown as the last item in the pinned Workspaces group:
 
 ```javascript
 const options = {
@@ -394,7 +395,7 @@ const options = {
 await myWorkspace.pin(options);
 ```
 
-To unpin a Workspace, use the [`unpin()`](../../../../reference/core/latest/workspaces/index.html#Workspace-unpin) method. The title and the Close and Save Workspace buttons will be returned, the Workspace icon will be hidden and the Workspace will be added as the first tab in the unpinned Workspaces group:
+To unpin a Workspace, use the [`unpin()`](../../../../reference/core/latest/workspaces/index.html#Workspace-unpin) method. The title, the Workspace tab menu and the "Close" button will be returned, the Workspace icon will be hidden and the Workspace will be added as the first tab in the unpinned Workspaces group:
 
 ```javascript
 await myWorkspace.unpin();
@@ -485,7 +486,7 @@ await targetElement.addWindow({ appName: "app-three" });
 
 Once you have a reference to any [`Box`](../../../../reference/core/latest/workspaces/index.html#Box) or [`WorkspaceWindow`](../../../../reference/core/latest/workspaces/index.html#WorkspaceWindow) element, you can use its methods to manipulate its state and content.
 
-#### Maximize and Restore
+#### Maximize & Restore
 
 To maximize a Workspace element within the bounds of the Workspace, use its `maximize()` method:
 
@@ -499,7 +500,7 @@ To restore a Workspace element after maximizing it, use its `restore()` method:
 await targetElement.restore();
 ```
 
-#### Remove a Child Element
+#### Remove Child Elements
 
 To remove an immediate child element from any [`Box`](../../../../reference/core/latest/workspaces/index.html#Box) element, use its `removeChild()` method. It accepts a predicate that you can use as a filter to find the desired child element:
 
@@ -543,24 +544,26 @@ const definition = {
             children: [
                 {
                     type: "group",
-                    children: [{
-                        type: "window",
-                        appName: "app-two"
-                    }],
-
+                    children: [
+                        {
+                            type: "window",
+                            appName: "app-two"
+                        }
+                    ],
                 },
                 {
                     type: "group",
-                    children: [{
-                        type: "window",
-                        appName: "app-two",
-                        config: {
-                            // Window size constraints.
-                            maxWidth: 500,
-                            minHeight: 200
+                    children: [
+                        {
+                            type: "window",
+                            appName: "app-two",
+                            config: {
+                                // Window size constraints.
+                                maxWidth: 500,
+                                minHeight: 200
+                            }
                         }
-                    }],
-
+                    ],
                 }
             ],
             config: {
@@ -585,14 +588,17 @@ You can set size constraints also when using the [Workspaces Builder API](#works
 ```javascript
 const rowDefinition = {
     type: "row",
-    children: [{
-        type: "group",
-        children: [{
-            type: "window",
-            appName: "app-two"
-        }],
-
-    }],
+    children: [
+        {
+            type: "group",
+            children: [
+                {
+                    type: "window",
+                    appName: "app-two"
+                }
+            ],
+        }
+    ],
     config: {
         // The row will be pinned - its height will be preserved when the user resizes the Workspace.
         isPinned: true
@@ -633,7 +639,7 @@ const workspace = await glue.workspaces.restoreWorkspace("My Workspace", options
 
 *For more details on how to configure Workspace loading strategies, see [Loading Strategies](../enabling-workspaces/index.html#main_app-loading_strategies) in the Enabling Workspaces section.*
 
-### Lockdown
+### Lock Settings
 
 [`Workspace`](../../../../reference/core/latest/workspaces/index.html#Workspace) instances, [`Group`](../../../../reference/core/latest/workspaces/index.html#Group), [`Row`](../../../../reference/core/latest/workspaces/index.html#Row), [`Column`](../../../../reference/core/latest/workspaces/index.html#Column) and [`WorkspaceWindow`](../../../../reference/core/latest/workspaces/index.html#WorkspaceWindow) elements can be locked using the [`lock()`](../../../../reference/core/latest/workspaces/index.html#Workspace-lock) method of the respective instance. Locking a Workspace or any of its elements allows you to control the extent to which the user can modify it. For instance, you may want to prevent the user from removing or extracting a window from the Workspace, but at the same time allow them to resize the Workspace contents, or you may want to disable any Workspace modifications whatsoever.
 
@@ -676,41 +682,43 @@ Locking properties for a [`Workspace`](../../../../reference/core/latest/workspa
 
 | Property | Description |
 |----------|-------------|
-| `allowSplitters` | If `false`, will prevent the splitters from being draggable, so the Workspace elements can't be resized . |
+| `allowDropBottom` | If `false`, will prevent the user from dropping windows in the bottommost area of the Workspace. |
+| `allowDropLeft` | If `false`, will prevent the user from dropping windows in the leftmost area of the Workspace. |
+| `allowDropRight` | If `false`, will prevent the user from dropping windows in the rightmost area of the Workspace. |
+| `allowDropTop` | If `false`, will prevent the user from dropping windows in the topmost area of the Workspace. |
 | `allowExtract` | If `false`, will prevent the user from extracting (or rearranging) windows inside the Workspace. |
-| `showCloseButton` | If `false`, will hide the Close button on the Workspace tab. |
-| `showSaveButton` | If `false`, will hide the Save Workspace button on the Workspace tab. |
-| `showAddWindowButtons` | If `false`, will hide all Add Window buttons (the "+" buttons) in the headers of window groups. |
-| `showEjectButtons` | If `false`, will hide all Eject buttons in the headers of window groups. |
-| `showWindowCloseButtons` | If `false`, will hide all Close buttons on the window tabs. |
+| `allowSplitters` | If `false`, will prevent the splitters from being draggable, so the Workspace elements can't be resized . |
+| `showAddWindowButtons` | If `false`, will hide all "Add Window" buttons (the "+" buttons) in the headers of window groups. |
+| `showCloseButton` | If `false`, will hide the "Close" button on the Workspace tab. |
+| `showEjectButtons` | If `false`, will hide all "Eject" buttons in the headers of window groups. |
+| `showSaveButton` | If `false`, will hide the "Save Workspace" button on the Workspace tab. |
+| `showWindowCloseButtons` | If `false`, will hide all "Close" buttons on the window tabs. |
 
 Locking properties for a [`Group`](../../../../reference/core/latest/workspaces/index.html#Group):
 
 | Property | Description |
 |----------|-------------|
+| `allowDropBottom` | If `false`, will prevent the user from dropping windows in the bottommost area of the window group. |
+| `allowDropHeader` | If `false`, will prevent the user from dropping windows in the header area of the window group. |
+| `allowDropLeft` | If `false`, will prevent the user from dropping windows in the leftmost area of the window group. |
+| `allowDropRight` | If `false`, will prevent the user from dropping windows in the rightmost area of the window group. |
+| `allowDropTop` | If `false`, will prevent the user from dropping windows in the topmost area of the window group. |
 | `allowExtract` | If `false`, will prevent the user from extracting windows from the window group. |
-| `allowDrop` | If `false`, will prevent the user from adding windows by dropping them in the window group. |
-| `allowDropLeft` | If `false`, will prevent the user from adding windows by dropping them in the leftmost area of the window group. |
-| `allowDropTop` | If `false`, will prevent the user from adding windows by dropping them in the topmost area of the window group. |
-| `allowDropRight` | If `false`, will prevent the user from adding windows by dropping them in the rightmost area of the window group. |
-| `allowDropBottom` | If `false`, will prevent the user from adding windows by dropping them in the bottommost area of the window group. |
-| `allowDropHeader` | If `false`, will prevent the user from adding windows by dropping them in the header area of the window group. |
-| `showMaximizeButton` | If `false`, will hide the Maximize button in the header of the window group. |
-| `showEjectButton` | If `false`, will hide the Eject button in the header of the window group. |
-| `showAddWindowButton` | If `false`, will hide the Add Window button (the "+" button) in the header of the window group. |
+| `allowReorder` | If `false`, will prevent the user from reordering the windows in the window group. |
+| `showAddWindowButton` | If `false`, will hide the "Add Window" button (the "+" button) in the header of the window group. |
+| `showEjectButton` | If `false`, will hide the "Eject" button in the header of the window group. |
+| `showMaximizeButton` | If `false`, will hide the "Maximize" button in the header of the window group. |
 
 Locking properties for a [`Row`](../../../../reference/core/latest/workspaces/index.html#Row):
 
 | Property | Description |
 |----------|-------------|
-| `allowDrop` | If `false`, will prevent the user from adding windows by dropping them in the Workspace row. |
 | `allowSplitters` | If `false`, will prevent the splitters from being draggable, so the Workspace row can't be resized . |
 
 Locking properties for a [`Column`](../../../../reference/core/latest/workspaces/index.html#Column):
 
 | Property | Description |
 |----------|-------------|
-| `allowDrop` | If `false`, will prevent the user from adding windows by dropping them in the Workspace column. |
 | `allowSplitters` | If `false`, will prevent the splitters from being draggable, so the Workspace column can't be resized . |
 
 Locking properties for a [`WorkspaceWindow`](../../../../reference/core/latest/workspaces/index.html#WorkspaceWindow):
@@ -718,7 +726,8 @@ Locking properties for a [`WorkspaceWindow`](../../../../reference/core/latest/w
 | Property | Description |
 |----------|-------------|
 | `allowExtract` | If `false`, will prevent the user from extracting the window from the Workspace. |
-| `showCloseButton` | If `false`, will hide the Close button on the window tab. |
+| `allowReorder` | If `false`, will prevent the user from reordering the window in the window group. |
+| `showCloseButton` | If `false`, will hide the "Close" button on the window tab. |
 
 To set the locking properties of a Workspace and any of its elements when creating it, use the `config` property of the [`WorkspaceDefinition`](../../../../reference/core/latest/workspaces/index.html#WorkspaceDefinition) object. The locking configuration of a Workspace element will override the locking configuration of the Workspace:
 
@@ -730,24 +739,26 @@ const definition = {
             children: [
                 {
                     type: "group",
-                    children: [{
-                        type: "window",
-                        appName: "app-two"
-                    }],
-
+                    children: [
+                        {
+                            type: "window",
+                            appName: "app-two"
+                        }
+                    ],
                 },
                 {
                     type: "group",
-                    children: [{
-                        type: "window",
-                        appName: "app-two",
-                        config: {
-                            // This will override the Workspace locking config.
-                            allowExtract: true,
-                            showCloseButton: true
+                    children: [
+                        {
+                            type: "window",
+                            appName: "app-two",
+                            config: {
+                                // This will override the Workspace locking config.
+                                allowExtract: true,
+                                showCloseButton: true
+                            }
                         }
-                    }],
-
+                    ],
                 }
             ]
         }],
@@ -772,14 +783,17 @@ You can set locking configuration for a Workspace and its elements also when usi
 ```javascript
 const rowDefinition = {
     type: "row",
-    children: [{
-        type: "group",
-        children: [{
-            type: "window",
-            appName: "app-two"
-        }],
-
-    }],
+    children: [
+        {
+            type: "group",
+            children: [
+                {
+                    type: "window",
+                    appName: "app-two"
+                }
+            ],
+        }
+    ],
     config: {
         allowDrop: false
     }
@@ -790,11 +804,13 @@ await myWorkspace.addRow(rowDefinition);
 
 ### Workspace Layouts
 
-Workspace Layouts are JSON objects that describe the content and arrangement of a Workspace.
+Workspace Layouts are JSON objects that describe the content and arrangement of a Workspace. Workspace Layouts can be saved, deleted, exported and imported.
+
+The Workspaces Layouts API is accessible through the [`glue.workspaces.layouts`](../../../../reference/core/latest/workspaces/index.html#WorkspaceLayoutsAPI) object.
 
 #### Workspace Layout Summaries
 
-You can get the summaries of all Workspace Layouts without the extensive objects describing their structure. For example, you may need only the names of the available Layouts to list them in the UI:
+You can get the [`WorkspaceLayoutSummary`](../../../../reference/core/latest/workspaces/index.html#WorkspaceLayoutSummary) objects for all Workspace Layouts without the extensive JSON data describing their structure. For example, you may need only the names of the available Layouts to list them in the UI:
 
 ```javascript
 const layoutSummaries = await glue.workspaces.layouts.getSummaries();

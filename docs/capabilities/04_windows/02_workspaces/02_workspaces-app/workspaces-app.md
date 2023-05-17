@@ -6,45 +6,88 @@ Hot module reloading is supported, but keep in mind that each refresh closes all
 
 *Use the [Workspaces App template](https://github.com/Glue42/templates/tree/master/workspaces-react) provided in the [**Glue42 Core**](https://glue42.com/core/) GitHub repo as a startup skeleton to create and customize your own Workspaces App.*
 
-## Header Area Zones
+## Header Elements
 
-It is possible to add custom components in the Workspaces App header area in the following zones:
+The Header Element of the Workspaces App isn't available as a single customizable component, but contains several customizable elements:
 
-- Logo zone
-- Add Workspace zone
-- System Buttons zone
+- Logo element;
+- Add Workspace element;
+- System Buttons element;
 
-The Logo zone is located at the leftmost part of the header area, to the left of the Workspace tabs, and hosts the `<GlueLogo />` component. By default, it renders the Glue42 logo:
+*Note that, by default, there is a Move Area element located between the Add Workspace and the System Buttons elements. In a [**Glue42 Enterprise**](https://glue42.com/enterprise/) project, this element allows the user to move the Workspaces App, but in a [**Glue42 Core**](https://glue42.com/core/) project, the browser prevents its default functionality.*
 
-![Logo component](../../../../images/workspaces/logo-component.png)
+The Logo element is located at the leftmost part of the header area, to the left of the Workspace tabs, and hosts the `<GlueLogo />` component. By default, it renders the Glue42 logo:
 
-The Add Workspace zone is located between the Workspace tabs and the move area and hosts the `<AddWorkspaceButton />` component. By default, it renders the "+" button that opens the Add Workspace popup:
+![Logo component](../../../../images/workspaces/element-logo.png)
 
-![Add workspace component](../../../../images/workspaces/add-workspace-component.png)
+The Add Workspace element is located right after the Workspace tabs and hosts the `<AddWorkspaceButton />` component. By default, it renders the "+" button that opens the Add Workspace popup:
 
-The System Buttons zone is located at the rightmost part of the header area, after the move area, and hosts the `<MinimizeFrameButton />`, `<MaximizeFrameButton />` and `<CloseFrameButton />` components. By default, they render the Minimize, Maximize and Close buttons:
+![Add workspace component](../../../../images/workspaces/element-add-workspace.png)
 
-![System buttons component](../../../../images/workspaces/system-buttons-component.png)
+The System Buttons element is located at the rightmost part of the header area and can host any custom buttons. By default, this element is empty (there are no "Minimize", "Maximize" or "Close" buttons), because the browser prevents the default functionality of the system buttons:
+
+![System buttons component](../../../../images/workspaces/element-system-buttons.png)
+
+The following demonstrates the default structure of the Header element:
+
+```javascript
+<>
+    <GlueLogo />
+    <>
+        <WorkspaceTab />
+    </>
+    <AddWorkspaceButton />
+    <MoveArea />
+    <></>
+</>
+```
+
+## Group Header Elements
+
+The Group Header element contains the header of a tab window group within a Workspace:
+
+![Group Header](../../../../images/workspaces/group-header.png)
+
+The Group Header element isn't available as a single customizable component, but contains several customizable elements and zones. One or more Workspace Window Tab elements hold the individual tabs and the Group Header Buttons element holds the standard buttons for a window group in a Workspace ("Add Window", "Eject", "Maximize", "Restore"). There are two additional customizable zones that are located before and after the tabs:
+
+![Group Header](../../../../images/workspaces/group-header-zones.png)
+
+Each Workspace Window Tab element hosts an individual `<WorkspaceWindowTab />` component. Each `<WorkspaceWindowTab />` component contains the `<WorkspaceWindowChannelsLink />`, `<WorkspaceWindowTabTitle />` and `<WorkspaceWindowTabCloseButton />` components. The Group Header Buttons element hosts the `<GroupHeaderButtons />` component. The following demonstrates the default structure of the `<WorkspaceWindowTab />` and the `<GroupHeaderButtons />` components:
+
+```javascript
+<WorkspaceWindowTab>
+    <WorkspaceWindowChannelsLink />
+    <WorkspaceWindowTabTitle />
+    <WorkspaceWindowTabCloseButton />
+</WorkspaceWindowTab>
+
+<GroupHeaderButtons>
+    <AddWindowButton />
+    <EjectButton />
+    <RestoreGroupButton />
+    <MaximizeGroupButton />
+</GroupHeaderButtons>
+```
 
 ## Using the Components
 
 All default components can be reused and composed with custom code. If usage of such component has been detected, its default behavior will be applied. For instance, if you use the `<AddWorkspaceButton />` component, a popup will automatically appear when the button is clicked, without the need of custom code to induce this behavior. If you pass the same component more than once, an error will be thrown.
 
-To remove a component and make the respective zone empty, pass a `<Fragment />` component.
+To remove a component and make the respective element empty, pass a `<Fragment />` component.
 
 There are several prerequisites when creating a custom Workspaces App:
 
 - The `<Workspaces />` component accepts the size of its container. If it is nested in another component, the parent component must have its `height` style property set to `100%` in order for the `<Workspaces />` component to be visible.
-- The `@glue42/workspaces-ui-react` library depends on the `glue` object returned by the initialized Glue42 Web library. If you have used the [Glue42 React Hooks](../../../../developers/core-concepts/web-client/react/index.html) wrapper to obtain the `glue` object, or if you have attached the `glue` object to the global `window` object, it will be automatically passed to the `<Workspaces />` component as a prop. Otherwise, you must pass it manually as a prop to the `<Workspaces />` component.
+- The `@glue42/workspaces-ui-react` library depends on the `glue` object returned by the [initialized Glue42 Web library](../../../../developers/core-concepts/web-client/javascript/index.html#initialization). If you have used the [Glue42 React Hooks](../../../../developers/core-concepts/web-client/react/index.html) wrapper to obtain the `glue` object, or if you have attached the `glue` object to the global `window` object, it will be automatically passed to the `<Workspaces />` component as a prop. Otherwise, you must pass it manually.
 - The CSS files must be added manually (see [Styles](#styles)).
 
 ## Workspaces Component
 
-The `<Workspaces />` component has two props - `glue` and `components`. The `glue` prop expects the `glue` object returned by the initialized Glue42 library. The `components` prop is used to define the header area components (see [Header Area Components](#header_area_components)), the system popup components or apps (see [Replacing the System Popups](#custom_popups-replacing_the_system_popups)) and the Workspace content to be rendered (see [Composing Workspace Content](#composing_workspace_content)).
+The `<Workspaces />` component has two props - `glue` and `components`. The `glue` prop expects the `glue` object returned by the initialized Glue42 library. The `components` prop is used to define the header components (see [Header Components](#header_components)), the system popup components or apps (see [Replacing the System Popups](#custom_popups-replacing_the_system_popups)) and the Workspace content to be rendered (see [Composing Workspace Content](#composing_workspace_content)).
 
-*It is important to note that the `<Workspaces>` component isn't meant to be used as a typical React component. Besides its rendering responsibilities, it also contains heavy logic. This component is meant to allow you to create a dedicated Workspaces App which must function as a standalone window - you must never use it as a part of another app, as this will lead to malfunctioning. The Workspaces App should be customized only using the available extensibility points.*
+*It is important to note that the `<Workspaces>` component isn't meant to be used as a typical React component. Besides its rendering responsibilities, it also contains heavy logic. This component is meant to allow you to create a dedicated Workspaces App which must function as a standalone window - you must never use it as part of another app, as this will lead to malfunctioning. The Workspaces App should be customized only using the available extensibility points.*
 
-The following example shows the `<Workspaces />` component props, their properties and default values:
+The following example demonstrates the structure of the `<Workspaces />` component, its properties and default values:
 
 ```javascript
 <Workspaces
@@ -62,16 +105,31 @@ The following example shows the `<Workspaces />` component props, their properti
                     </>
                 );
             },
-            SystemButtonsComponent: () => {
+            SystemButtonsComponent: () => <></>
+        },
+        groupHeader: {
+            WorkspaceWindowTabComponent: () => {
                 return (
                     <>
-                        <MinimizeFrameButton />
-                        <MaximizeFrameButton />
-                        <CloseFrameButton />
+                        <WorkspaceWindowChannelsLink />
+                        <WorkspaceWindowTabTitle />
+                        <WorkspaceWindowTabCloseButton />
                     </>
                 );
-            }
-        },
+            },
+            ButtonsComponent: () => {
+                return (
+                    <>
+                        <AddWindowButton />
+                        <EjectButton />
+                        <RestoreGroupButton />
+                        <MaximizeGroupButton />
+                    </>
+                );
+            },
+            BeforeTabsComponent: () => <></>,
+            AfterTabsComponent: () => <></>
+        }
         popups: {
             SaveWorkspaceComponent: SaveWorkspacePopup,
             AddApplicationComponent: AddApplicationPopup,
@@ -107,13 +165,13 @@ Adding a custom toolbar with buttons to the Workspaces App:
 
 ![Custom Toolbar](../../../../images/workspaces/custom-toolbar.png)
 
-## Header Area Components
+## Header Components
 
-Use the default header components or replace them with your custom ones. Compose more than one component in a [header area zone](#header_area_zones) by passing a function that returns a `<Fragment />` component.
+Use the default components for the header of the Workspaces App, or replace them with your custom ones. Compose more than one component in a [header element](#header_elements) by passing a function that returns a `<Fragment />` component.
 
 ### Logo
 
-The following example demonstrates composing the Glue42 logo and a custom button in the Logo zone:
+The following example demonstrates composing the Glue42 logo and a custom button in the Logo element:
 
 ```javascript
 import React from "react";
@@ -137,9 +195,9 @@ const App = () => {
 export default App;
 ```
 
-Adding a custom button in the Logo zone:
+Adding a custom button in the Logo element:
 
-![Button logo zone](../../../../images/workspaces/button-logo-zone.png)
+![Button Logo Element](../../../../images/workspaces/custom-button-logo-element.png)
 
 ### Add Workspace
 
@@ -169,13 +227,15 @@ export default App;
 
 Using a custom button for the Add Workspace component:
 
-![Button add workspace](../../../../images/workspaces/button-add-workspace.png)
+![Button add workspace](../../../../images/workspaces/Custom-button-add-workspace-element.png)
 
 ### Workspace Tab
 
-The contents of the `<WorkspaceTab />` component can be modified by replacing the default `<WorkspaceIconButton />`, `<WorkspaceSaveButton />`, `<WorkspaceTitle />` and `<WorkspaceTabCloseButton />` components it contains. You can provide a custom icon to be used when the [Workspace is pinned](../workspaces-api/index.html#workspace-pinning__unpinning_workspaces), a custom Save button for the Workspace tab, a custom Workspace title, and a custom Close button for the Workspace tab.
+*Note that the examples in this section use the [`<WorkspaceTab />`](https://github.com/Glue42/core/blob/master/packages/workspaces-ui-react/src/defaultComponents/workspace/WorkspaceTab.tsx) component. A [`<WorkspaceTabV2 />`](https://github.com/Glue42/core/blob/master/packages/workspaces-ui-react/src/defaultComponents/workspace/tabV2/WorkspaceTabV2.tsx) component is also available - its structure differs from the `<WorkspaceTab />` component, as it contains a [Lock Settings UI](../enabling-workspaces/index.html#main_app-lock_settings) for the Workspace. Both components are supported.*
 
-The following example demonstrates composing a custom Workspace Tab component using the default `<WorkspaceSaveButton />` and `<WorkspaceIconButton />` components, as well as a custom title and a custom Close button for the Workspace tab. The example also shows how to hide and show conditionally the Workspace Tab contents based on whether the Workspace is pinned:
+The contents of the `<WorkspaceTab />` component can be modified by replacing the default `<WorkspaceIconButton />`, `<WorkspaceSaveButton />`, `<WorkspaceTitle />` and `<WorkspaceTabCloseButton />` components it contains. You can provide a custom icon to be used when the [Workspace is pinned](../workspaces-api/index.html#workspace-pinning__unpinning_workspaces), a custom Save button for the Workspace tab, a custom Workspace title, and a custom "Close" button for the Workspace tab.
+
+The following example demonstrates composing a custom Workspace Tab component using the default `<WorkspaceSaveButton />` and `<WorkspaceIconButton />` components, as well as a custom title and a custom "Close" button for the Workspace tab. The example also shows how to hide and show conditionally the Workspace Tab contents based on whether the Workspace is pinned:
 
 ```javascript
 import React, { useState } from "react";
@@ -225,15 +285,11 @@ export default App;
 
 ### System Buttons
 
-The following example demonstrates adding a custom button to the System Buttons zone and using the default Minimize, Maximize and Close buttons:
+The following example demonstrates adding a custom button in the System Buttons element:
 
 ```javascript
 import React from "react";
-import Workspaces, {
-    MinimizeFrameButton,
-    MaximizeFrameButton,
-    CloseFrameButton
-} from "@glue42/workspaces-ui-react";
+import Workspaces from "@glue42/workspaces-ui-react";
 import CustomButton from "./CustomButton";
 
 const App = () => {
@@ -242,16 +298,7 @@ const App = () => {
             <Workspaces
                 components={{
                     header: {
-                        SystemButtonsComponent: () => {
-                            return (
-                                <>
-                                    <CustomButton />
-                                    <MinimizeFrameButton />
-                                    <MaximizeFrameButton />
-                                    <CloseFrameButton />
-                                </>
-                            );
-                        }
+                        SystemButtonsComponent: <CustomButton />
                     }
                 }}
             />
@@ -262,9 +309,190 @@ const App = () => {
 export default App;
 ```
 
-Adding a custom button in the System Buttons zone:
+Adding a custom button in the System Buttons element:
 
-![Button logo zone](../../../../images/workspaces/button-system-zone.png)
+![Button System Buttons Element](../../../../images/workspaces/custom-button-system-buttons-element.png)
+
+## Group Header Components
+
+Use the default Group Header components, or provide your own components to customize the Group Header elements and zones.
+
+The following image demonstrates a Group Header with custom:
+
+- Workspace Window Tab element containing a custom "Close" button;
+- Group Header Buttons element containing a custom button;
+- Before Tabs zone containing a custom icon;
+
+![Custom Group Header](../../../../images/workspaces/custom-group-header.png)
+
+To customize the Group Header elements and zones, use the `groupHeader` property of the `components` object in the `<Workspaces />` component.
+
+### Workspace Window Tab
+
+The following examples demonstrate creating a Workspace Window Tab component with customized "Close" button while keeping the default Channel Selector and title format.
+
+When creating a custom "Close" button (or any custom element in the Workspace Window Tab that requires the user to click on it), you must consider preventing the `"mousedown"` and/or `"click"` events so that they won't be processed by the Workspaces framework. Otherwise, when the user holds down the mouse button on that element, the window tab will enter draggable mode.
+
+Creating a custom "Close" button with the default closing functionality by using the respective prop:
+
+```javascript
+import React, { useEffect, useRef } from "react";
+
+const CustomCloseButton = ({ close }) => {
+    const ref = useRef(null);
+
+    useEffect(() => {
+        if (!ref.current) { return };
+
+        // Stop the propagation of the `"mousedown"` event,
+        // in order to prevent the Workspaces framework from processing it.
+        ref.current.onmousedown = e => e.stopPropagation();
+    }, [ref]);
+
+    return <button ref={ref} onClick={() => close()}>x</button>
+};
+
+export default CustomCloseButton;
+```
+
+*Note that due to the nature of the Workspaces App and the fact that React event handlers are always executed after the native DOM event handlers, you must use a direct reference to the DOM elements instead of React events when handling the `"mousedown"` and `"click"` events.*
+
+Using the custom "Close" button in the Workspace Window Tab component. To preserve the default component functionalities, remember to pass the respective props to the components:
+
+```javascript
+import React from "react";
+import {
+    WorkspaceWindowChannelsLink,
+    WorkspaceWindowTabTitle,
+    WorkspaceWindowTabCloseButton
+} from "@glue42/workspaces-ui-react";
+import CustomCloseButton from "./CustomCloseButton";
+
+const CustomWorkspaceWindowTab = ({ channels, title, close }) => {
+    return (
+        <>
+            <WorkspaceWindowTabTitle title={title} />
+            {close.visible && <CustomCloseButton {...close} />}
+        </>
+    );
+};
+
+export default CustomWorkspaceWindowTab;
+```
+
+Using the custom Workspace Window Tab component in the Group Header element of your custom Workspaces App:
+
+```javascript
+import React from "react";
+import Workspaces from "@glue42/workspaces-ui-react";
+import CustomWorkspaceWindowTab from "./CustomWorkspaceWindowTab";
+
+const App = () => {
+    return (
+        <Workspaces
+            components={{
+                groupHeader: {
+                    WorkspaceWindowTabComponent: CustomWorkspaceWindowTab
+                }
+            }}
+        />
+    );
+};
+
+export default App;
+```
+
+### Group Header Buttons
+
+The following example demonstrates creating a Group Header Buttons component containing a custom button and the standard tab window group buttons. To preserve the default component functionalities, remember to pass the respective props to the components:
+
+```javascript
+import React from "react";
+import {
+    AddWindowButton,
+    EjectButton,
+    MaximizeGroupButton,
+    RestoreGroupButton
+} from "@glue42/workspaces-ui-react";
+
+const CustomGroupHeaderButtons = ({ addWindow, eject, restore, maximize }) => {
+    return (
+        <>
+            <button>Custom Button</button>
+            {addWindow.visible && <AddWindowButton {...addWindow} />}
+            {eject.visible && <EjectButton {...eject} />}
+            {restore.visible && <RestoreGroupButton {...restore} />}
+            {maximize.visible && <MaximizeGroupButton {...maximize} />}
+        </>
+    );
+};
+
+export default CustomGroupHeaderButtons;
+```
+
+Using the custom Group Header Buttons component in the Group Header element of your custom Workspaces App:
+
+```javascript
+import React from "react";
+import Workspaces from "@glue42/workspaces-ui-react";
+import CustomWorkspaceWindowTab from "./CustomWorkspaceWindowTab";
+import CustomGroupHeaderButtons from "./CustomGroupHeaderButtons";
+
+const App = () => {
+    return (
+        <Workspaces
+            components={{
+                groupHeader: {
+                    WorkspaceWindowTabComponent: CustomWorkspaceWindowTab,
+                    ButtonsComponent: CustomGroupHeaderButtons
+                }
+            }}
+        />
+    );
+};
+
+export default App;
+```
+
+### Zones
+
+The following example demonstrates creating a custom component for the Before Tabs zone of the Group Header element:
+
+```javascript
+import React from "react";
+
+const CustomBeforeTab = () => {
+    return <div>&#128269;</div>
+};
+
+export default CustomBeforeTab;
+```
+
+Using the custom component for the Before Tabs zone in the Group Header element of your custom Workspaces App:
+
+```javascript
+import React from "react";
+import Workspaces from "@glue42/workspaces-ui-react";
+import CustomWorkspaceWindowTab from "./CustomWorkspaceWindowTab";
+import CustomGroupHeaderButtons from "./CustomGroupHeaderButtons";
+import CustomBeforeTab from "./CustomBeforeTab";
+
+const App = () => {
+    return (
+        <Workspaces
+            components={{
+                groupHeader: {
+                    WorkspaceWindowTabComponent: CustomWorkspaceWindowTab,
+                    ButtonsComponent: CustomGroupHeaderButtons,
+                    BeforeTabsComponent: CustomBeforeTab
+                }
+            }}
+        />
+    );
+};
+
+export default App;
+```
 
 ## Custom Popups
 
@@ -490,31 +718,7 @@ export default CustomPopup;
 
 ## Composing Workspace Content
 
-The `components` prop of the `<Workspaces />` component has a `WorkspaceContents` property that enables you to manipulate the content of a Workspace - hide/show the Workspace content or add custom elements to the Workspace. For instance, you may need to render the Workspace content conditionally:
-
-```javascript
-import React, { useState } from "react";
-import Workspaces, { WorkspaceContents } from "@glue42/workspaces-ui-react";
-import CustomWorkspaceContent from "./CustomWorkspaceContent";
-
-const App = () => {
-    const [showContent, setShowContent] = useState(true);
-    ...
-    return (
-        <Workspaces components={{
-                ...
-                WorkspaceContents: (props) => showContent ?
-                    // Show the default Workspace content with the `<WorkspaceContents />` library component.
-                    <WorkspaceContents {...props} /> :
-                    // Or show custom Workspace content with your custom component.
-                    <CustomWorkspaceContent workspaceId={props.workspaceId} />
-            }}
-        />
-    )
-};
-
-export default App;
-```
+The `components` prop of the `<Workspaces />` component has a `WorkspaceContents` property that enables you to manipulate the content of a Workspace - hide or show the Workspace content or add custom elements to the Workspace. For instance, you may need to render the Workspace content conditionally.
 
 *Note that it isn't advisable to add complex components as additional Workspace content - the `WorkspaceContents` property is meant to allow you to add styling elements or interaction areas (simple toolbars, buttons, etc.) around the usual Workspace content.*
 
@@ -522,18 +726,25 @@ The `<WorkspaceContents />` component expects a Workspace ID as a prop.
 
 *Note that you must never render simultaneously components containing the same Workspace ID, as this will lead to unexpected behavior.*
 
-The following example demonstrates how to add a custom toolbar inside a Workspace:
+The following example demonstrates how to add a custom toolbar inside a Workspace and render it conditionally by clicking a custom button in the System Buttons element:
 
 ```javascript
-import React from "react";
+import React, { useState } from "react";
 import Workspaces, { WorkspaceContents } from "@glue42/workspaces-ui-react";
-import Toolbar from "./Toolbar";
+import CustomWorkspaceContent from "./CustomWorkspaceContent";
 
 const App = () => {
+    const [showContent, setShowContent] = useState(false);
+
     return (
         <Workspaces
             components={{
-                WorkspaceContents: props => <> <Toolbar /> <WorkspaceContents {...props}/> </>
+                header: {
+                    SystemButtonsComponent: () => <button onClick={() => setShowContent(!showContent)}>Toggle Toolbar</button>
+                },
+                WorkspaceContents: props => showContent ?
+                    <WorkspaceContents {...props} /> :
+                    <> <CustomWorkspaceContent workspaceId={props.workspaceId}/> <WorkspaceContents {...props}/> </>
             }}
         />
     );
@@ -544,7 +755,7 @@ export default App;
 
 Adding a custom toolbar as part of the Workspace content:
 
-![Custom Workspace content](../../../../images/workspaces/custom-workspace-content.png)
+![Custom Workspace content](../../../../images/workspaces/custom-workspace-content.gif)
 
 For a demonstration of using the `<WorkspaceContents />` component, see the [Pinned Workspace Tabs](https://github.com/Glue42/templates/tree/master/workspaces-react-pinned-tabs) example on GitHub. It shows how to render Workspace content conditionally using a button in the Workspaces header area.
 
