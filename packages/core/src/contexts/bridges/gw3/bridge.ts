@@ -309,7 +309,7 @@ export class GW3Bridge implements ContextBridge {
                 contextData.isAnnounced = true;
                 contextData.name = name;
                 contextData.contextId = createContextMsg.context_id;
-                contextData.context = createContextMsg.data || data;
+                contextData.context = createContextMsg.data || deepClone(data);
                 contextData.hasReceivedSnapshot = true;
                 this._contextNameToData[name] = contextData;
 
@@ -333,6 +333,14 @@ export class GW3Bridge implements ContextBridge {
         // - on success, apply delta to context currently in contextData
 
         // should we implicitly create the context?
+
+        // avoid keeping a reference to the same object as the client code
+        // to avoid them mutating our state - applyDelta will simply stick
+        // some of delta's properties on the internal context object so this
+        // makes sure they're new objects
+        if (delta) {
+            delta = deepClone(delta);
+        }
 
         // NB: await always causes a context switch, even if the promise is undefined
         if (name in this._creationPromises) {
@@ -379,6 +387,12 @@ export class GW3Bridge implements ContextBridge {
 
     public async set(name: ContextName, data: any): Promise<void> {
 
+        // avoid keeping a reference to the same object as the client code
+        // to avoid them mutating our state
+        if (data) {
+            data = deepClone(data);
+        }
+
         // NB: await always causes a context switch, even if the promise is undefined
         if (name in this._creationPromises) {
             await this._creationPromises[name];
@@ -423,6 +437,12 @@ export class GW3Bridge implements ContextBridge {
     public async setPaths(name: ContextName, pathValues: Glue42Core.Contexts.PathValue[]): Promise<void> {
         if (!this.setPathSupported) {
             return Promise.reject("glue.contexts.setPaths operation is not supported, use Glue42 3.10 or later");
+        }
+
+        // avoid keeping a reference to the same object as the client code
+        // to avoid them mutating our state
+        if (pathValues) {
+            pathValues = deepClone(pathValues);
         }
 
         // NB: await always causes a context switch, even if the promise is undefined
@@ -944,11 +964,11 @@ export class GW3Bridge implements ContextBridge {
                     const updateCallback = contextData.updateCallbacks[updateCallbackIndex];
                     updateCallback(
                         deepClone(contextData.context),
-                        Object.assign(
+                        deepClone(Object.assign(
                             {},
                             delta.added || {},
                             delta.updated || {},
-                            delta.reset || {}),
+                            delta.reset || {})),
                         delta.removed,
                         parseInt(updateCallbackIndex, 10),
                         extraData);
