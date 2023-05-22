@@ -306,61 +306,95 @@ describe('set() ', function () {
       expect(counter).to.eql(3);
     });
 
-    // https://jira.tick42.com/browse/G4E-6023
-    it("writing to same object", () => {
+    // https://jira.tick42.com/browse/G4E-6142, G4E-6023
+    it("writing to same object (set)", () => {
 
-      return new Promise(async (rs) => {
+      return new Promise(async (rs, rj) => {
 
         const name = gtf.contexts.getContextName();
-        let subscribeCalls = 0;
+        const expectedSubscribeCallbackCalls = 4;
+        let subscribeCallbackCalls = 0;
 
         await (glue.contexts.subscribe(name, (data) => {
-            subscribeCalls += 1;
-            if (subscribeCalls > 2) {
-                throw new Error("Unexpected subscribe call");
-            } else if (subscribeCalls === 2) {
-                rs();
+            subscribeCallbackCalls += 1;
+
+            if (subscribeCallbackCalls > expectedSubscribeCallbackCalls) {
+                throw new Error("Unexpected subscribe callback call");
             }
         }));
 
         let currentContext = {
             test0: "1",
-            test1: "A",
+            test1: { value: "A" },
         };
 
         await glue.contexts.set(name, currentContext);
 
-        currentContext.test1 = "B";
-        await glue.contexts.set(name, currentContext);
+        // prove that what you're passing in isn't saved by reference
 
+        currentContext.test1.value = "X";
         currentContext = await glue.contexts.get(name);
 
-        // prove that what you're passing in isn't saved by reference
-        expect(currentContext).to.deep.equal({
-            test0 : "1",
-            test1 : "B",
-        });
-
-        currentContext.test1 = "C";
-        await glue.contexts.set(name, currentContext);
+        try {
+            expect(currentContext).to.deep.equal({
+                test0 : "1",
+                test1 : { value: "A" },
+            });
+        } catch(e) {
+            rj(e);
+            return;
+        }
 
         // prove that what you're passing in isn't saved by reference
         // (again, because it might be different when first creating the context)
-        expect(currentContext).to.deep.equal({
-            test0 : "1",
-            test1 : "C",
-        });
 
-        const result = await glue.contexts.get(name);
+        currentContext.test1.value = "B";
+        await glue.contexts.set(name, currentContext);
 
-        currentContext.test1 = "D";
+        currentContext.test1.value = "X";
+        currentContext = await glue.contexts.get(name);
+
+        try {
+            expect(currentContext).to.deep.equal({
+                test0 : "1",
+                test1 : { value: "B" },
+            });
+        } catch (e) {
+            rj(e);
+            return;
+        }
+
+        // count callback calls
+
+        currentContext.test1.value = "C";
+        await glue.contexts.set(name, currentContext);
+
+        currentContext.test1.value = "D";
+        await glue.contexts.set(name, currentContext);
 
         // prove that what you're getting out isn't saved by reference
-        expect(result).to.deep.equal({
-            test0 : "1",
-            test1 : "C",
-        });
 
+        currentContext = await glue.contexts.get(name);
+
+        currentContext.test1.value = "X";
+
+        currentContext = await glue.contexts.get(name);
+
+        try {
+            expect(currentContext).to.deep.equal({
+                test0 : "1",
+                test1 : { value: "D" },
+            });
+        } catch (e) {
+            rj(e);
+            return;
+        }
+
+        if (subscribeCallbackCalls === expectedSubscribeCallbackCalls) {
+            rs(undefined);
+        } else {
+            rj(new Error(`${subscribeCallbackCalls} subscribe calls, expected ${expectedSubscribeCallbackCalls}`));
+        }
       });
     });
   });
