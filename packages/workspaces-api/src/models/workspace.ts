@@ -7,6 +7,7 @@ import { Frame } from "./frame";
 import { SubscriptionConfig } from "../types/subscription";
 import { WorkspacePrivateData } from "../types/privateData";
 import { Glue42Workspaces } from "../../workspaces";
+import { Workspace as WorkspaceTemp } from "../../temp";
 
 interface PrivateData {
     manager: PrivateDataManager;
@@ -24,7 +25,7 @@ const getDataManager = (model: Workspace): PrivateDataManager => {
 
 type SaveLayoutConfig = Omit<Omit<Glue42Workspaces.WorkspaceLayoutSaveConfig, "name">, "workspaceId">;
 
-export class Workspace implements Glue42Workspaces.Workspace {
+export class Workspace implements WorkspaceTemp {
 
     constructor(dataManager: PrivateDataManager) {
         data.set(this, { manager: dataManager });
@@ -188,7 +189,7 @@ export class Workspace implements Glue42Workspaces.Workspace {
         // should close the frame only if the frame is NOT a platform
         const platformFrameId = (await controller.getPlatformFrameId()).id;
 
-        const shouldCloseFrame = workspaces.length === 1 && 
+        const shouldCloseFrame = workspaces.length === 1 &&
             workspaces.every((wsp) => wsp.id === this.id) &&
             platformFrameId !== this.frame.id;
 
@@ -454,7 +455,7 @@ export class Workspace implements Glue42Workspaces.Workspace {
         if (!window.glue42gd) {
             throw new Error("Not supported in Glue42 Core");
         }
-        
+
         await getData(this).controller.hideWorkspaceLoadingAnimation(this.id);
     }
 
@@ -592,6 +593,32 @@ export class Workspace implements Glue42Workspaces.Workspace {
 
         const config: SubscriptionConfig = {
             action: "restored",
+            eventType: "window",
+            scope: "workspace",
+            scopeId: id,
+            callback: wrappedCallback
+        };
+
+        const unsubscribe = await getData(this).controller.processLocalSubscription(config, id);
+        return unsubscribe;
+    }
+
+    public async onWindowSelected(callback: (window: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe> {
+        checkThrowCallback(callback);
+        const id = getData(this).id;
+        const wrappedCallback = async (payload: WindowStreamData): Promise<void> => {
+            await this.refreshReference();
+            const windowParent = this.getBox((parent) => parent.id === payload.windowSummary.parentId);
+
+            const foundWindow = windowParent.children.find((child) => {
+
+                return child.type === "window" && child.elementId === payload.windowSummary.itemId;
+            });
+            callback(foundWindow as Glue42Workspaces.WorkspaceWindow);
+        };
+
+        const config: SubscriptionConfig = {
+            action: "selected",
             eventType: "window",
             scope: "workspace",
             scopeId: id,

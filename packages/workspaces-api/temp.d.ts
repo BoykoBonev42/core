@@ -1,14 +1,17 @@
 import { Glue42Workspaces } from "./workspaces";
 
-export interface Group extends Glue42Workspaces.Group {
-
-     /**
-     * Changes the parent of the group to a new column that is added in the place of the group
-     */
-    public bundleToColumn(): Promise<void>;
-
+export interface API extends Glue42Workspaces.API {
     /**
-     * Changes the parent of the group to a new row that is added in the place of the group
+     * Notifies when a window was selected in any frame and returns an unsubscribe function.
+     * @param callback Callback function to handle the event. Receives the selected window as a parameter.
      */
-    public bundleToRow(): Promise<void>;
+    onWindowSelected(callback: (WorkspaceWindow: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe>;
+}
+
+export interface Workspace extends Glue42Workspaces.Workspace {
+    /**
+     * Notifies when a window was selected in this workspace and returns an unsubscribe function.
+     * @param callback Callback function to handle the event. Receives the selected window as a parameter.
+     */
+    onWindowSelected(callback: (window: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe>;
 }

@@ -208,7 +208,6 @@ export class Group implements Glue42Workspaces.Group {
 
     public async onLockConfigurationChanged(callback: (config: Glue42Workspaces.GroupLockConfig) => void): Promise<Glue42Workspaces.Unsubscribe> {
         checkThrowCallback(callback);
-        const id = getBase(this).getId(this);
         const wrappedCallback = async (): Promise<void> => {
             await this.workspace.refreshReference();
             callback({

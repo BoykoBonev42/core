@@ -1463,6 +1463,16 @@ export namespace Glue42Workspaces {
         setSize(sizeConfig: ElementResizeConfig): Promise<void>;
 
         /**
+         * Changes the parent of the group to a new column that is added in the place of the group
+         */
+        bundleToColumn(): Promise<void>;
+
+        /**
+         * Changes the parent of the group to a new row that is added in the place of the group
+         */
+        bundleToRow(): Promise<void>;
+
+        /**
          * Notifies when a change in the lock configuration of the group has been made
          * @param  callback Callback function to handle the event. Receives the new lock configuration as a parameter
          */

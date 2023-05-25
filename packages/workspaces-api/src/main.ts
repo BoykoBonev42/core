@@ -6,8 +6,9 @@ import { FrameCreateConfig, WorkspaceIoCCreateConfig } from "./types/ioc";
 import { Glue42Workspaces } from "./../workspaces";
 import { WorkspacesController } from "./types/controller";
 import { version } from "../package.json";
+import { API } from "../temp";
 
-export const composeAPI = (glue: any, ioc: IoC): Glue42Workspaces.API => {
+export const composeAPI = (glue: any, ioc: IoC): API => {
 
     const controller: WorkspacesController = ioc.controller;
 
@@ -305,6 +306,30 @@ export const composeAPI = (glue: any, ioc: IoC): Glue42Workspaces.API => {
         return unsubscribe;
     };
 
+
+    const onWindowSelected = async (callback: (swimlaneWindow: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe> => {
+        checkThrowCallback(callback);
+        const wrappedCallback = async (payload: WindowStreamData): Promise<void> => {
+            const snapshot = (await controller.getSnapshot(payload.windowSummary.config.workspaceId, "workspace")) as WorkspaceSnapshotResult;
+
+            const frameConfig: FrameCreateConfig = {
+                summary: snapshot.frameSummary
+            };
+            const frame = ioc.getModel<"frame">("frame", frameConfig);
+
+            const workspaceConfig: WorkspaceIoCCreateConfig = { frame, snapshot };
+
+            const workspace = ioc.getModel<"workspace">("workspace", workspaceConfig);
+
+            const windowParent = workspace.getBox((parent) => parent.id === payload.windowSummary.parentId);
+            const foundWindow = windowParent.children.find((child) => child.type === "window" && child.elementId === payload.windowSummary.itemId);
+
+            callback(foundWindow as Glue42Workspaces.WorkspaceWindow);
+        };
+        const unsubscribe = await controller.processGlobalSubscription(wrappedCallback, "window", "selected");
+        return unsubscribe;
+    };
+
     const waitForFrame = async (id: string): Promise<Glue42Workspaces.Frame> => {
         nonEmptyStringDecoder.runWithException(id);
         return new Promise<Glue42Workspaces.Frame>((res, rej) => {
@@ -356,6 +381,7 @@ export const composeAPI = (glue: any, ioc: IoC): Glue42Workspaces.API => {
         onWindowRemoved,
         onWindowMaximized,
         onWindowRestored,
+        onWindowSelected,
         version
     };
 };

@@ -1,3 +1,6 @@
+1.17.0
+feat: implemented the onWindowSelected events
+fix: fixed a problem with the rendering of the custom buttons in the group headers
 1.16.2
 fix: updated the frame re-initialization logic
 chore: improved some styling

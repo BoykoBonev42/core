@@ -1,3 +1,6 @@
+1.21.0
+feat: added onWindowSelected events
+chore: updated the temp.ts types
 1.20.5
 chore: bump due to dependencies update
 1.20.4

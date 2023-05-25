@@ -145,7 +145,7 @@ export class WorkspacesManager {
         if (!this._frameController) {
             // tslint:disable-next-line: no-console
             console.warn("Your subscription to window clicked wasn't successful, because the Workspaces library isn't initialized yet");
-            return (): void => {};
+            return (): void => { };
         }
         return this._frameController.onFrameContentClicked(cb);
     };
@@ -1228,6 +1228,12 @@ export class WorkspacesManager {
                 placementId: idAsString(item.config.id),
                 groupId: idAsString(item.parent.config.id),
                 isSelected: true
+            });
+
+            this.workspacesEventEmitter.raiseWindowEvent({
+                action: "selected", payload: {
+                    windowSummary: this.stateResolver.getWindowSummarySync(item.config.id, item)
+                }
             });
         });
 

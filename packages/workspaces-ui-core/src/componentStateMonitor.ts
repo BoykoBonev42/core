@@ -128,6 +128,14 @@ class ComponentStateMonitor {
             };
         }
 
+        if (componentsFactory?.createGroupHeaderButtons) {
+            this.decoratedFactory.createGroupHeaderButtons = (args) => {
+                this._visibilityState.groupHeaderButtons[args.groupId] = args;
+                this.setupCleanup(this._componentsFactory.removeGroupHeaderButtons, "groupHeaderButtons", args.groupId, undefined, args.groupId, args.workspaceId);
+                return componentsFactory.createGroupHeaderButtons(args);
+            };
+        }
+
         if (componentsFactory?.updateWorkspaceTabs) {
             this.decoratedFactory.updateWorkspaceTabs = (args) => {
                 if (!this._visibilityState.workspaceTabs[args.workspaceId]) {

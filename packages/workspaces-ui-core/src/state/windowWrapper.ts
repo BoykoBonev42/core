@@ -132,7 +132,7 @@ export class WorkspaceWindowWrapper {
     private getSummaryCore(windowContentItem: GoldenLayout.Component, winId: string): WindowSummary {
         const isLoaded = windowContentItem.config.componentState.windowId !== undefined;
         const positionIndex = this.index;
-        const workspaceId = store.getByWindowId(winId)?.id;
+        const workspaceId = windowContentItem.layoutManager.config.workspacesOptions.workspaceId ?? store.getByWindowId(winId)?.id;
         const { appName, url, windowId } = windowContentItem.config.componentState;
 
         const userFriendlyParent = this.getUserFriendlyParent(windowContentItem);
