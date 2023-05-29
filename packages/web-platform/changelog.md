@@ -1,5 +1,6 @@
-1.25.2
+1.26.0
 feat: add timeouts in 'raise' operation for Intents API based on the IntentRequest
+fix: The system settings in session storage are now cleared on shutdown
 1.25.1
 fix: improved the shutdown logic
 1.25.0

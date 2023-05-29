@@ -1346,7 +1346,7 @@ button.g42-list-item, button.list-group-item, .add-application button.btn {
   user-select: none;
 }
 
-.lm_tab, .lm_tabs, .lm_controls, .lm_header {
+.lm_tab, .lm_tabs, .lm_controls, .lm_header, .lm_logo {
   display: flex;
   align-items: center;
 }
