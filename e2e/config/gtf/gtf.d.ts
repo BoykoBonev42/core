@@ -34,6 +34,12 @@ export type Fdc3AddIntentListenerReturnValue = {
     privateChannel?: boolean;
 };
 
+export interface FDC3AddIntentListenerRequest {
+    intent: string;
+    returnValue?: Fdc3AddIntentListenerReturnValue;
+    methodResponseTimeoutMs?: number;
+}
+
 export namespace Gtf {
     export interface Agm {
         getMethodName(): string;
@@ -90,7 +96,7 @@ export namespace Gtf {
             addContextListenerOnPrivateChannel(contextType: string): Promise<void>;
             unsubscribeFromPrivateChannelListener(): Promise<void>;
             disconnectFromPrivateChannel(): Promise<void>;
-            addIntentListener(intent: string, returnValue?: Fdc3AddIntentListenerReturnValue): Promise<void>;
+            addIntentListener(request: FDC3AddIntentListenerRequest): Promise<void>;
             unsubscribeIntentListener(intent: string): Promise<void>;
             getIntentListenerContext(intent: string): Promise<void>;
             createPrivateChannel(): Promise<void>;

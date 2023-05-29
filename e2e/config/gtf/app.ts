@@ -1,6 +1,6 @@
 import { Glue42Web } from "../../../packages/web/web";
 import { Fdc3IntentResolution, AppIdentifier, Context, IntentResolution } from './fdc3/types';
-import { Gtf, ControlArgs, SubscriptionFacade, StreamFacade, CreateAppConfig, Fdc3AddIntentListenerReturnValue } from "./gtf";
+import { Gtf, ControlArgs, SubscriptionFacade, StreamFacade, CreateAppConfig, FDC3AddIntentListenerRequest } from "./gtf";
 
 export class GtfApp implements Gtf.App {
     private registerResponseCounter = 0;
@@ -393,10 +393,10 @@ export class GtfApp implements Gtf.App {
 
                 return this.sendControl<void>(controlArgs);
             },
-            addIntentListener: async (intent: string, returnValue?: Fdc3AddIntentListenerReturnValue): Promise<void> => {
+            addIntentListener: async ({ intent, returnValue, methodResponseTimeoutMs }: FDC3AddIntentListenerRequest): Promise<void> => {
                 const controlArgs: ControlArgs = {
                     operation: 'fdc3AddIntentListener',
-                    params: { intent, returnValue }
+                    params: { intent, returnValue, methodResponseTimeoutMs }
                 };
 
                 await this.fdc3Ready;

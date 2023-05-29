@@ -1,21 +1,22 @@
-import { DesktopAgent as Fdc3DesktopAgent, Channel } from '@finos/fdc3';
+import { Channel } from "@finos/fdc3";
 import { GlueController } from "../controllers/glue";
-import { EventDispatcher } from "../events/dispatcher"
-import { DesktopAgent } from '../models/desktopAgent';
-import { AppChannel } from '../models/appChannel';
-import { ChannelsParser } from '../channels/parser';
-import { UserChannel } from '../models/userChannel';
-import { ChannelContext } from '../types/glue42Types';
-import { IntentsController } from '../controllers/intents';
-import { ApplicationsController } from '../controllers/applications';
-import { ChannelsController } from '../channels/controller';
-import { EventReceiver } from '../events/receiver';
-import { ChannelsStateStore } from '../channels/stateStore';
-import { PrivateChannel } from '../models/privateChannel';
-import { ChannelsFactory } from '../channels/factory';
-import { ChannelsCallbackRegistry } from '../channels/callbackRegistry';
-import { GlueEventsController } from '../controllers/glueEvents';
-import { ChannelsPendingListenersStore } from '../channels/pendingListenersStore';
+import { EventDispatcher } from "../events/dispatcher";
+import { DesktopAgent } from "../models/desktopAgent";
+import { AppChannel } from "../models/appChannel";
+import { ChannelsParser } from "../channels/parser";
+import { UserChannel } from "../models/userChannel";
+import { ChannelContext } from "../types/glue42Types";
+import { IntentsController } from "../controllers/intents";
+import { ApplicationsController } from "../controllers/applications";
+import { ChannelsController } from "../channels/controller";
+import { EventReceiver } from "../events/receiver";
+import { ChannelsStateStore } from "../channels/stateStore";
+import { PrivateChannel } from "../models/privateChannel";
+import { ChannelsFactory } from "../channels/factory";
+import { ChannelsCallbackRegistry } from "../channels/callbackRegistry";
+import { GlueEventsController } from "../controllers/glueEvents";
+import { ChannelsPendingListenersStore } from "../channels/pendingListenersStore";
+import { ExtendedFDC3DesktopAgent } from "../types/fdc3Types";
 
 export class IoC {
     private _eventDispatcher!: EventDispatcher;
@@ -28,7 +29,7 @@ export class IoC {
     private _channelsParser!: ChannelsParser;
     private _channelsStateStore!: ChannelsStateStore;
     private _channelsFactory!: ChannelsFactory;
-    private _fdc3!: Fdc3DesktopAgent;
+    private _fdc3!: ExtendedFDC3DesktopAgent;
     private _channelsCallbackRegistry!: ChannelsCallbackRegistry;
     private _channelsPendingListenersStore!: ChannelsPendingListenersStore;
     private _eventsController!: GlueEventsController;
@@ -53,7 +54,7 @@ export class IoC {
         return this._glueController;
     }
 
-    public get fdc3(): Fdc3DesktopAgent {
+    public get fdc3(): ExtendedFDC3DesktopAgent {
         if (!this._fdc3) {
             this._fdc3 = this.desktopAgent.toApi();
         }

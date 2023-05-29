@@ -1,7 +1,7 @@
-import { IoC } from './shared/ioc';
-import { DesktopAgent } from '@finos/fdc3';
+import { IoC } from "./shared/ioc";
+import { ExtendedFDC3DesktopAgent } from "./types/fdc3Types";
 
-const fdc3Factory = (): DesktopAgent => {
+const fdc3Factory = (): ExtendedFDC3DesktopAgent => {
     const ioc = new IoC();
 
     ioc.glueController.createGluePromise();
@@ -9,6 +9,6 @@ const fdc3Factory = (): DesktopAgent => {
     ioc.eventReceiver.start();
 
     return ioc.fdc3;
-}
+};
 
 export default fdc3Factory;

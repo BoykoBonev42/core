@@ -1,6 +1,6 @@
 import { Glue42Web } from "@glue42/web";
 import { Decoder, object, array, optional, anyJson, oneOf, constant, string, boolean, number } from "decoder-validate";
-import { nonEmptyStringDecoder, windowOpenSettingsDecoder } from "../../shared/decoders";
+import { nonEmptyStringDecoder, nonNegativeNumberDecoder, windowOpenSettingsDecoder } from "../../shared/decoders";
 import { IntentRequestResolverConfig, IntentResolverResponse, IntentsOperationTypes, RaiseIntentRequestWithResolverConfig, ResolverIntentHandler, WrappedIntentFilter, WrappedIntents } from "./types";
 
 export const intentsOperationTypesDecoder: Decoder<IntentsOperationTypes> = oneOf<"findIntent" | "getIntents" | "raiseIntent" | "raise" | "operationCheck">(
@@ -68,7 +68,9 @@ export const intentRequestDecoder: Decoder<Glue42Web.Intents.IntentRequest> = ob
     target: optional(intentTargetDecoder),
     context: optional(intentContextDecoder),
     options: optional(windowOpenSettingsDecoder),
-    handlers: optional(array(intentHandlerDecoder))
+    handlers: optional(array(intentHandlerDecoder)),
+    timeout: optional(nonNegativeNumberDecoder),
+    waitUserResponseIndefinitely: optional(boolean())
 });
 
 const intentRequestResolverConfigDecoder: Decoder<IntentRequestResolverConfig> = object({

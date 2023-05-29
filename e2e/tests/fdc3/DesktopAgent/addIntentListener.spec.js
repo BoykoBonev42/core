@@ -127,7 +127,7 @@ describe("addIntentListener()", function () {
 
         const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
 
-        await supportApp.fdc3.addIntentListener(intentName, context);
+        await supportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { context } });
 
         await fdc3.raiseIntent(intentName, context);
 
@@ -158,7 +158,7 @@ describe("addIntentListener()", function () {
 
         const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
 
-        await supportApp.fdc3.addIntentListener(intentName, context);
+        await supportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { context } });
 
         await fdc3.raiseIntent(intentName, context);
 
@@ -216,7 +216,7 @@ describe("addIntentListener()", function () {
 
             const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
 
-            await supportApp.fdc3.addIntentListener(intentName);
+            await supportApp.fdc3.addIntentListener({ intent: intentName });
 
             await methodAddedPromise.promise;
         });
@@ -226,7 +226,7 @@ describe("addIntentListener()", function () {
             
             const supportApp = await gtf.createApp({ name: appDef.name, exposeFdc3: true });
 
-            await supportApp.fdc3.addIntentListener(intentName, { context: contextToReturn });
+            await supportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { context: contextToReturn } });
 
             const { result } = await glue.intents.raise({ intent: intentName, target: { instance: supportApp.agm.instance.instance }});
 

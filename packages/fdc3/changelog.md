@@ -1,3 +1,8 @@
+3.2.3
+fix: replaying of callback when subscribing on a user channel and there's already broadcasted FDC3 data
+fix: throw errors to have 'reason' prop with more descriptive explanation
+feat: extend timeout waiting for raiseIntent and raiseIntentForContext to resolve/reject
+feat: change return type of getResult method of IntentResolution to be undefined when handler's callback is void
 3.2.2
 fix: adding a context listener while on a user channel invokes the callback in other user channels when joined
 3.2.1

@@ -7,7 +7,7 @@ import { GlueBridge } from "../communication/bridge";
 import { UnsubscribeFunction } from "callback-registry";
 import { intentsOperationTypesDecoder, raiseRequestDecoder, findFilterDecoder, AddIntentListenerDecoder } from "../shared/decoders";
 import { operations, WrappedIntentFilter, WrappedIntents } from "./protocol";
-import { ADDITIONAL_BRIDGE_OPERATION_TIMEOUT, DEFAULT_RESOLVER_RESPONSE_TIMEOUT, GLUE42_FDC3_INTENTS_METHOD_PREFIX, INTENTS_RESOLVER_APP_NAME } from "./constants";
+import { ADDITIONAL_BRIDGE_OPERATION_TIMEOUT, DEFAULT_RESOLVER_RESPONSE_TIMEOUT, GLUE42_FDC3_INTENTS_METHOD_PREFIX, INTENTS_RESOLVER_APP_NAME, MAX_SET_TIMEOUT_DELAY } from "./constants";
 import { LegacyIntentsHelper } from "./legacyHelper";
 import { systemOperations } from "../shared/systemOperations";
 
@@ -100,7 +100,12 @@ export class IntentsController implements LibController {
 
         this.logger.trace(`Sending raise request to the platform: ${JSON.stringify(request)} and method response timeout of ${this.intentResolverResponseTimeout}ms`);
 
-        const response = await this.bridge.send<IntentRequestWithResolverInfo, Glue42Web.Intents.IntentResult>("intents", operations.raise, requestWithResolverInfo, { methodResponseTimeoutMs: this.intentResolverResponseTimeout + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT });
+        // waitUserResponseIndefinitely: true -> methodResponseTimeoutMs: Number.MAX_SAFE_INTEGER
+        const methodResponseTimeoutMs = intentRequest.waitUserResponseIndefinitely 
+            ? MAX_SET_TIMEOUT_DELAY
+            : (intentRequest.timeout || this.intentResolverResponseTimeout) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
+
+        const response = await this.bridge.send<IntentRequestWithResolverInfo, Glue42Web.Intents.IntentResult>("intents", operations.raise, requestWithResolverInfo, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs });
 
         return response;
     }
@@ -111,7 +116,8 @@ export class IntentsController implements LibController {
             resolverConfig: {
                 enabled: this.useIntentsResolverUI,
                 appName: this.intentsResolverAppName,
-                waitResponseTimeout: this.intentResolverResponseTimeout
+                // if waitUserResponseIndefinitely: true -> ignore resolver timeout and wait for eternity until the user chooses a handler
+                waitResponseTimeout: request.waitUserResponseIndefinitely ? MAX_SET_TIMEOUT_DELAY : this.intentResolverResponseTimeout
             }
         };
     }

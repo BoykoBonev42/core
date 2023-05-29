@@ -1471,6 +1471,18 @@ export namespace Glue42Web {
             * in the array, raise() will resolve with the first application or instance in the collection.
             */
             readonly handlers?: Glue42Web.Intents.IntentHandler[];
+            /**
+             * Timeout to wait for 'raise' method to resolve.
+             * @default: 90000
+             */
+            readonly timeout?: number;
+            /**
+             * Whether to wait for the Intents Resolver UI to choose a handler for the raised intent. 
+             * If set to true, the timer starts after there's a chosen handler from the user. 
+             * Otherwise, the start point is the beginning of the raise invocation.
+             * @default: false
+             */
+            readonly waitUserResponseIndefinitely?: boolean;
         }
 
         /**

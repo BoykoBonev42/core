@@ -70,7 +70,7 @@ module.exports = (config) => {
         port: 9999,
         singleRun: true,
         concurrency: Infinity,
-        browserNoActivityTimeout: 100000,
+        browserNoActivityTimeout: 150000,
         browserDisconnectTimeout: 100000
     });
 };

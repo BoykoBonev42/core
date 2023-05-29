@@ -33,7 +33,7 @@ describe("raiseIntentForContext()", function () {
 
         supportApp = await gtf.createApp({ name: supportAppName, exposeFdc3: true });
 
-        await supportApp.fdc3.addIntentListener(intentName);
+        await supportApp.fdc3.addIntentListener({ intent: intentName });
     });
 
     afterEach(async () => {
@@ -129,7 +129,7 @@ describe("raiseIntentForContext()", function () {
 
         const anotherSupportApp = await gtf.createApp({ name: anotherAppDef.name, exposeFdc3: true });
 
-        await anotherSupportApp.fdc3.addIntentListener(intentName, { context: contextToReturn });
+        await anotherSupportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { context: contextToReturn } });
 
         await fdc3.raiseIntentForContext(contextToReturn);
 
@@ -159,7 +159,7 @@ describe("raiseIntentForContext()", function () {
 
         const anotherSupportApp = await gtf.createApp({ name: anotherAppDef.name, exposeFdc3: true });
 
-        await anotherSupportApp.fdc3.addIntentListener(intentName);
+        await anotherSupportApp.fdc3.addIntentListener({ intent: intentName });
 
         await fdc3.raiseIntentForContext(context, { appId: anotherAppDef.name });
 
@@ -174,7 +174,7 @@ describe("raiseIntentForContext()", function () {
         // starting another instance of the support app
         const anotherSupportApp = await gtf.createApp({ name: supportAppName, exposeFdc3: true });
 
-        await anotherSupportApp.fdc3.addIntentListener(intentName);
+        await anotherSupportApp.fdc3.addIntentListener({ intent: intentName });
 
         await fdc3.raiseIntentForContext(context, { appId: supportAppName, instanceId: anotherSupportApp.agm.instance.instance });
 

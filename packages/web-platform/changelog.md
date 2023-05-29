@@ -1,3 +1,5 @@
+1.25.2
+feat: add timeouts in 'raise' operation for Intents API based on the IntentRequest
 1.25.1
 fix: improved the shutdown logic
 1.25.0

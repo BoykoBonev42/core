@@ -1,14 +1,14 @@
-import { Glue42Core } from '@glue42/core';
-import shortid from 'shortid';
-import { Glue42Web } from '../../web';
-import { AppManagerController } from '../appManager/controller';
-import { GlueBridge } from '../communication/bridge';
-import { intentResolverResponseDecoder } from '../shared/decoders';
-import { PromisePlus } from '../shared/promise-plus';
-import { systemOperations } from '../shared/systemOperations';
-import { IntentRequestWithResolverInfo, IntentsResolverStartContext, LibDomains, OperationCheckConfig, OperationCheckResult, SimpleItemIdRequest, WorkspaceFrameBoundsResult, ShouldResolverOpen, IntentRequestResolverConfig, IntentResolverResponse } from '../shared/types';
-import { WindowsController } from '../windows/controller';
-import { INTENTS_RESOLVER_HEIGHT, INTENTS_RESOLVER_INTEROP_PREFIX, INTENTS_RESOLVER_WIDTH } from './constants';
+import { Glue42Core } from "@glue42/core";
+import shortid from "shortid";
+import { Glue42Web } from "../../web";
+import { AppManagerController } from "../appManager/controller";
+import { GlueBridge } from "../communication/bridge";
+import { intentResolverResponseDecoder } from "../shared/decoders";
+import { PromisePlus } from "../shared/promise-plus";
+import { systemOperations } from "../shared/systemOperations";
+import { IntentRequestWithResolverInfo, IntentsResolverStartContext, LibDomains, OperationCheckConfig, OperationCheckResult, SimpleItemIdRequest, WorkspaceFrameBoundsResult, ShouldResolverOpen, IntentRequestResolverConfig, IntentResolverResponse } from "../shared/types";
+import { WindowsController } from "../windows/controller";
+import { INTENTS_RESOLVER_HEIGHT, INTENTS_RESOLVER_INTEROP_PREFIX, INTENTS_RESOLVER_WIDTH } from "./constants";
 import { IntentsResolverResponse, IntentsResolverResponsePromise, operations } from "./protocol";
 
 export class LegacyIntentsHelper {
@@ -147,7 +147,7 @@ export class LegacyIntentsHelper {
             intent: requestObj,
             callerId: this.interop.instance.instance!,
             methodName
-        }
+        };
     }
 
     private async buildStartOptions(): Promise<Glue42Web.AppManager.ApplicationStartOptions> {
@@ -229,7 +229,7 @@ export class LegacyIntentsHelper {
             this.cleanUpIntentResolverPromise(inst.id);
 
             unsub();
-        })
+        });
     }
 
     private createResponsePromise(intent: string, instanceId: string, methodName: string, timeout: number): void {
@@ -283,7 +283,7 @@ export class LegacyIntentsHelper {
 
     private checkIfResolverShouldBeOpened(intent: Glue42Web.Intents.Intent, intentRequest: Glue42Web.Intents.IntentRequest, resolverConfig: IntentRequestResolverConfig): ShouldResolverOpen {
         if (!resolverConfig.enabled) {
-            return { open: false, reason: `Intent Resolver is disabled. Raising intent to first found handler` };
+            return { open: false, reason: "Intent Resolver is disabled. Raising intent to first found handler" };
         }
 
         const intentsResolverApp = this.appManagerController.getApplication(resolverConfig.appName);
@@ -295,7 +295,7 @@ export class LegacyIntentsHelper {
         const hasMoreThanOneHandler = this.checkIfIntentHasMoreThanOneHandler(intent, intentRequest);
 
         if (!hasMoreThanOneHandler) {
-            return { open: false, reason: `Raised intent has only one handler` };
+            return { open: false, reason: "Raised intent has only one handler" };
         }
 
         return { open: true };

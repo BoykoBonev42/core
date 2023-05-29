@@ -588,7 +588,9 @@ export const intentRequestDecoder: Decoder<Glue42Web.Intents.IntentRequest> = ob
     target: optional(intentTargetDecoder),
     context: optional(intentContextDecoder),
     options: optional(windowOpenSettingsDecoder),
-    handlers: optional(array(intentHandlerDecoder))
+    handlers: optional(array(intentHandlerDecoder)),
+    timeout: optional(nonNegativeNumberDecoder),
+    waitUserResponseIndefinitely: optional(boolean())
 });
 
 export const raiseRequestDecoder: Decoder<string | Glue42Web.Intents.IntentRequest> = oneOf<string | Glue42Web.Intents.IntentRequest>(

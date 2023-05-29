@@ -545,7 +545,7 @@ describe("Channel's broadcast()", function () {
 
             await fdc3SupportApp.fdc3.createPrivateChannel();
 
-            await fdc3SupportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+            await fdc3SupportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { privateChannel: true } });
 
             const resolution = await fdc3.raiseIntent(intentName, context);
 
@@ -567,7 +567,7 @@ describe("Channel's broadcast()", function () {
     
                 await fdc3SupportApp.fdc3.createPrivateChannel();
     
-                await fdc3SupportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+                await fdc3SupportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { privateChannel: true } });
     
                 const resolution = await fdc3.raiseIntent(intentName, context);
     
@@ -587,7 +587,7 @@ describe("Channel's broadcast()", function () {
 
             await fdc3SupportApp.fdc3.createPrivateChannel();
 
-            await fdc3SupportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+            await fdc3SupportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { privateChannel: true } });
 
             const resolution = await fdc3.raiseIntent(intentName, context);
 
@@ -607,7 +607,7 @@ describe("Channel's broadcast()", function () {
 
             await fdc3SupportApp.fdc3.createPrivateChannel();
 
-            await fdc3SupportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+            await fdc3SupportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { privateChannel: true } });
 
             const resolution = await fdc3.raiseIntent(intentName, context);
 
@@ -632,7 +632,7 @@ describe("Channel's broadcast()", function () {
 
             await fdc3SupportApp.fdc3.createPrivateChannel();
 
-            await fdc3SupportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+            await fdc3SupportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { privateChannel: true } });
 
             const resolution = await fdc3.raiseIntent(intentName, intentContext);
 
@@ -663,7 +663,7 @@ describe("Channel's broadcast()", function () {
 
             await fdc3SupportApp.fdc3.createPrivateChannel();
 
-            await fdc3SupportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+            await fdc3SupportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { privateChannel: true } });
 
             const resolution = await fdc3.raiseIntent(intentName, intentContext);
 
@@ -694,7 +694,7 @@ describe("Channel's broadcast()", function () {
 
             await fdc3SupportApp.fdc3.createPrivateChannel();
 
-            await fdc3SupportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+            await fdc3SupportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { privateChannel: true } });
 
             const resolution = await fdc3.raiseIntent(intentName, intentContext);
 

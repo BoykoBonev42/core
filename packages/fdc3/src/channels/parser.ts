@@ -1,5 +1,5 @@
-import { Context } from '@finos/fdc3';
-import { glueChannelNamePrefix } from '../shared/constants';
+import { Context } from "@finos/fdc3";
+import { glueChannelNamePrefix } from "../shared/constants";
 
 export class ChannelsParser {
     private readonly fdc3Delimiter = "&";
@@ -15,6 +15,12 @@ export class ChannelsParser {
         const parsedType = this.mapChannelsDelimiterToFDC3Type(latest_fdc3_type);
 
         return { type: parsedType, ...data[`${this.channelsFdc3DataPrefix}${latest_fdc3_type}`] };
+    }
+
+    public revertGlueParsedTypeToInitialFDC3Type(string: string): string {
+        const withoutPrefix = string.replace(this.channelsFdc3DataPrefix, "");
+
+        return this.mapChannelsDelimiterToFDC3Type(withoutPrefix);
     }
 
     public parseFDC3ContextToGlueContexts(context: Context) {

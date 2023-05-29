@@ -36,7 +36,7 @@ export class ApplicationsController {
         const app = this.glueController.getApplication(name);
 
         if (!app) {
-            throw new Error(`${OpenError.AppNotFound} - Cannot find targeted ${name} application`);
+            throw { message: OpenError.AppNotFound, reason: `Cannot find targeted ${name} application` };
         }
 
         if (context) {
@@ -54,7 +54,7 @@ export class ApplicationsController {
 
             return this.parseGlueInstToAppIdentifier(glueInst);
         } catch (error) {
-            throw new Error(`${OpenError.ErrorOnLaunch} - Error: ${error}`);
+            throw { message: OpenError.ErrorOnLaunch, reason: typeof error === "string" ? error : JSON.stringify(error) };
         }
     }
 
@@ -68,7 +68,7 @@ export class ApplicationsController {
         const app = this.glueController.getApplication(appId);
 
         if (!app) {
-            throw new Error(`${ResolveError.NoAppsFound} - App with appId: ${appId} does not exist`);
+            throw { message: ResolveError.NoAppsFound, reason: `App with appId: ${appId} does not exist` };
         }
 
         const glueInstances = this.glueController.getApplicationInstances(appId);
@@ -90,7 +90,7 @@ export class ApplicationsController {
         const app = this.glueController.getApplication(appId);
 
         if (!app) {
-            throw new Error(`${OpenError.AppNotFound} - cannot find application with appId: ${appId}`);
+            throw { message: OpenError.AppNotFound, reason: `Cannot find application with appId: ${appId}` };
         }
 
         if (!instanceId) {
@@ -198,7 +198,7 @@ export class ApplicationsController {
         } catch (error) {
             await this.unregisterContextListenerPromise(glueInst.id);
 
-            throw new Error(`${OpenError.AppTimeout} - ${error}`);
+            throw { message: OpenError.AppTimeout, reason: typeof error === "string" ? error : JSON.stringify(error) };
         }
     }
 

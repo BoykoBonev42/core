@@ -325,6 +325,11 @@ const fdc3RaiseIntent = async (params, success, error) => {
 
         const resolutionResult = await getResult();
 
+        if (!resolutionResult) {
+            success({ result: { data, resolutionResult } });
+            return;
+        }
+
         const resultIsChannel = isChannel(resolutionResult);
 
         if (resultIsChannel) {
@@ -389,10 +394,18 @@ const fdc3UnsubscribeFromPrivateChannelListener = async (_, success, error) => {
     }
 };
 
-const fdc3AddIntentListener = async ({ intent, returnValue }, success, error) => {
+const fdc3AddIntentListener = async ({ intent, returnValue, methodResponseTimeoutMs }, success, error) => {
     try {
         const listener = await fdc3.addIntentListener(intent, async (context) => {
             fdc3IntentContextAndListener[intent] = { ...fdc3IntentContextAndListener[intent], context };
+
+            if (methodResponseTimeoutMs) {
+                const promise = new Promise((resolve) => {
+                    setTimeout(resolve, methodResponseTimeoutMs);
+                });
+
+                await promise;
+            } 
 
             if (!returnValue) {
                 return;

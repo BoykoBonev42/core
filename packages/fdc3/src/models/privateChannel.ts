@@ -43,7 +43,7 @@ export class PrivateChannel {
         const isDisconnected = await this.channelsController.isPrivateChannelDisconnected({ commandId, channelId: this.id });
 
         if (isDisconnected) {
-            throw new Error(`${ChannelError.AccessDenied} - Channel has disconnected - broadcast is no longer available`);
+            throw { message: ChannelError.AccessDenied, reason: "Channel has disconnected - broadcast is no longer available" };
         }
 
         contextDecoder.runWithException(context);
@@ -61,7 +61,7 @@ export class PrivateChannel {
     private async addContextListener(contextType: string | null | ContextHandler, handler?: ContextHandler): Promise<Listener> {
         if (arguments.length === 1) {
             if (typeof contextType !== "function") {
-                throw new Error(`${ChannelError.AccessDenied} - Expected function as an argument, got ${typeof contextType}`);
+                throw { message: ChannelError.AccessDenied, reason: `Expected function as an argument, got ${typeof contextType}` };
             }
 
             return this.channelsController.addContextListener({ commandId: generateCommandId(), handler: contextType, channelId: this.id });
@@ -70,7 +70,7 @@ export class PrivateChannel {
         const contextTypeDecoder = optionalNonEmptyStringDecoder.runWithException(contextType);
 
         if (typeof handler !== "function") {
-            throw new Error(`${ChannelError.AccessDenied} - Expected function as an argument, got ${typeof contextType}`);
+            throw { message: ChannelError.AccessDenied, reason: `Expected function as an argument, got ${typeof contextType}` };
         }
 
         return this.channelsController.addContextListener({ 
@@ -84,7 +84,7 @@ export class PrivateChannel {
 
     private onAddContextListener(handler: (contextType?: string) => void): Listener {
         if (typeof handler !== "function") {
-            throw new Error(`${ChannelError.AccessDenied} - Expected function as an argument, got ${typeof handler}`);
+            throw { message: ChannelError.AccessDenied, reason: `Expected function as an argument, got ${typeof handler}` };
         }
 
         const unsub = this.channelsController.addPrivateChannelEvent({
@@ -99,7 +99,7 @@ export class PrivateChannel {
 
     private onUnsubscribe(handler: (contextType?: ContextType) => void): Listener {
         if (typeof handler !== "function") {
-            throw new Error(`${ChannelError.AccessDenied} - Expected function as an argument, got ${typeof handler}`);
+            throw { message: ChannelError.AccessDenied, reason: `Expected function as an argument, got ${typeof handler}` };
         }
 
         const unsub = this.channelsController.addPrivateChannelEvent({
@@ -114,7 +114,7 @@ export class PrivateChannel {
 
     private onDisconnect(handler: () => void): Listener {
         if (typeof handler !== "function") {
-            throw new Error(`${ChannelError.AccessDenied} - Expected function as an argument, got ${typeof handler}`);
+            throw { message: ChannelError.AccessDenied, reason: `Expected function as an argument, got ${typeof handler}` };
         }
 
         const unsub = this.channelsController.addPrivateChannelEvent({

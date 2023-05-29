@@ -14,6 +14,36 @@ const fdc3AddContextListener = async({ contextType }, success, error) => {
     }
 };
 
+const fdc3AddIntentListener = async ({ intent, returnValue, methodResponseTimeoutMs }, success, error) => {
+    try {
+        const listener = await fdc3.addIntentListener(intent, async (context) => {
+            if (methodResponseTimeoutMs) {
+                const promise = new Promise((resolve) => {
+                    setTimeout(resolve, methodResponseTimeoutMs);
+                });
+
+                await promise;
+            } 
+
+            if (!returnValue) {
+                return;
+            }
+
+            if (returnValue.context) {
+                return context;
+            }
+
+            if (returnValue.privateChannel) {
+                return privateChannel;
+            }
+        });
+        intentListeners[intent] = listener;
+        success();
+    } catch (err) {
+        error(err);
+    }
+};
+
 const raiseIntent = async ({ intent }, success, error) => {
     try {
         await glue.intents.raise(intent);
@@ -23,9 +53,17 @@ const raiseIntent = async ({ intent }, success, error) => {
     }
 };
 
-const addIntentListener = async({ intent }, success, error) => {
+const addIntentListener = async({ intent, waitTimeoutMs }, success, error) => {
     try {
-        const listener = await glue.intents.addIntentListener(intent, (context) => {
+        const listener = glue.intents.addIntentListener(intent, async(context) => {
+            if (waitTimeoutMs) {
+                const promise = new Promise((resolve) => {
+                    setTimeout(resolve, waitTimeoutMs);
+                });
+
+                await promise;
+            }
+
             return context;
         });
 
@@ -37,9 +75,17 @@ const addIntentListener = async({ intent }, success, error) => {
     }
 };
 
-const registerIntent = async({ intent }, success, error) => {
+const registerIntent = async({ intent, waitTimeoutMs }, success, error) => {
     try {
-        const listener = await glue.intents.register(intent, (context) => {
+        const listener = await glue.intents.register(intent, async(context) => {
+            if (waitTimeoutMs) {
+                const promise = new Promise((resolve) => {
+                    setTimeout(resolve, waitTimeoutMs);
+                });
+
+                await promise;
+            }
+
             return context;
         });
 
@@ -67,6 +113,7 @@ const unregisterIntent = async({ intent }, success, error) => {
 };
 
 const operations = [
+    { name: "fdc3AddIntentListener", execute: fdc3AddIntentListener },
     { name: "fdc3AddContextListener", execute: fdc3AddContextListener },
     { name: "raiseIntent", execute: raiseIntent },
     { name: "addIntentListener", execute: addIntentListener },

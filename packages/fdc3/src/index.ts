@@ -1,5 +1,5 @@
 import fdc3Factory from "./main";
-import { checkIfInElectron } from './shared/utils';
+import { checkIfInElectron } from "./shared/utils";
 
 let globalFdc3 = window.fdc3 as any;
 

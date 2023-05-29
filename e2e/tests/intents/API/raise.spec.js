@@ -3,6 +3,7 @@ describe('raise()', () => {
     let unsubObj;
     let glueApplication;
     let definitionsOnStart;
+    let timeout;
 
     const lightweightSupportMethodName = "G42Core.E2E.Lightweight.Control";
 
@@ -22,10 +23,19 @@ describe('raise()', () => {
             unsubObj = undefined;
         }
 
+        if (timeout) {
+            clearTimeout(timeout);
+            timeout = undefined;
+        }
+
         await Promise.all(glue.appManager.instances().map(inst => inst.stop()));
 
         await glue.appManager.inMemory.import(definitionsOnStart, "replace");
     });
+
+    const passInstructionsToSupportApp = async (operation, params, windowId) => {
+        return glue.interop.invoke(lightweightSupportMethodName, { operation, params }, { windowId });
+    };
 
     it('Should throw an error when intentRequest isn\'t of type string or type object.', (done) => {
         glue.intents.raise(42)
@@ -217,6 +227,146 @@ describe('raise()', () => {
         expect(intentResult.result).to.eql(intentRequest.context);
     });
 
+    it("Should take into account 'timeout' when it's longer than the default one (60 seconds) and the handler resolves", async () => {
+        const intentName = `test-methodResponseTimeoutMs-${Date.now()}`;
+
+        const un = await glue.intents.register(intentName, () => {
+            return new Promise((resolve) => {
+                timeout = setTimeout(resolve, 70 * 1000);
+            });
+        });
+
+        gtf.addWindowHook(un.unsubscribe);
+
+        await glue.intents.raise({ intent: intentName, timeout: 90 * 1000 });
+    }).timeout(100 * 1000);
+
+    it("Should take into account 'timeout' when it's shorter than the default one (60 seconds) and the handler resolves", async () => {
+        const intentName = `test-methodResponseTimeoutMs-${Date.now()}`;
+
+        const un = await glue.intents.register(intentName, () => {
+            return new Promise((resolve) => {
+                timeout = setTimeout(resolve, 5 * 1000);
+            });
+        });
+
+        gtf.addWindowHook(un.unsubscribe);
+
+        const timeBeforeRaise = Date.now();
+
+        await glue.intents.raise({ intent: intentName, timeout: 20 * 1000 });
+
+        const timeAfterRaise = Date.now();
+
+        expect(timeAfterRaise - 5000 >= timeBeforeRaise).to.eql(true);
+    }).timeout(30 * 1000);
+    
+    it("Should take into account 'timeout' when it's longer than the default one (60 seconds) and the handler rejects", async () => {
+        const intentName = `test-methodResponseTimeoutMs-${Date.now()}`;
+        const raiseRejectionPromise = gtf.wrapPromise();
+
+        const un = await glue.intents.register(intentName, () => {
+            return new Promise((_, reject) => {
+                timeout = setTimeout(reject, 70 * 1000);
+            });
+        });
+
+        gtf.addWindowHook(un.unsubscribe);
+
+        try {
+            await glue.intents.raise({ intent: intentName, timeout: 90 * 1000 });
+            raiseRejectionPromise.reject("Should have rejected");
+        } catch (error) {
+            raiseRejectionPromise.resolve();
+        }
+
+        await raiseRejectionPromise.promise;
+    }).timeout(100 * 1000);
+
+    it("Should take into account 'timeout' when it's shorter than the default one (60 seconds) and handler rejects", async () => {
+        const raiseRejectionPromise = gtf.wrapPromise();
+        
+        const intentName = `test-methodResponseTimeoutMs-${Date.now()}`;
+
+        const un = await glue.intents.register(intentName, () => {
+            return new Promise((_, reject) => {
+                timeout = setTimeout(reject, 10 * 1000);
+            });
+        });
+
+        gtf.addWindowHook(un.unsubscribe);
+
+        try {
+            await glue.intents.raise({ intent: intentName, timeout: 20 * 1000 });
+            raiseRejectionPromise.reject("Should have rejected");
+        } catch (error) {
+            raiseRejectionPromise.resolve();
+        }
+
+        await raiseRejectionPromise.promise;
+    }).timeout(30 * 1000);
+
+    it("Should take into account 'timeout' when the the handler resolves after 62 seconds", async() => {
+        const intentName = `test-waitTimeoutMs-${Date.now()}`;
+
+        const appDef = {
+            name: `intents-support-${Date.now()}`,
+            type: "window",
+            details: {
+                url: "http://localhost:4242/lightweightSupport/index.html"
+            },
+            intents: [{ name: intentName }]
+        };
+
+        await glue.appManager.inMemory.import([appDef], "merge");
+
+        // open support app
+        const inst = await glue.appManager.application(appDef.name).start();
+
+        // send command to support app to add a handler for the intent
+        await passInstructionsToSupportApp("registerIntent", { intent: intentName, waitTimeoutMs: 62 * 1000 }, inst.id);
+
+        // raise the intent and wait for max 72000ms for the handler's callback to resolve
+        await glue.intents.raise({ intent: intentName, timeout: 72 * 1000, target: { instance: inst.id } });
+    }).timeout(80 * 1000);
+
+    it("Should not take into account 'timeout' when there's no app registering an intent with passed name (no app definition)", async () => {
+        const raiseRejectsPromise = gtf.wrapPromise();
+
+        gtf.wait(50 * 1000, () => raiseRejectsPromise.reject("Should have rejected by now"));
+
+        try {
+            await glue.intents.raise({ intent: "asd", waitTimeoutMs: 70 * 1000 });
+            raiseRejectsPromise.reject("Should have rejected");
+        } catch (error) {
+            raiseRejectsPromise.resolve();
+        }
+
+        await raiseRejectsPromise.promise;
+    }).timeout(80 * 1000);
+
+    it("Should take into account 'timeout' when there's no app registering an intent with passed name (no app definition) but an instance adds a handler which resolves after 62 seconds", async () => {
+        const intentName = `test-waitTimeoutMs-${Date.now()}`;
+
+        const appDef = {
+            name: `intents-support-${Date.now()}`,
+            type: "window",
+            details: {
+                url: "http://localhost:4242/lightweightSupport/index.html"
+            }
+        };
+
+        await glue.appManager.inMemory.import([appDef], "merge");
+
+        // open support app
+        const inst = await glue.appManager.application(appDef.name).start();
+
+        // send command to support app to add a handler for the intent
+        await passInstructionsToSupportApp("registerIntent", { intent: intentName, waitTimeoutMs: 62 * 1000 }, inst.id);
+
+        await glue.intents.raise({ intent: intentName, timeout: 70 * 1000 });
+    }).timeout(80 * 1000);
+
     describe('when invoked with handlers in the intentRequest', function () {
         let intentName;
         let firstAppDef;
@@ -251,10 +401,6 @@ describe('raise()', () => {
 
             await glue.appManager.inMemory.import([firstAppDef, secondAppDef], "merge");
         });
-
-        const passInstructionsToSupportApp = async (operation, params, windowId) => {
-            return glue.interop.invoke(lightweightSupportMethodName, { operation, params }, { windowId });
-        }
 
         ['test', 42, { test: 42 }].forEach(invalidInput => {
             it(`Should throw when handlers is an invalid type (${typeof invalidInput})`, done => {
@@ -690,7 +836,8 @@ describe('raise()', () => {
                     context: {
                         type: "test.intent",
                         data: { test: 42 }
-                    }
+                    },
+                    timeout: 10 * 1000
                 };
 
                 try {

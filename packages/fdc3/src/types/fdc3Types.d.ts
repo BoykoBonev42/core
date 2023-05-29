@@ -1,6 +1,6 @@
-import { AppIdentifier, Context, ContextHandler, DisplayMetadata, IntentHandler, Listener } from "@finos/fdc3";
+import { AppIdentifier, Context, ContextHandler, DesktopAgent, DisplayMetadata, IntentHandler, IntentResolution, IntentResult, Listener } from "@finos/fdc3";
 import { PrivateChannelEventMethods } from "../channels/privateChannelConstants";
-import { ChannelContext } from "./glue42Types";
+import { ChannelContext, GlueIntent } from "./glue42Types";
 
 export interface ChannelMetadata {
     id?: string;
@@ -67,6 +67,17 @@ export interface RaiseIntentConfig extends CommandIdConfig {
     target?: string | AppIdentifier;
 }
 
+export interface CheckRaiseIntentRequestArgs extends CommandIdConfig {
+    intent: GlueIntent;
+    context: Context;
+    target?: string | AppIdentifier;
+}
+
+export interface CheckIntentHandlersTargetArgs extends CommandIdConfig {
+    intent: GlueIntent;
+    target: string | AppIdentifier;
+}
+
 export interface RaiseIntentForContextConfig extends CommandIdConfig {
     context: Context;
     target?:  string | AppIdentifier;
@@ -104,4 +115,13 @@ export interface GlueStartContextOnOpen {
         instance: string;
     },
     context: Context;
+}
+
+export interface ExtendedIntentResolution extends Omit<IntentResolution, "getResult"> {
+    getResult: () => Promise<IntentResult | undefined>;
+}
+
+export interface ExtendedFDC3DesktopAgent extends Omit<DesktopAgent, "raiseIntent" | "raiseIntentForContext"> {
+    raiseIntent(intent: string, context: Context, app?: string | AppIdentifier): Promise<ExtendedIntentResolution>;
+    raiseIntentForContext(context: Context, app?: string | AppIdentifier): Promise<ExtendedIntentResolution>
 }

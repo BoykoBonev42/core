@@ -1,5 +1,8 @@
 describe("raiseIntent()", function () {
+    const lightweightSupportMethodName = "G42Core.E2E.Lightweight.Control";
+
     let definitionsOnStart;
+    let timeout;
     
     const supportAppName1 = 'fdc3Support1';
     let intentName1;
@@ -57,6 +60,11 @@ describe("raiseIntent()", function () {
     });
 
     afterEach(async () => {
+        if (timeout) {
+            clearTimeout(timeout);
+            timeout = undefined;
+        }
+
         await Promise.all(glue.appManager.instances().map(inst => inst.stop()));
 
         await glue.appManager.inMemory.import(definitionsOnStart, "replace");
@@ -96,7 +104,7 @@ describe("raiseIntent()", function () {
     });
 
     it("Should return an object", async () => {
-        await supportApp1.fdc3.addIntentListener(intentName1);
+        await supportApp1.fdc3.addIntentListener({ intent: intentName1 });
 
         const context = { ...gtf.fdc3.getContext(), type: contextType1 };
         const resolution = await fdc3.raiseIntent(intentName1, context);
@@ -105,7 +113,7 @@ describe("raiseIntent()", function () {
     });
 
     it("Should return a valid IntentResolution object", async () => {
-        await supportApp1.fdc3.addIntentListener(intentName1);
+        await supportApp1.fdc3.addIntentListener({ intent: intentName1 });
 
         const context = { ...gtf.fdc3.getContext(), type: contextType1 };
         const resolution = await fdc3.raiseIntent(intentName1, context);
@@ -116,7 +124,7 @@ describe("raiseIntent()", function () {
     });
 
     it("Should return correct IntentResolution object", async () => {
-        await supportApp1.fdc3.addIntentListener(intentName1);
+        await supportApp1.fdc3.addIntentListener({ intent: intentName1 });
 
         const context = { ...gtf.fdc3.getContext(), type: contextType1 };
         const resolution = await fdc3.raiseIntent(intentName1, context);
@@ -138,7 +146,7 @@ describe("raiseIntent()", function () {
     it("Should throw when there's an app registering an intent with such name but it's not the same app that is passed as a third argument (string)", async () => {
         const context = { ...gtf.fdc3.getContext(), type: contextType1 };
 
-        await supportApp1.fdc3.addIntentListener(intentName1);
+        await supportApp1.fdc3.addIntentListener({ intent: intentName1 });
 
         const raiseIntentThrownPromise = gtf.wrapPromise();
 
@@ -155,7 +163,7 @@ describe("raiseIntent()", function () {
     it("Should throw when there's an app registering an intent with such name but it's not the same app that is passed as a third argument ({ appId: string })", async () => {
         const context = { ...gtf.fdc3.getContext(), type: contextType1 };
 
-        await supportApp1.fdc3.addIntentListener(intentName1);
+        await supportApp1.fdc3.addIntentListener({ intent: intentName1 });
 
         const raiseIntentThrownPromise = gtf.wrapPromise();
 
@@ -172,7 +180,7 @@ describe("raiseIntent()", function () {
     it("Should throw when there's an app registering an intent with such name but it's not the same instance that is passed as a third argument ({ appId: string, instanceId: string })", async () => {
         const context = { ...gtf.fdc3.getContext(), type: contextType1 };
 
-        await supportApp1.fdc3.addIntentListener(intentName1);
+        await supportApp1.fdc3.addIntentListener({ intent: intentName1 });
 
         const raiseIntentThrownPromise = gtf.wrapPromise();
 
@@ -193,7 +201,7 @@ describe("raiseIntent()", function () {
         await supportApp1.fdc3.createPrivateChannel();
 
         // supportApp1 adds a context listener whose callback will return the created private channel => this is the channel's first consumer (the creator)
-        await supportApp1.fdc3.addIntentListener(intentName1, { privateChannel: true });
+        await supportApp1.fdc3.addIntentListener({ intent: intentName1, returnValue: { privateChannel: true } });
 
         // current app raises the intent and retrieves the result which is the private channel => this is the channel's second consumer (the client)
         const resolution = await fdc3.raiseIntent(intentName1, context);
@@ -215,7 +223,7 @@ describe("raiseIntent()", function () {
     it("Should target the passed application by appId when there are two apps providing the same intent", async () => {
         const context = { ...gtf.fdc3.getContext(), type: contextType1 };
 
-        await supportApp1.fdc3.addIntentListener(intentName1);
+        await supportApp1.fdc3.addIntentListener({ intent: intentName1 });
 
         await fdc3.raiseIntent(intentName1, context, { appId: supportAppName1 });
 
@@ -228,8 +236,8 @@ describe("raiseIntent()", function () {
         const context = { ...gtf.fdc3.getContext(), type: contextType1 };
 
         // both instances add intent listener for the intent
-        await supportApp1.fdc3.addIntentListener(intentName1);
-        await supportApp2.fdc3.addIntentListener(intentName1);
+        await supportApp1.fdc3.addIntentListener({ intent: intentName1 });
+        await supportApp2.fdc3.addIntentListener({ intent: intentName1 });
 
         await fdc3.raiseIntent(intentName1, context, { appId: supportAppName1 });
 
@@ -272,6 +280,69 @@ describe("raiseIntent()", function () {
         await listenerInvokedPromise.promise;
     });
 
+    it("Should wait for the intent handler to resolve for 75 seconds maximum", async () => {
+        const intentName = `fdc3.intent.${Date.now()}`;
+        const context = gtf.fdc3.getContext();
+
+        const appDef = {
+            name: `intents-support-${Date.now()}`,
+            type: "window",
+            details: {
+                url: "http://localhost:4242/lightweightSupport/index.html"
+            },
+            intents: [{ name: intentName, contexts: [context.type] }]
+        };
+
+        await glue.appManager.inMemory.import([appDef], "merge");
+
+        const un = glue.appManager.onInstanceStarted(async (inst) => {
+            if (inst.application.name !== appDef.name) {
+                return;
+            }
+
+            const controlArgs = {
+                operation: "fdc3AddIntentListener",
+                params: { intent: intentName, returnValue: { context }, methodResponseTimeoutMs: 70 * 1000 }
+            }
+
+            await glue.interop.invoke(lightweightSupportMethodName, controlArgs, { windowId: inst.id });
+        });
+
+        gtf.addWindowHook(un);
+
+        const resolution = await fdc3.raiseIntent(intentName, context);
+
+        const result = await resolution.getResult();
+
+        expect(result).to.eql(context);
+    }).timeout(80 * 1000);
+
+    it("Should reject the promise after waiting for 75 seconds when the app hasn't added a listener after the timeout", async () => {
+        const raisePromiseRejectPromise = gtf.wrapPromise();
+        const intentName = `fdc3.intent.${Date.now()}`;
+        const context = gtf.fdc3.getContext();
+
+        const appDef = {
+            name: `intents-support-${Date.now()}`,
+            type: "window",
+            details: {
+                url: "http://localhost:4242/lightweightSupport/index.html"
+            },
+            intents: [{ name: intentName, contexts: [context.type] }]
+        };
+
+        await glue.appManager.inMemory.import([appDef], "merge");
+
+        try {
+            await fdc3.raiseIntent(intentName, context);
+            raisePromiseRejectPromise.reject("Should have rejected");
+        } catch (error) {
+            raisePromiseRejectPromise.resolve();
+        }
+
+        await raisePromiseRejectPromise.promise;
+    }).timeout(80 * 1000);
+
     describe("when the same app raises the intent, intentResolution.getResult() method", function () {
         const defaultChannelMethods = ["broadcast", "addContextListener", "getCurrentContext"];
         const defaultPrivateChannelMethods = ["id", "type", "displayMetadata", ...defaultChannelMethods, "onAddContextListener", "onUnsubscribe", "onDisconnect", "disconnect"];
@@ -279,7 +350,7 @@ describe("raiseIntent()", function () {
         it("Should be async", async () => {
             const context = { ...gtf.fdc3.getContext(), type: contextType1 };
 
-            await supportApp1.fdc3.addIntentListener(intentName1);
+            await supportApp1.fdc3.addIntentListener({ intent: intentName1 });
 
             const resolution = await fdc3.raiseIntent(intentName1, context);
 
@@ -289,11 +360,23 @@ describe("raiseIntent()", function () {
             expect(getResultPromise.catch).to.be.a("function");
         });
 
+        it("Should return undefined when addIntentListener's callback doesn't return anything", async() => {
+            await supportApp1.fdc3.addIntentListener({ intent: intentName1 });
+
+            const context = { ...gtf.fdc3.getContext(), type: contextType1 };
+
+            const resolution = await fdc3.raiseIntent(intentName1, context);
+
+            const result = await resolution.getResult();
+
+            expect(result).to.be.undefined;
+        });
+
         it("Should return correct context when intent handler returns a context", async () => {
             const context = { ...gtf.fdc3.getContext(), type: contextType1 };
             const contextToReturn = gtf.fdc3.getContext();
 
-            await supportApp1.fdc3.addIntentListener(intentName1, { context: contextToReturn });
+            await supportApp1.fdc3.addIntentListener({ intent: intentName1, returnValue: { context: contextToReturn } });
 
             const resolution = await fdc3.raiseIntent(intentName1, context);
 
@@ -307,7 +390,7 @@ describe("raiseIntent()", function () {
 
             await supportApp1.fdc3.createPrivateChannel();
 
-            await supportApp1.fdc3.addIntentListener(intentName1, { privateChannel: true });
+            await supportApp1.fdc3.addIntentListener({ intent: intentName1, returnValue: { privateChannel: true } });
 
             const resolution = await fdc3.raiseIntent(intentName1, context);
 
@@ -322,7 +405,7 @@ describe("raiseIntent()", function () {
 
             await supportApp1.fdc3.createPrivateChannel();
 
-            await supportApp1.fdc3.addIntentListener(intentName1, { privateChannel: true });
+            await supportApp1.fdc3.addIntentListener({ intent: intentName1, returnValue: { privateChannel: true } });
 
             const resolution1 = await fdc3.raiseIntent(intentName1, context);
             const channel1 = await resolution1.getResult();

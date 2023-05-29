@@ -1,4 +1,4 @@
-import { Context, Listener, ContextMetadata } from "@finos/fdc3";
+import { Context, Listener, ContextMetadata, ContextHandler } from "@finos/fdc3";
 import { isValidNonEmptyObject } from "../shared/utils";
 import { AddIntentListenerRequest, Application, ChannelContext, Glue42, SystemMethodEventArgument, GlueValidator, Instance, GlueIntent, IntentContext, IntentFilter, GlueIntentRequest, IntentResult, ServerInstance, InteropMethodFilter, InteropMethod, UnsubscribeFunction, InvocationResult, ContextListenerInvokedArgument, ServerMethodFilter, Logger, didCallbackReplayed, GDWindow } from "../types/glue42Types";
 import { ChannelsParser } from "../channels/parser";
@@ -203,6 +203,8 @@ export class GlueController {
     }
 
     public channelsSubscribe(callback: (data: any, metadata?: ContextMetadata) => void) {
+        const didReplay: didCallbackReplayed = { replayed: false };
+
         return this.glue.channels.subscribe(async(_, context: ChannelContext, updaterId: string) => {
             if (this.isUpdateFromMe(updaterId)) {
                 return;
@@ -211,6 +213,14 @@ export class GlueController {
             const contextData = await this.glue.contexts.get(`${glueChannelNamePrefix}${context.name}`);
 
             if (!contextData.latest_fdc3_type) {
+                return;
+            }
+
+            if (!didReplay.replayed) {
+                this.invokePreviouslyBroadcastedData(callback, contextData, this.getContextMetadata(updaterId));
+
+                didReplay.replayed = true;
+                
                 return;
             }
 
@@ -242,6 +252,18 @@ export class GlueController {
         return this.logger.subLogger(name);
     }
 
+    private invokePreviouslyBroadcastedData(callback: ContextHandler, contextData: any, metadata?: ContextMetadata): void {
+        Object.entries(contextData.data).forEach(([key, value]: [string, any]) => {
+            if (!this.channelsParser.isFdc3DataKey(key)) {
+                return;
+            }
+
+            const parsedData = { type: this.channelsParser.revertGlueParsedTypeToInitialFDC3Type(key), ...value };
+
+            callback(parsedData, metadata);
+        });
+    }
+
     private isUpdateFromMe(updaterId?: string): boolean {
         return this.glue.interop.instance.peerId === updaterId;
     }
@@ -265,12 +287,11 @@ export class GlueController {
         this._logger = this.glue.logger;
     }
 
-    private parseDataAndInvokeSubscribeCallback(callback: (data: any, metadata?: any) => void, data: any, metadata?: ContextMetadata) {
+    private parseDataAndInvokeSubscribeCallback(callback: (data: any, metadata?: ContextMetadata) => void, data: any, metadata?: ContextMetadata) {
         const parsedData = this.channelsParser.parseContextsDataToInitialFDC3Data(data);
 
         callback(parsedData, metadata);
     }
-
 
     private checkIfAppChannelShouldInvokeInitialReplay(didReplay: didCallbackReplayed, contextData: any): boolean {
         /* Skip initial replays on App Channels */

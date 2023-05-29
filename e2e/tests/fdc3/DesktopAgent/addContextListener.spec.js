@@ -314,9 +314,9 @@ describe("addContextListener() ", function () {
                 await callbackInvokedPromise.promise;
             });
 
-            it("Should invoke the callback with the latest broadcasted data when there are multiple fdc3 contexts were broadcasted on the channel before adding the listener", async() => {
+            it("Should invoke the callback multiple times when there are multiple fdc3 contexts broadcasted on the channel before adding the listener", async() => {
+                const callbackInvokedWithOldData = gtf.wrapPromise();
                 const callbackInvokedWithLatestData = gtf.wrapPromise();
-                const callbackNotInvokedWithOldData = gtf.wrapPromise();
 
                 const firstContext = gtf.fdc3.getContext();
                 const secondContext = gtf.fdc3.getContext();
@@ -327,7 +327,7 @@ describe("addContextListener() ", function () {
 
                 const listener = await fdc3.addContextListener((ctx) => {
                     if (ctx.type === firstContext.type) {
-                        callbackNotInvokedWithOldData.reject("Should not have invoked with the old context");
+                        callbackInvokedWithOldData.resolve();
                     }
 
                     if (ctx.type === secondContext.type) {
@@ -339,11 +339,7 @@ describe("addContextListener() ", function () {
 
                 await fdc3.joinUserChannel(userChannelIdToJoin);
 
-                await callbackInvokedWithLatestData.promise;
-
-                gtf.wait(3000, callbackNotInvokedWithOldData.resolve);
-
-                await callbackNotInvokedWithOldData.promise;
+                await Promise.all([callbackInvokedWithOldData.promise, callbackInvokedWithLatestData.promise]);
             });
 
             it("Should invoke the callback with metadata as a second argument", async () => {
@@ -831,9 +827,9 @@ describe("addContextListener() ", function () {
                 await callbackInvokedPromise.promise;
             });
 
-            it("Should invoke the callback with the latest broadcasted data when there are multiple fdc3 contexts were broadcasted on the channel before adding the listener", async() => {
+            it("Should invoke the callback multiple times when there are multiple fdc3 contexts broadcasted on the channel before adding the listener", async() => {
+                const callbackInvokedWithOldData = gtf.wrapPromise();
                 const callbackInvokedWithLatestData = gtf.wrapPromise();
-                const callbackNotInvokedWithOldData = gtf.wrapPromise();
 
                 const firstContext = gtf.fdc3.getContext();
                 const secondContext = gtf.fdc3.getContext();
@@ -844,7 +840,7 @@ describe("addContextListener() ", function () {
 
                 const listener = await fdc3.addContextListener(null, (ctx) => {
                     if (ctx.type === firstContext.type) {
-                        callbackNotInvokedWithOldData.reject("Should not have invoked with the old context");
+                        callbackInvokedWithOldData.resolve();
                     }
 
                     if (ctx.type === secondContext.type) {
@@ -856,11 +852,7 @@ describe("addContextListener() ", function () {
 
                 await fdc3.joinUserChannel(userChannelIdToJoin);
 
-                await callbackInvokedWithLatestData.promise;
-
-                gtf.wait(3000, callbackNotInvokedWithOldData.resolve);
-
-                await callbackNotInvokedWithOldData.promise;
+                await Promise.all([callbackInvokedWithOldData.promise, callbackInvokedWithLatestData.promise]);
             });
 
             it("Should invoke the callback with metadata as a second argument", async () => {
@@ -939,7 +931,6 @@ describe("addContextListener() ", function () {
 
                 await metadataHeard.promise;
             });
-
 
             describe("integration with Glue42 Channels API", function () {
                 const channelsFdc3DataKeyPrefix = 'fdc3_';
@@ -1472,6 +1463,39 @@ describe("addContextListener() ", function () {
                 await metadataHeard.promise;
             });
 
+            it("Should invoke the callback with broadcasted context of the same type on the channel", async () => {
+                const invokedWithInstrumentContextPromise = gtf.wrapPromise();
+                const notInvokedWithContactContextPromise = gtf.wrapPromise();
+                
+                const instrumentType = "fdc3.instrument";
+                const contactType = "fdc3.contact";
+
+                const instrumentContext = { ...gtf.fdc3.getContext(), type: instrumentType };
+                const contactContext = { ...gtf.fdc3.getContext(), type: contactType };
+
+                await supportApp.fdc3.broadcast(instrumentContext);
+
+                await supportApp.fdc3.broadcast(contactContext);
+
+                const listener = await fdc3.addContextListener(instrumentType, (ctx) => {
+                    if (ctx.type === instrumentType) {
+                        invokedWithInstrumentContextPromise.resolve();
+                    }
+
+                    if (ctx.type === contactType) {
+                        notInvokedWithContactContextPromise.reject("Should not have fired");
+                    }
+                });
+
+                gtf.fdc3.addActiveListener(listener);
+
+                await fdc3.joinUserChannel(userChannelIdToJoin);
+
+                gtf.wait(3000, notInvokedWithContactContextPromise.resolve);
+
+                await Promise.all([invokedWithInstrumentContextPromise.promise, notInvokedWithContactContextPromise.promise]);
+            });
+
             describe("integration with Glue42 Channels API", function () {
                 const channelsFdc3DataKeyPrefix = 'fdc3_';
                 const channelsFdc3Delimiter = "&";
@@ -1972,6 +1996,40 @@ describe("addContextListener() ", function () {
                 await metadataHeard.promise;
             });
 
+            it("Should invoke the callback with all previously broadcasted contexts on the channel", async () => {
+                // leave current channel
+                await fdc3.leaveCurrentChannel();
+
+                const invokedWithInstrumentContext = gtf.wrapPromise();
+                const invokedWithContactContext = gtf.wrapPromise();
+                
+                const instrumentType = "fdc3.instrument";
+                const contactType = "fdc3.contact";
+
+                const instrumentContext = { ...gtf.fdc3.getContext(), type: instrumentType };
+                const contactContext = { ...gtf.fdc3.getContext(), type: contactType };
+
+                await supportApp.fdc3.broadcast(instrumentContext);
+
+                await supportApp.fdc3.broadcast(contactContext);
+
+                await fdc3.joinUserChannel(userChannelIdToJoin);
+
+                const listener = await fdc3.addContextListener((ctx) => {
+                    if (ctx.type === instrumentType) {
+                        invokedWithInstrumentContext.resolve();
+                    }
+
+                    if (ctx.type === contactType) {
+                        invokedWithContactContext.resolve();
+                    }
+                });
+
+                gtf.fdc3.addActiveListener(listener);
+
+                await Promise.all([invokedWithInstrumentContext.promise, invokedWithContactContext.promise]);
+            });
+
             describe("integration with Glue42 Channels API", function () {
                 const channelsFdc3DataKeyPrefix = 'fdc3_';
                 const channelsFdc3Delimiter = "&";
@@ -2384,6 +2442,40 @@ describe("addContextListener() ", function () {
                 await supportApp.fdc3.broadcast(fdc3Context);
 
                 await metadataHeard.promise;
+            });
+
+            it("Should invoke the callback with all previously broadcasted contexts on the channel", async () => {
+                // leave current channel
+                await fdc3.leaveCurrentChannel();
+
+                const invokedWithInstrumentContext = gtf.wrapPromise();
+                const invokedWithContactContext = gtf.wrapPromise();
+                
+                const instrumentType = "fdc3.instrument";
+                const contactType = "fdc3.contact";
+
+                const instrumentContext = { ...gtf.fdc3.getContext(), type: instrumentType };
+                const contactContext = { ...gtf.fdc3.getContext(), type: contactType };
+
+                await supportApp.fdc3.broadcast(instrumentContext);
+
+                await supportApp.fdc3.broadcast(contactContext);
+
+                await fdc3.joinUserChannel(userChannelIdToJoin);
+
+                const listener = await fdc3.addContextListener(null, (ctx) => {
+                    if (ctx.type === instrumentType) {
+                        invokedWithInstrumentContext.resolve();
+                    }
+
+                    if (ctx.type === contactType) {
+                        invokedWithContactContext.resolve();
+                    }
+                });
+
+                gtf.fdc3.addActiveListener(listener);
+
+                await Promise.all([invokedWithInstrumentContext.promise, invokedWithContactContext.promise]);
             });
 
             describe("integration with Glue42 Channels API", function () {
@@ -2807,6 +2899,42 @@ describe("addContextListener() ", function () {
                 await supportApp.fdc3.broadcast(fdc3Context);
 
                 await metadataHeard.promise;
+            });
+
+            it("Should invoke the callback with broadcasted context of the same type on the channel", async () => {
+                // leave current channel
+                await fdc3.leaveCurrentChannel();
+
+                const invokedWithInstrumentContextPromise = gtf.wrapPromise();
+                const notInvokedWithContactContextPromise = gtf.wrapPromise();
+                
+                const instrumentType = "fdc3.instrument";
+                const contactType = "fdc3.contact";
+
+                const instrumentContext = { ...gtf.fdc3.getContext(), type: instrumentType };
+                const contactContext = { ...gtf.fdc3.getContext(), type: contactType };
+
+                await supportApp.fdc3.broadcast(instrumentContext);
+
+                await supportApp.fdc3.broadcast(contactContext);
+
+                await fdc3.joinUserChannel(userChannelIdToJoin);
+
+                const listener = await fdc3.addContextListener(instrumentType, (ctx) => {
+                    if (ctx.type === instrumentType) {
+                        invokedWithInstrumentContextPromise.resolve();
+                    }
+
+                    if (ctx.type === contactType) {
+                        notInvokedWithContactContextPromise.reject("Should not have fired");
+                    }
+                });
+
+                gtf.fdc3.addActiveListener(listener);
+
+                gtf.wait(3000, notInvokedWithContactContextPromise.resolve);
+
+                await Promise.all([invokedWithInstrumentContextPromise.promise, notInvokedWithContactContextPromise.promise]);
             });
 
             describe("integration with Glue42 Channels API", function () {

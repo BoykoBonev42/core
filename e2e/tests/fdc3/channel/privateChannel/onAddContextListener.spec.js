@@ -94,7 +94,7 @@ describe("onAddContextListener()", function() {
 
             await supportApp.fdc3.createPrivateChannel();
 
-            await supportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+            await supportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { privateChannel: true } });
 
             const intentRes = await fdc3.raiseIntent(intentName, context);
 
@@ -145,7 +145,7 @@ describe("onAddContextListener()", function() {
 
             await supportApp.fdc3.createPrivateChannel();
 
-            await supportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+            await supportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { privateChannel: true } });
 
             const intentRes = await fdc3.raiseIntent(intentName, context);
 
@@ -204,7 +204,7 @@ describe("onAddContextListener()", function() {
 
             await supportApp.fdc3.createPrivateChannel();
 
-            await supportApp.fdc3.addIntentListener(intentName, { privateChannel: true });
+            await supportApp.fdc3.addIntentListener({ intent: intentName, returnValue: { privateChannel: true } });
 
             const intentRes = await fdc3.raiseIntent(intentName, firstContext);
 

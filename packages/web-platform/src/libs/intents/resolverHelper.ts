@@ -5,7 +5,7 @@ import logger from "../../shared/logger";
 import { GlueController } from "../../controllers/glue";
 import { intentResolverResponseDecoder } from "./decoders";
 import { INTENTS_RESOLVER_HEIGHT, INTENTS_RESOLVER_INTEROP_PREFIX, INTENTS_RESOLVER_WIDTH } from "./constants";
-import { IntentResolverResponse, IntentsResolverResponse, IntentsResolverResponsePromise, IntentsResolverStartContext, RaiseIntentRequestWithResolverConfig } from "./types";
+import { IntentResolverResponse, IntentsResolverResponse, IntentsResolverResponsePromise, IntentsResolverStartContext, StartResolverAppArgs } from "./types";
 import { WorkspacesController } from "../workspaces/controller";
 import { PromisePlus } from "../../shared/promisePlus";
 import { WindowsController } from "../windows/controller";
@@ -24,7 +24,7 @@ export class IntentsResolverHelper {
         return logger.get("intents.resolver.controller");
     }
 
-    public async startResolverApp(requestWithResolverInfo: RaiseIntentRequestWithResolverConfig, callerId: string, commandId: string): Promise<Glue42Web.Intents.IntentHandler> {
+    public async startResolverApp({ requestWithResolverInfo, commandId, callerId, resolverInstance }: StartResolverAppArgs): Promise<Glue42Web.Intents.IntentHandler> {
         const { intentRequest, resolverConfig } = requestWithResolverInfo;
 
         this.logger?.trace(`[${commandId}] Intents Resolver UI with app name ${resolverConfig.appName} will be used for request: ${JSON.stringify(intentRequest)}`);
@@ -39,17 +39,31 @@ export class IntentsResolverHelper {
 
         this.logger?.trace(`[${commandId}] Starting Intents Resolver UI with context: ${JSON.stringify(startContext)} and options: ${startOptions}`);
 
-        const resolverInstance = await this.glueController.clientGlue.appManager.application(resolverConfig.appName).start(startContext, startOptions);
+        const instance = await this.glueController.clientGlue.appManager.application(resolverConfig.appName).start(startContext, startOptions);
 
-        this.logger?.trace(`[${commandId}] Intents Resolver instance with id ${resolverInstance.id} opened`);
+        if (resolverInstance) {
+            resolverInstance.instanceId = instance.id;
+        }
 
-        this.subscribeOnInstanceStopped(resolverInstance);
+        this.logger?.trace(`[${commandId}] Intents Resolver instance with id ${instance.id} opened`);
 
-        this.createResponsePromise(intentRequest.intent, resolverInstance.id, responseMethodName, resolverConfig.waitResponseTimeout);
+        this.subscribeOnInstanceStopped(instance);
 
-        const handler = await this.handleInstanceResponse(resolverInstance.id, commandId);
+        this.createResponsePromise(intentRequest.intent, instance.id, responseMethodName, resolverConfig.waitResponseTimeout);
+
+        const handler = await this.handleInstanceResponse(instance.id, commandId);
 
         return handler;
+    }
+
+    public stopResolverInstance(instanceId: string): void {
+        const searchedInstance = this.glueController.clientGlue.appManager.instances().find(inst => inst.id === instanceId);
+
+        if (!searchedInstance) {
+            return;
+        }
+
+        searchedInstance.stop().catch(err => this.logger?.error(err));
     }
 
     private async handleInstanceResponse(instanceId: string, commandId: string): Promise<Glue42Web.Intents.IntentHandler> {
@@ -209,16 +223,6 @@ export class IntentsResolverHelper {
         this.intentsResolverResponsePromises[instanceId!].reject(response.error.message);
 
         this.stopResolverInstance(instanceId!);
-    }
-
-    private stopResolverInstance(instanceId: string): void {
-        const searchedInstance = this.glueController.clientGlue.appManager.instances().find(inst => inst.id === instanceId);
-
-        if (!searchedInstance) {
-            return;
-        }
-
-        searchedInstance.stop().catch(err => this.logger?.error(err));
     }
 
     private subscribeOnInstanceStopped(instance: Glue42Web.AppManager.Instance): void {

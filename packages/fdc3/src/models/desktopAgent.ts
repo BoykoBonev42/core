@@ -1,9 +1,10 @@
-import { Context, Listener, ImplementationMetadata, AppIdentifier, AppMetadata, Channel, AppIntent, IntentResolution, IntentHandler, ContextHandler, DesktopAgent as Fdc3DesktopAgent } from "@finos/fdc3";
+import { Context, Listener, ImplementationMetadata, AppIdentifier, AppMetadata, Channel, AppIntent, IntentHandler, ContextHandler } from "@finos/fdc3";
 import { IntentsController } from "../controllers/intents";
 import { ApplicationsController } from "../controllers/applications";
 import { appIdentifierDecoder, contextDecoder, optionalNonEmptyStringDecoder, nonEmptyStringDecoder, optionalAppIdentifier, optionalContextDecoder, optionalTargetApp, targetAppDecoder } from "../shared/decoder";
 import { ChannelsController } from "../channels/controller";
 import { generateCommandId } from "../shared/utils";
+import { ExtendedFDC3DesktopAgent, ExtendedIntentResolution } from "../types/fdc3Types";
 export class DesktopAgent {
     constructor(
         private readonly intentsController: IntentsController,
@@ -11,8 +12,8 @@ export class DesktopAgent {
         private readonly channelsController: ChannelsController
     ) { }
 
-    public toApi(): Fdc3DesktopAgent {
-        const api: Fdc3DesktopAgent = {
+    public toApi(): ExtendedFDC3DesktopAgent {
+        const api: ExtendedFDC3DesktopAgent = {
             addContextListener: this.addContextListener.bind(this),
             addIntentListener: this.addIntentListener.bind(this),
             broadcast: this.broadcast.bind(this),
@@ -30,8 +31,8 @@ export class DesktopAgent {
             joinUserChannel: this.joinUserChannel.bind(this),
             leaveCurrentChannel: this.leaveCurrentChannel.bind(this),
             open: this.open.bind(this) as { (target: AppIdentifier, context?: Context): Promise<AppIdentifier>; (target: string, context?: Context): Promise<AppIdentifier> },
-            raiseIntent: this.raiseIntent.bind(this) as { (intent: string, context: Context, app?: AppIdentifier): Promise<IntentResolution>; (intent: string, context: Context, name?: String): Promise<IntentResolution>},
-            raiseIntentForContext: this.raiseIntentForContext.bind(this) as { (context: Context, app?: AppIdentifier | undefined): Promise<IntentResolution>; (context: Context, name: String): Promise<IntentResolution>},
+            raiseIntent: this.raiseIntent.bind(this) as { (intent: string, context: Context, app?: AppIdentifier): Promise<ExtendedIntentResolution>; (intent: string, context: Context, name?: string): Promise<ExtendedIntentResolution>},
+            raiseIntentForContext: this.raiseIntentForContext.bind(this) as { (context: Context, app?: AppIdentifier | undefined): Promise<ExtendedIntentResolution>; (context: Context, name: string): Promise<ExtendedIntentResolution>},
         };
 
         return Object.freeze(api);
@@ -118,7 +119,7 @@ export class DesktopAgent {
         return this.intentsController.findIntentsByContext({ commandId: generateCommandId(), context: contextDecoderResult.result, resultType });
     }
 
-    private async raiseIntent(intent: string, context: Context, app?: string | AppIdentifier): Promise<IntentResolution> {
+    private async raiseIntent(intent: string, context: Context, app?: string | AppIdentifier): Promise<ExtendedIntentResolution> {
         nonEmptyStringDecoder.runWithException(intent);
 
         contextDecoder.runWithException(context);
@@ -128,7 +129,7 @@ export class DesktopAgent {
         return this.intentsController.raiseIntent({ commandId: generateCommandId(), intent, context, target: app });
     }
 
-    private async raiseIntentForContext(context: Context, app?: string | AppIdentifier): Promise<IntentResolution> {
+    private async raiseIntentForContext(context: Context, app?: string | AppIdentifier): Promise<ExtendedIntentResolution> {
         contextDecoder.runWithException(context);
         optionalTargetApp.runWithException(app);
 

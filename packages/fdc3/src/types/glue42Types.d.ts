@@ -32,6 +32,7 @@ export type GlueIntentRequest = {
     context?: IntentContext;
     options?: ApplicationStartOptions;
     handlers?: GlueIntentHandler[];
+    timeout?: number;
 }
 
 export type GlueIntentHandler = {

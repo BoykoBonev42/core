@@ -24,3 +24,5 @@ export const glueChannelNamePrefix = "___channel___";
 export const fdc3NothingContextType = "fdc3.nothing";
 
 export const Glue42EnterpriseNoAppWindow = "no-app-window";
+
+export const RaiseTimeoutMs = 75 * 1000;

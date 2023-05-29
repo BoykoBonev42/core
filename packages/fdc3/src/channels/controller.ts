@@ -88,13 +88,13 @@ export class ChannelsController {
         const isPrivateChannel = this.isPrivateChannel(channelId);
 
         if (isPrivateChannel) {
-            throw new Error(`${ChannelError.AccessDenied} - Cannot retrieve a private channel`);
+            throw { message: ChannelError.AccessDenied, reason: "Cannot retrieve a private channel" };
         }
 
         const isUserChannel = this.isUserChannel(channelId);
 
         if (isUserChannel) {
-            throw new Error(`${ChannelError.AccessDenied} - There's an already existing system channel with passed id. Retrieve it using fdc3.getSystemChannels() or create a new app channel with a different id`);
+            throw { message: ChannelError.AccessDenied, reason: "There's an already existing system channel with passed id. Retrieve it using fdc3.getSystemChannels() or create a new app channel with a different id" };
         }
 
         return this.getOrCreateAppChannel(commandId, channelId);
@@ -108,13 +108,13 @@ export class ChannelsController {
         const isAppChannel = this.doesAppChannelExist(channelId);
 
         if (isAppChannel) {
-            throw new Error(`${ChannelError.AccessDenied} - Cannot join an app channel`);
+            throw { message: ChannelError.AccessDenied, reason: "Cannot join an app channel" };
         }
 
         const channelToJoin = this.channelsStateStore.userChannels[channelId];
 
         if (!channelToJoin) {
-            throw new Error(`${ChannelError.NoChannelFound} - Cannot find user channel with id ${channelId}`);
+            throw { message: ChannelError.NoChannelFound, reason: `Cannot find user channel with id ${channelId}` };
         }
 
         const currentChannel = this.channelsStateStore.currentChannel;
@@ -526,8 +526,8 @@ export class ChannelsController {
 
             return { unsubscribe };
         }
-
-        throw new Error(`${ChannelError.AccessDenied} - Cannot add a context listener on an invalid channel`);
+        
+        throw { message: ChannelError.AccessDenied, reason: "Cannot add a context listener on an invalid channel" };
     }
 
     private getChannelTypeById(channelId: string): ChannelTypes {
@@ -549,7 +549,7 @@ export class ChannelsController {
             return ChannelTypes.App;
         }
 
-        throw new Error(`Channel with id: ${channelId} does not exist`);
+        throw { message: ChannelError.NoChannelFound, reason: `Channel with id: ${channelId} does not exist` };
     }
 
     private async getTargetedInstanceId(channelId: string): Promise<string | undefined> {

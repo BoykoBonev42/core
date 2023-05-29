@@ -1,4 +1,4 @@
-import { Context, DisplayMetadata, Listener, Channel, ContextHandler } from "@finos/fdc3";
+import { Context, DisplayMetadata, Listener, Channel, ContextHandler, ChannelError } from "@finos/fdc3";
 import { ChannelsController } from "../channels/controller";
 import { contextDecoder, optionalNonEmptyStringDecoder, nonEmptyStringDecoder } from "../shared/decoder";
 import { ChannelContext } from "../types/glue42Types";
@@ -49,7 +49,7 @@ export class UserChannel {
     private async addContextListener(contextType: string | null | ContextHandler, handler?: ContextHandler): Promise<Listener | void> {
         if (arguments.length === 1) {
             if (typeof contextType !== "function") {
-                throw new Error("Please provide the handler as a function!");
+                throw { message: ChannelError.AccessDenied, reason: `Expected function as an argument, got ${typeof contextType}` };
             }
 
             return this.channelsController.addContextListener({ commandId: generateCommandId(), handler: contextType, channelId: this.id });
@@ -58,7 +58,7 @@ export class UserChannel {
         const contextTypeDecoder = optionalNonEmptyStringDecoder.runWithException(contextType);
 
         if (typeof handler !== "function") {
-            throw new Error("Please provide the handler as a function!");
+            throw { message: ChannelError.AccessDenied, reason: `Expected function as an argument, got ${typeof handler}` };
         }
 
         return this.channelsController.addContextListener({ commandId: generateCommandId(), handler, contextType: contextTypeDecoder, channelId: this.id });

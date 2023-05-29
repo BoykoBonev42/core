@@ -30,6 +30,7 @@ export const PromiseWrap = <T>(promise: () => Promise<T>, timeoutMilliseconds: n
                 }
                 promiseActive = false;
                 clearTimeout(timeout);
+
                 reject(error);
             });
     });

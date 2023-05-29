@@ -9,6 +9,10 @@ export type IntentRequestResolverConfig = {
     waitResponseTimeout: number
 }
 
+export type ResolverInstance = {
+    instanceId?: string;
+}
+
 export type ShouldResolverOpen = {
     open: boolean;
     reason?: string
@@ -21,7 +25,15 @@ export interface IntentRequest {
     target?: IntentRequestTarget;
     context?: Glue42Web.Intents.IntentContext;
     options?: Glue42Web.AppManager.ApplicationStartOptions;
-    handlers?: Glue42Web.Intents.IntentHandler[]
+    handlers?: Glue42Web.Intents.IntentHandler[];
+    timeout?: number,
+    waitUserResponseIndefinitely?: boolean;
+}
+
+export interface WaitForMethodOptions {
+    instanceId?: string;
+    waitTimeoutMs?: number;
+    errorMsg?: string;
 }
 
 export interface ResolverIntentHandler {
@@ -89,4 +101,19 @@ export interface IntentResolverResponse {
 export interface IntentResolverTarget {
     app?: string;
     instance?: string;
+}
+
+export interface StartResolverAppArgs {
+    requestWithResolverInfo: RaiseIntentRequestWithResolverConfig;
+    callerId: string;
+    commandId: string;
+    resolverInstance?: ResolverInstance;
+}
+
+export interface CoreRaiseIntentArgs {
+    request: RaiseIntentRequestWithResolverConfig;
+    resolverInstance: ResolverInstance;
+    timeout: number;
+    commandId: string;
+    callerId: string
 }

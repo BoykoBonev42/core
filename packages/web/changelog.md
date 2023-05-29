@@ -1,3 +1,5 @@
+2.21.0
+feat: add optional 'timeout' and 'waitUserResponseIndefinitely' props in IntentRequest
 2.20.0
 feat: added typings for webPlatform api
 2.19.1
