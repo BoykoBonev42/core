@@ -1,6 +1,6 @@
 {
     "name": "@glue42/workspaces-api",
-    "version": "1.20.5",
+    "version": "1.21.0",
     "description": "Glue42 Core workspaces API",
     "main": "dist/workspaces.umd.js",
     "module": "dist/workspaces.es.js",
@@ -26,7 +26,7 @@
     },
     "license": "MIT",
     "dependencies": {
-        "@glue42/core": "^5.10.2",
+        "@glue42/core": "^5.10.3",
         "callback-registry": "^2.5.2",
         "decoder-validate": "0.0.2",
         "nanoid": "^4.0.0"
