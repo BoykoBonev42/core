@@ -146,6 +146,10 @@ export class GlueController {
         return result;
     }
 
+    public isValidWindowId(id?: string): boolean {
+        return!!(id && this.clientGlue.windows.findById(id));
+    }
+
     public async sendShutDownSignals(): Promise<void> {
 
         const allNonMeWindows = this.clientGlue.windows.list().filter((webWindow) => webWindow.id !== this.platformWindowId);
@@ -170,6 +174,7 @@ export class GlueController {
         }
 
     }
+
 
     public shutdown(): void {
         this.systemGlue.connection.logout();

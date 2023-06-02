@@ -144,8 +144,8 @@ export class IntentsController implements LibController {
 
                 let title: string | undefined;
 
-                if (server.windowId) {
-                    title = await this.ioc.windowsController.getWindowTitle(server.windowId, commandId);
+                if (this.glueController.isValidWindowId(server.windowId)) {
+                    title = await this.ioc.windowsController.getWindowTitle(server.windowId!, commandId);
                 }
 
                 const handler: Glue42Web.Intents.IntentHandler = {
