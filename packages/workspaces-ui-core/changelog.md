@@ -1,3 +1,5 @@
+1.17.1
+chore: changed the exports of workspaces-ui-core to export both esm and umd
 1.17.0
 feat: implemented the onWindowSelected events
 fix: fixed a problem with the rendering of the custom buttons in the group headers

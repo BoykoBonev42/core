@@ -5,6 +5,7 @@ const external = require('rollup-plugin-peer-deps-external');
 const copy = require('rollup-plugin-copy');
 const execute = require('rollup-plugin-execute');
 const del = require('rollup-plugin-delete');
+const packageJson = require('./package.json');
 
 module.exports = [
     {
@@ -26,6 +27,18 @@ module.exports = [
             execute('npm run bundle:css'),
             execute('npm run bundle:scss')
         ],
-        output: [{ dir: 'dist', format: 'es', sourcemap: true }]
+        output: [
+            {
+                file: packageJson.module,
+                format: 'esm',
+                sourcemap: true
+            },
+            {
+                file: packageJson.main,
+                name: 'workspaces-ui-core',
+                format: 'umd',
+                sourcemap: true,
+            }
+        ],
     }
 ];
