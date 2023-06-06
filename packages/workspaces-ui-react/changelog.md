@@ -1,3 +1,5 @@
+2.5.3
+fix: reworked the workspace contents unmounting logic to prevent leaks
 2.5.2
 chore: bump due to dependencies update
 2.5.1

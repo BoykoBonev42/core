@@ -15,8 +15,8 @@ const WorkspaceContents: React.FC<WorkspaceContentsProps> = ({ workspaceId, cont
         containerRef.current?.appendChild(workspaceContents);
 
         return () => {
+            workspaceContents = document.getElementById(`nestHere${workspaceId}`);
             if (!workspaceContents) {
-                console.warn(`Failed to detach element for workspace ${workspaceId}`);
                 return;
             }
             workspaceContents.style.display = "none";
