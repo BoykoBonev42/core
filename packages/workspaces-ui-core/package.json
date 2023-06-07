@@ -1,6 +1,6 @@
 {
     "name": "@glue42/workspaces-ui-core",
-    "version": "1.17.0",
+    "version": "1.17.1",
     "description": "Glue42's vanilla JS implementation of the workspaces ui component",
     "main": "dist/cjs/export.js",
     "module": "dist/esm/export.js",
