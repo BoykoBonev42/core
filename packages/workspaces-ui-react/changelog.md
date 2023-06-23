@@ -1,3 +1,5 @@
+2.5.4
+chore: throwing an error when the frame is started as a normal window in GD
 2.5.3
 fix: reworked the workspace contents unmounting logic to prevent leaks
 2.5.2

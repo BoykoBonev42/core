@@ -7,8 +7,10 @@ class WorkspacesManagerDecorator {
     public init(glue: any, componentFactory: any) {
         if (window.workspacesManager) {
             window.workspacesManager.init(componentFactory);
-        } else {
+        } else if (!window.glue42gd) {
             workspacesManager.init(glue, componentFactory);
+        } else {
+            throw new Error(`Detected an attempt to start a workspaces frame in a normal GD window. The Frame app should be started in a type:"workspaces" application when in Glue42 Desktop`);
         }
     }
 
