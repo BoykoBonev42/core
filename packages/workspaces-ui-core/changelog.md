@@ -1,3 +1,5 @@
+1.18.0
+feat: implemented the onWorkspacesHibernated/Resumed events
 1.17.1
 chore: changed the exports of workspaces-ui-core to export both esm and umd
 1.17.0

@@ -1,3 +1,5 @@
+1.22.0
+feat: added onHibernated/Resumed events for workspaces
 1.21.0
 feat: added onWindowSelected events
 chore: updated the temp.ts types

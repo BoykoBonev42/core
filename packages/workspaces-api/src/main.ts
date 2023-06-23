@@ -205,6 +205,32 @@ export const composeAPI = (glue: any, ioc: IoC): API => {
         return unsubscribe;
     };
 
+    const onWorkspaceHibernated = async (callback: (workspace: Glue42Workspaces.Workspace) => void): Promise<Glue42Workspaces.Unsubscribe> => {
+        checkThrowCallback(callback);
+
+        const wrappedCallback = async (payload: WorkspaceStreamData): Promise<void> => {
+            const workspace = await controller.transformStreamPayloadToWorkspace(payload);
+
+            callback(workspace);
+        };
+
+        const unsubscribe = await controller.processGlobalSubscription(wrappedCallback, "workspace", "hibernated");
+        return unsubscribe;
+    };
+
+    const onWorkspaceResumed = async (callback: (workspace: Glue42Workspaces.Workspace) => void): Promise<Glue42Workspaces.Unsubscribe> => {
+        checkThrowCallback(callback);
+
+        const wrappedCallback = async (payload: WorkspaceStreamData):  Promise<void> => {
+            const workspace = await controller.transformStreamPayloadToWorkspace(payload);
+
+            callback(workspace);
+        };
+
+        const unsubscribe = await controller.processGlobalSubscription(wrappedCallback, "workspace", "resumed");
+        return unsubscribe;
+    };
+
     const onWindowAdded = async (callback: (swimlaneWindow: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe> => {
         checkThrowCallback(callback);
         const wrappedCallback = async (payload: WindowStreamData): Promise<void> => {
@@ -376,6 +402,8 @@ export const composeAPI = (glue: any, ioc: IoC): API => {
         onFrameClosed,
         onWorkspaceOpened,
         onWorkspaceClosed,
+        onWorkspaceHibernated,
+        onWorkspaceResumed,
         onWindowAdded,
         onWindowLoaded,
         onWindowRemoved,

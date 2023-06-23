@@ -619,6 +619,15 @@ export class WorkspacesManager {
             uiExecutor.hideWorkspaceSaveButton({ workspaceTab: workspaceContentItem.tab });
             uiExecutor.showWorkspaceIconButton({ workspaceTab: workspaceContentItem.tab, icon: wrapper.icon });
         }
+
+        this.workspacesEventEmitter.raiseWorkspaceEvent({
+            action:"resumed",
+            payload:{
+                frameSummary: this.getFrameSummary(this.frameId),
+                workspaceSummary: this.stateResolver.getWorkspaceSummary(workspaceId),
+                frameBounds: this.stateResolver.getFrameBounds()
+            }
+        });
     }
 
     public lockWorkspace(lockConfig: LockWorkspaceArguments): void {
@@ -861,7 +870,7 @@ export class WorkspacesManager {
             throw new Error(`Cannot hibernate workspace ${workspace.id} because its empty`);
         }
 
-        const snapshot = await this.stateResolver.getWorkspaceConfig(workspace.id);
+        const snapshot =  this.stateResolver.getWorkspaceConfig(workspace.id);
 
         workspace.hibernatedWindows = workspace.windows;
         (snapshot.workspacesOptions as any).isHibernated = true;
@@ -876,6 +885,15 @@ export class WorkspacesManager {
         store.removeLayout(workspace.id);
 
         this._controller.showHibernationIcon(workspaceId);
+
+        this.workspacesEventEmitter.raiseWorkspaceEvent({
+            action:"hibernated",
+            payload:{
+                frameSummary: this.getFrameSummary(this.frameId),
+                workspaceSummary: this.stateResolver.getWorkspaceSummary(workspaceId),
+                frameBounds: this.stateResolver.getFrameBounds()
+            }
+        });
 
         return snapshot;
     }

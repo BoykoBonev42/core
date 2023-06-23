@@ -479,6 +479,46 @@ export class Workspace implements WorkspaceTemp {
         return unsubscribe;
     }
 
+    public async onHibernated(callback: () => void): Promise<Glue42Workspaces.Unsubscribe> {
+        checkThrowCallback(callback);
+        const id = getData(this).id;
+
+        const wrappedCallback = async (): Promise<void> => {
+            await this.refreshReference();
+            callback();
+        };
+        const config: SubscriptionConfig = {
+            action: "hibernated",
+            eventType: "workspace",
+            scope: "workspace",
+            scopeId: id,
+            callback: wrappedCallback
+        };
+
+        const unsubscribe = await getData(this).controller.processLocalSubscription(config, id);
+        return unsubscribe;
+    }
+
+    public async onResumed(callback: () => void): Promise<Glue42Workspaces.Unsubscribe> {
+        checkThrowCallback(callback);
+        const id = getData(this).id;
+
+        const wrappedCallback = async (): Promise<void> => {
+            await this.refreshReference();
+            callback();
+        };
+        const config: SubscriptionConfig = {
+            action: "resumed",
+            eventType: "workspace",
+            scope: "workspace",
+            scopeId: id,
+            callback: wrappedCallback
+        };
+
+        const unsubscribe = await getData(this).controller.processLocalSubscription(config, id);
+        return unsubscribe;
+    }
+
     public async onWindowAdded(callback: (window: Glue42Workspaces.WorkspaceWindow) => void): Promise<Glue42Workspaces.Unsubscribe> {
         checkThrowCallback(callback);
         const id = getData(this).id;

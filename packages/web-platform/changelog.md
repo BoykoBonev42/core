@@ -1,3 +1,5 @@
+1.26.2
+feat: updated the decoders to support the onWorkspaceHibernated/Resumed events
 1.26.1
 fix: retrieving all intents when the platform is a frame and adds a listener at runtime
 1.26.0

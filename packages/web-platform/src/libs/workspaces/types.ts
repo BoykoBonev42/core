@@ -14,7 +14,7 @@ export interface WorkspaceWindowData {
 
 export type WorkspaceEventType = "frame" | "workspace" | "container" | "window";
 export type WorkspaceEventScope = "global" | "frame" | "workspace" | "window";
-export type WorkspaceEventAction = "opened" | "closing" | "closed" | "focus" | "added" | "loaded" | "removed" | "childrenUpdate" | "containerChange" | "maximized" | "restored" | "minimized" | "normal" | "selected";
+export type WorkspaceEventAction = "opened" | "closing" | "closed" | "focus" | "added" | "loaded" | "removed" | "childrenUpdate" | "containerChange" | "maximized" | "restored" | "minimized" | "normal" | "selected" | "hibernated" | "resumed";
 export interface WorkspaceEventPayload {
     action: WorkspaceEventAction;
     type: WorkspaceEventType;

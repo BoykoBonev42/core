@@ -4,7 +4,7 @@ import { FrameStreamData, WorkspaceStreamData, ContainerStreamData, WindowStream
 
 export type WorkspaceEventType = "frame" | "workspace" | "container" | "window";
 export type WorkspaceEventScope = "global" | "frame" | "workspace" | "container" | "window";
-export type WorkspaceEventAction = "opened" | "closing" | "closed" | "focus" | "added" | "loaded" | "removed" | "childrenUpdate" | "containerChange" | "maximized" | "restored" | "minimized" | "normal" | "selected" | "lock-configuration-changed";
+export type WorkspaceEventAction = "opened" | "closing" | "closed" | "focus" | "added" | "loaded" | "removed" | "childrenUpdate" | "containerChange" | "maximized" | "restored" | "minimized" | "normal" | "selected" | "lock-configuration-changed"| "hibernated"|"resumed";
 export type WorkspacePayload = FrameStreamData | WorkspaceStreamData | ContainerStreamData | WindowStreamData;
 
 export interface SubscriptionConfig {
