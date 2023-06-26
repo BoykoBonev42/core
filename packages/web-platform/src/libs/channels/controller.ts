@@ -14,7 +14,7 @@ export class ChannelsController implements LibController {
     private operations: { [key in ChannelOperationTypes]: BridgeOperation } = {
         addChannel: { name: "addChannel", execute: this.addChannel.bind(this), dataDecoder: channelContextDecoder },
         operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) },
-        getWindowsWithChannels: {name: "linkWindowToChannel", execute: this.getWindowsWithChannels.bind(this), dataDecoder: windowWithChannelFilterDecoder, resultDecoder: GetWindowOnChannelInfoDecoder}
+        getWindowsWithChannels: {name: "getWindowsWithChannels", execute: this.getWindowsWithChannels.bind(this), dataDecoder: windowWithChannelFilterDecoder, resultDecoder: GetWindowOnChannelInfoDecoder}
     };
 
     constructor(

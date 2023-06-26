@@ -360,7 +360,7 @@ export class WindowsController implements LibController {
         const windowData = this.sessionController.getWindowDataById(data.windowId);
         
         if (!windowData) {
-            throw new Error(`Cannot get the title of window: ${data.windowId}, because it is does not exist for the platform`);
+            throw new Error(`Cannot get the channel of window: ${data.windowId}, because it does not exist for the platform`);
         }
 
         return  {
@@ -373,7 +373,7 @@ export class WindowsController implements LibController {
         const windowData = this.sessionController.getWindowDataById(data.windowId);
 
         if (!windowData) {
-            throw new Error(`Cannot set channel of window: ${data.windowId}, because it is does not exist for the platform`);
+            throw new Error(`Cannot set channel of window: ${data.windowId}, because it does not exist for the platform`);
         }
 
         windowData.channel = data.channel;
