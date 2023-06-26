@@ -6,17 +6,20 @@ import { BridgeOperation, InternalPlatformConfig, LibController, OperationCheckC
 import { GlueController } from "../../controllers/glue";
 import logger from "../../shared/logger";
 import { ChannelContextPrefix } from "../../common/constants";
-import { channelContextDecoder, channelOperationDecoder, ChannelOperationTypes } from "./decoders";
+import { channelContextDecoder, channelOperationDecoder, ChannelOperationTypes, GetWindowOnChannelInfoDecoder, windowWithChannelFilterDecoder } from "./decoders";
 import { operationCheckConfigDecoder, operationCheckResultDecoder } from "../../shared/decoders";
+import { WindowsController } from "../windows/controller";
 
 export class ChannelsController implements LibController {
     private operations: { [key in ChannelOperationTypes]: BridgeOperation } = {
         addChannel: { name: "addChannel", execute: this.addChannel.bind(this), dataDecoder: channelContextDecoder },
-        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) }
+        operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) },
+        getWindowsWithChannels: {name: "linkWindowToChannel", execute: this.getWindowsWithChannels.bind(this), dataDecoder: windowWithChannelFilterDecoder, resultDecoder: GetWindowOnChannelInfoDecoder}
     };
 
     constructor(
-        private readonly glueController: GlueController
+        private readonly glueController: GlueController,
+        private readonly windowsController: WindowsController
     ) { }
 
     private get logger(): Glue42Core.Logger.API | undefined {
@@ -73,6 +76,44 @@ export class ChannelsController implements LibController {
         const isSupported = operations.some((operation) => operation.toLowerCase() === config.operation.toLowerCase());
 
         return { isSupported };
+    }
+
+    private async getWindowsWithChannels(filter: Glue42Web.Channels.WindowWithChannelFilter): Promise<{windows: Glue42Web.Channels.WindowIdOnChannelInfo[]}> {
+        let result: Glue42Web.Channels.WindowIdOnChannelInfo[];
+
+        const windowsList  = this.glueController.clientGlue.windows.list();
+
+        const windowsWithChannels = (await Promise.all(windowsList.map(async (w) => {
+            const channel = await this.windowsController.getChannel({ windowId: w.id});
+
+            if (channel) {
+                return {
+                    application: w.name,
+                    windowId: w.id,
+                    channel
+                };
+            }
+        }))).filter((w): w is Glue42Web.Channels.WindowIdOnChannelInfo => !!w);
+
+        if (filter) {
+            result = windowsWithChannels.filter(w => {
+                let match = true;
+
+                if (filter.application) {
+                    match = filter.application === w.application;
+                } else if (filter.windowIds) {
+                    match = filter.windowIds.indexOf(w.windowId) !== -1;
+                } else if (filter.channels) {
+                    match = filter.channels.indexOf(w.channel) !== -1;
+                }
+
+                return match;
+            });
+        } else {
+            result = windowsWithChannels;
+        }
+
+        return { windows: result };
     }
 
     private async setupChannels(channels: Glue42WebPlatform.Channels.ChannelDefinition[]): Promise<void> {

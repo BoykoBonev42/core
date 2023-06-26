@@ -114,6 +114,7 @@ export interface SessionWindowData {
     initialContext?: any;
     layoutComponentId?: string;
     selfAssigned?: boolean;
+    channel?: string;
 }
 
 export interface WorkspaceWindowSession {

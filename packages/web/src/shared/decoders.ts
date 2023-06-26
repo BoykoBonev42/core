@@ -3,7 +3,7 @@ import { Decoder, string, number, object, constant, oneOf, optional, array, bool
 import { Glue42Web } from "../../web";
 import { AppsImportOperation, AppHelloSuccess, ApplicationData, ApplicationStartConfig, AppManagerOperationTypes, AppRemoveConfig, BaseApplicationData, BasicInstanceData, InstanceData, AppsExportOperation, FDC3Definition, AppDirectoryStateChange } from "../appManager/protocol";
 import { AllLayoutsFullConfig, AllLayoutsSummariesResult, GetAllLayoutsConfig, LayoutsImportConfig, LayoutsOperationTypes, OptionalSimpleLayoutResult, RestoreLayoutConfig, SaveLayoutConfig, SaveRequestClientResponse, PlatformSaveRequestConfig, SimpleLayoutConfig, SimpleLayoutResult, PermissionStateResult, SimpleAvailabilityResult } from "../layouts/protocol";
-import { HelloSuccess, OpenWindowConfig, CoreWindowData, WindowHello, WindowOperationTypes, SimpleWindowCommand, WindowTitleConfig, WindowBoundsResult, WindowMoveResizeConfig, WindowUrlResult, FrameWindowBoundsResult, FocusEventData } from "../windows/protocol";
+import { HelloSuccess, OpenWindowConfig, CoreWindowData, WindowHello, WindowOperationTypes, SimpleWindowCommand, WindowTitleConfig, WindowBoundsResult, WindowMoveResizeConfig, WindowUrlResult, FrameWindowBoundsResult, FocusEventData, WindowChannelConfig } from "../windows/protocol";
 import { IntentsOperationTypes, WrappedIntentFilter, WrappedIntents } from "../intents/protocol";
 import { IntentResolverResponse, LibDomains, OperationCheckConfig, OperationCheckResult, SimpleItemIdRequest, WorkspaceFrameBoundsResult, IntentRequestWithResolverInfo, IntentRequestResolverConfig } from "./types";
 import { AllNotificationsData, NotificationEventPayload, NotificationsOperationTypes, PermissionQueryResult, PermissionRequestResult, RaiseNotification, SimpleNotificationData, SimpleNotificationSelect } from "../notifications/protocol";
@@ -140,6 +140,11 @@ export const helloSuccessDecoder: Decoder<HelloSuccess> = object({
 export const windowTitleConfigDecoder: Decoder<WindowTitleConfig> = object({
     windowId: nonEmptyStringDecoder,
     title: string()
+});
+
+export const windowChannelConfigDecoder: Decoder<WindowChannelConfig> = object({
+    windowId: nonEmptyStringDecoder,
+    channel: string(),
 });
 
 export const focusEventDataDecoder: Decoder<FocusEventData> = object({
@@ -710,6 +715,25 @@ export const channelContextDecoder: Decoder<Glue42Web.Channels.ChannelContext> =
     data: optional(object()),
 });
 
+
+export const windowWithChannelFilterDecoder: Decoder<Glue42Web.Channels.WindowWithChannelFilter | undefined> = optional(object({
+    application: optional(string()),
+    windowIds: optional(array(string())),
+    channels: optional(array(string()))
+}));
+
+export const WindowIdOnChannelInfoDecoder: Decoder<Glue42Web.Channels.WindowIdOnChannelInfo> = object({
+    windowId: string(),
+    channel: string(),
+    application: string()
+});
+
+export const WindowIdOnChannelInfoArrayDecoder: Decoder<Glue42Web.Channels.WindowIdOnChannelInfo[]> = array(WindowIdOnChannelInfoDecoder);
+
+
+export const GetWindowOnChannelInfoDecoder: Decoder<{windows: Glue42Web.Channels.WindowIdOnChannelInfo[]}> = object({
+    windows: WindowIdOnChannelInfoArrayDecoder
+});
 
 export const raiseNotificationDecoder: Decoder<RaiseNotification> = object({
     settings: glue42NotificationOptionsDecoder,

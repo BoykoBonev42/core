@@ -3,7 +3,7 @@ import { Glue42Web } from "@glue42/web";
 export type WindowOperationsTypes = "openWindow" |
     "windowHello" | "getUrl" | "getTitle" | "setTitle" |
     "moveResize" | "focus" | "close" | "getBounds" | "getFrameBounds" |
-    "registerWorkspaceWindow" | "unregisterWorkspaceWindow" | "operationCheck" | "focusChange";
+    "registerWorkspaceWindow" | "unregisterWorkspaceWindow" | "operationCheck" | "focusChange" | "getChannel" | "setChannel";
 
 export interface OpenWindowConfig {
     name: string;
@@ -28,6 +28,11 @@ export interface SimpleWindowCommand {
 export interface WindowTitleConfig {
     windowId: string;
     title: string;
+}
+
+export interface WindowChannelConfig {
+    windowId: string;
+    channel?: string;
 }
 
 export interface WindowMoveResizeConfig {

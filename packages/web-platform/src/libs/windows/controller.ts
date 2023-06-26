@@ -6,9 +6,9 @@ import { BridgeOperation, FocusEventData, InternalPlatformConfig, LibController,
 import { GlueController } from "../../controllers/glue";
 import { SessionStorageController } from "../../controllers/session";
 import { PromiseWrap } from "../../shared/promisePlus";
-import { frameWindowBoundsResultDecoder, openWindowConfigDecoder, simpleWindowDecoder, windowBoundsResultDecoder, windowMoveResizeConfigDecoder, windowOperationDecoder, windowTitleConfigDecoder, windowUrlResultDecoder } from "./decoders";
+import { frameWindowBoundsResultDecoder, openWindowConfigDecoder, simpleWindowDecoder, windowBoundsResultDecoder, windowChannelConfigDecoder, windowMoveResizeConfigDecoder, windowOperationDecoder, windowTitleConfigDecoder, windowUrlResultDecoder } from "./decoders";
 import { WindowsStateController } from "../../controllers/state";
-import { HelloSuccess, OpenWindowConfig, OpenWindowSuccess, SelfAssignedWindowData, SimpleWindowCommand, WindowBoundsResult, WindowMoveResizeConfig, WindowOperationsTypes, WindowTitleConfig, WindowUrlResult } from "./types";
+import { HelloSuccess, OpenWindowConfig, OpenWindowSuccess, SelfAssignedWindowData, SimpleWindowCommand, WindowBoundsResult, WindowChannelConfig, WindowMoveResizeConfig, WindowOperationsTypes, WindowTitleConfig, WindowUrlResult } from "./types";
 import { getRelativeBounds } from "../../shared/utils";
 import logger from "../../shared/logger";
 import { WorkspaceWindowData } from "../workspaces/types";
@@ -35,7 +35,9 @@ export class WindowsController implements LibController {
         registerWorkspaceWindow: { name: "registerWorkspaceWindow", dataDecoder: workspaceWindowDataDecoder, execute: this.registerWorkspaceWindow.bind(this) },
         unregisterWorkspaceWindow: { name: "unregisterWorkspaceWindow", dataDecoder: simpleWindowDecoder, execute: this.handleWorkspaceClientRemoval.bind(this) },
         operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder, execute: this.handleOperationCheck.bind(this) },
-        focusChange: { name: "focusChange", dataDecoder: focusEventDataDecoder, execute: this.handleFocusEvent.bind(this) }
+        focusChange: { name: "focusChange", dataDecoder: focusEventDataDecoder, execute: this.handleFocusEvent.bind(this) },
+        getChannel: {name: "getChannel", dataDecoder: simpleWindowDecoder, resultDecoder: windowChannelConfigDecoder, execute: this.handleGetChannel.bind(this) },
+        setChannel: {name: "setChannel", dataDecoder: windowChannelConfigDecoder, execute: this.handleSetChannel.bind(this) }
     };
 
     constructor(
@@ -124,6 +126,12 @@ export class WindowsController implements LibController {
     public async getWindowBounds(windowId: string, commandId: string): Promise<Glue42Web.Windows.Bounds> {
         const boundsResult = await this.handleGetBounds({ windowId }, commandId);
         return boundsResult.bounds;
+    }
+
+    public async getChannel(data: SimpleWindowCommand): Promise<string | undefined> {
+        const windowData = await this.handleGetChannel(data);
+
+        return windowData.channel;
     }
 
     public async processNewWindow(windowData: SessionWindowData, context?: any, childWindow?: Window): Promise<void> {
@@ -348,6 +356,34 @@ export class WindowsController implements LibController {
         await PromiseWrap<void>(() => this.glueController.callWindow<WindowTitleConfig, void>("windows", this.operations.setTitle, data, { windowId: data.windowId }), this.clientResponseTimeoutMs, timeoutMessage);
     }
 
+    private async handleGetChannel(data: SimpleWindowCommand): Promise<WindowChannelConfig> {
+        const windowData = this.sessionController.getWindowDataById(data.windowId);
+        
+        if (!windowData) {
+            throw new Error(`Cannot get the title of window: ${data.windowId}, because it is does not exist for the platform`);
+        }
+
+        return  {
+            windowId: data.windowId,
+            channel: windowData.channel
+        };
+    }
+
+    private handleSetChannel(data: WindowChannelConfig): Promise<void> {
+        const windowData = this.sessionController.getWindowDataById(data.windowId);
+
+        if (!windowData) {
+            throw new Error(`Cannot set channel of window: ${data.windowId}, because it is does not exist for the platform`);
+        }
+
+        windowData.channel = data.channel;
+
+        this.sessionController.removeWindowData(data.windowId);
+        this.sessionController.saveWindowData(windowData);
+
+        return Promise.resolve();
+    }
+    
     private async handleMoveResize(data: WindowMoveResizeConfig, commandId: string): Promise<void> {
         const workspaceClient = this.sessionController.getWorkspaceClientById(data.windowId);
 

@@ -53,6 +53,11 @@ export interface WindowTitleConfig {
     title: string;
 }
 
+export interface WindowChannelConfig {
+    windowId: string;
+    channel?: string;
+}
+
 export interface WindowMoveResizeConfig {
     windowId: string;
     top?: number;

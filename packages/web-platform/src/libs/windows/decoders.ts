@@ -1,8 +1,8 @@
 import { boolean, constant, Decoder, number, object, oneOf, optional, string } from "decoder-validate";
 import { nonEmptyStringDecoder, nonNegativeNumberDecoder, windowBoundsDecoder, windowOpenSettingsDecoder } from "../../shared/decoders";
-import { FrameWindowBoundsResult, OpenWindowConfig, OpenWindowSuccess, SimpleWindowCommand, WindowBoundsResult, WindowMoveResizeConfig, WindowOperationsTypes, WindowTitleConfig, WindowUrlResult } from "./types";
+import { FrameWindowBoundsResult, OpenWindowConfig, OpenWindowSuccess, SimpleWindowCommand, WindowBoundsResult, WindowChannelConfig, WindowMoveResizeConfig, WindowOperationsTypes, WindowTitleConfig, WindowUrlResult } from "./types";
 
-export const windowOperationDecoder: Decoder<WindowOperationsTypes> = oneOf<"openWindow" | "windowHello" | "getUrl" | "getTitle" | "setTitle" | "moveResize" | "focus" | "close" | "getBounds" | "getFrameBounds" | "registerWorkspaceWindow" | "unregisterWorkspaceWindow" | "operationCheck" | "focusChange">(
+export const windowOperationDecoder: Decoder<WindowOperationsTypes> = oneOf<"openWindow" | "windowHello" | "getUrl" | "getTitle" | "setTitle" | "moveResize" | "focus" | "close" | "getBounds" | "getFrameBounds" | "registerWorkspaceWindow" | "unregisterWorkspaceWindow" | "operationCheck" | "focusChange" | "setChannel">(
     constant("openWindow"),
     constant("windowHello"),
     constant("getUrl"),
@@ -16,7 +16,8 @@ export const windowOperationDecoder: Decoder<WindowOperationsTypes> = oneOf<"ope
     constant("registerWorkspaceWindow"),
     constant("unregisterWorkspaceWindow"),
     constant("operationCheck"),
-    constant("focusChange")
+    constant("focusChange"),
+    constant("setChannel")
 );
 
 export const openWindowConfigDecoder: Decoder<OpenWindowConfig> = object({
@@ -60,5 +61,10 @@ export const windowMoveResizeConfigDecoder: Decoder<WindowMoveResizeConfig> = ob
 export const windowTitleConfigDecoder: Decoder<WindowTitleConfig> = object({
     windowId: nonEmptyStringDecoder,
     title: string()
+});
+
+export const windowChannelConfigDecoder: Decoder<WindowChannelConfig> = object({
+    windowId: nonEmptyStringDecoder,
+    channel: string()
 });
 

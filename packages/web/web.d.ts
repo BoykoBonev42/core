@@ -828,6 +828,24 @@ export namespace Glue42Web {
             get(name: string): Promise<ChannelContext>;
 
             /**
+             * Returns the context of the current channel.
+             * @returns Promise that resolves with the context of the current channel. Undefined if not on a channel.
+             */
+            getMy(): Promise<ChannelContext | undefined>;
+
+            /**
+             * Returns all windows on a give channel
+             */
+            getWindowsOnChannel(channel: string): Promise<Glue42Web.Windows.WebWindow[]>;
+
+            /**
+             * Returns windows info together with their current channel.
+             * If no filter is set will return all channel enabled windows.
+             * @param filter if set will limit the result to windows matching the criteria
+             */
+            getWindowsWithChannels(filter?: WindowWithChannelFilter): Promise<WindowOnChannelInfo[]>;
+
+            /**
              * Joins a new channel by name. Leaves the current channel.
              * @param name The name of the channel to join.
              * @returns Promise that resolves when the channel has been joined.
@@ -887,6 +905,33 @@ export namespace Glue42Web {
             meta: any;
             /** Channel data. */
             data: any;
+        }
+
+        export interface WindowIdOnChannelInfo {
+            windowId: string;
+            // the channel that the window is currently on - might be undefined if channel is not selected
+            channel: string;
+            // the name of the window's application - shortcut for window.application.name
+            application: string;
+        }
+
+        export interface WindowOnChannelInfo {
+            // the actual window
+            window: Glue42Web.Windows.WebWindow;
+
+            // the channel that the window is currently on - might be undefined if channel is not selected
+            channel: string;
+            // the name of the window's application - shortcut for window.application.name
+            application: string;
+        }
+
+        export interface WindowWithChannelFilter {
+            // if set only windows that are instances of the specified application
+            application?: string;
+            // if set will return only the list of specified window
+            windowIds?: string[];
+            // if set will return only windows that are on the listed channels
+            channels?: string[];
         }
     }
 

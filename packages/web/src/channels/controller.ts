@@ -13,6 +13,8 @@ import { latestFDC3Type } from "../shared/constants";
 import { IoC } from "../shared/ioc";
 import { GlueBridge } from "../communication/bridge";
 import { operations } from "./protocol";
+import { WindowsController } from "../windows/controller";
+import { WindowChannelConfig } from "../windows/protocol";
 
 export class ChannelsController implements LibController {
     private readonly registry: CallbackRegistry = CallbackRegistryFactory();
@@ -25,6 +27,8 @@ export class ChannelsController implements LibController {
     private readonly GlueWebChannelsPrefix = "___channel___";
     private readonly SubsKey = "subs";
     private readonly ChangedKey = "changed";
+    private windowsController!: WindowsController;
+    private coreGlue!: Glue42Web.API;
 
     public handlePlatformShutdown(): void {
         this.registry.clear();
@@ -39,11 +43,15 @@ export class ChannelsController implements LibController {
 
         this.bridge = ioc.bridge;
 
+        this.windowsController = ioc.windowsController;
+
         this.logger.trace("no need for platform registration, attaching the channels property to glue and returning");
 
         const api = this.toApi();
 
         (coreGlue as Glue42Web.API).channels = api;
+
+        this.coreGlue = coreGlue as Glue42Web.API;
     }
 
     public async handleBridgeMessage(): Promise<void> {
@@ -91,7 +99,10 @@ export class ChannelsController implements LibController {
             my: this.my.bind(this),
             changed: this.changed.bind(this),
             onChanged: this.onChanged.bind(this),
-            add: this.add.bind(this)
+            add: this.add.bind(this),
+            getMy: this.getMy.bind(this),
+            getWindowsOnChannel: this.getWindowsOnChannel.bind(this),
+            getWindowsWithChannels: this.getWindowsWithChannels.bind(this)
         };
 
         return Object.freeze(api);
@@ -124,6 +135,10 @@ export class ChannelsController implements LibController {
 
         // TODO: Should be set after `subscribe()` has resolved, but due to an issue where `subscribe()` replays the context before returning an unsubscribe function this has been moved here.
         this.currentChannelName = name;
+
+        const myWindow = this.windowsController.my();
+
+        await this.bridge.send<WindowChannelConfig, void>("windows", operations.setChannel, {windowId: myWindow.id, channel: name});
 
         // When joining a channel (and not leaving).
         if (typeof name !== "undefined") {
@@ -271,6 +286,57 @@ export class ChannelsController implements LibController {
         await this.bridge.send<Glue42Web.Channels.ChannelContext, void>("channels", operations.addChannel, channelContext);
 
         return channelContext;
+    }
+
+    private async getMy(): Promise<Glue42Web.Channels.ChannelContext | undefined> {
+        const currentChannel = this.current();
+
+        if (!currentChannel) {
+            return Promise.resolve(undefined);
+        }
+
+        return this.get(currentChannel);
+    }
+
+    private async getWindowsOnChannel(channel: string): Promise<Glue42Web.Windows.WebWindow[]> {
+        if (typeof channel !== "string") {
+            throw new Error("Please provide the channel name as a string");
+        }
+
+        const windowsWithChannels = await this.getWindowsWithChannels({channels: [channel]});
+
+        const result = windowsWithChannels.map(w => w.window);
+
+        return result;
+    }
+
+    private async getWindowsWithChannels(filter?: Glue42Web.Channels.WindowWithChannelFilter): Promise<Glue42Web.Channels.WindowOnChannelInfo[]> {
+        const windowsWithChannels = await this.bridge.send<Glue42Web.Channels.WindowWithChannelFilter | undefined, {windows: Glue42Web.Channels.WindowIdOnChannelInfo[]}>("channels", operations.getWindowsWithChannels, filter);
+      
+        const windowsList = this.coreGlue.windows.list();
+
+        const result =
+            windowsWithChannels?.windows
+                ?.map((w) => {
+                    const webWindow = windowsList.find(
+                        (x) => x.id === w.windowId
+                    );
+                    let windowWithChannel = null;
+
+                    if (webWindow) {
+                        windowWithChannel = {
+                            window: windowsList.find(
+                                (x) => x.id === w.windowId
+                            ),
+                            channel: w.channel,
+                            application: w.application,
+                        };
+                    }
+
+                    return windowWithChannel;
+                }).filter((w): w is Glue42Web.Channels.WindowOnChannelInfo => !!w) || [];
+
+        return result;
     }
 
     private replaySubscribe = (callback: (data: any, context: Glue42Web.Channels.ChannelContext, updaterId: string) => void,  channelId: string) => {

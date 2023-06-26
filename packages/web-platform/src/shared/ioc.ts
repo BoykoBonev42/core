@@ -251,7 +251,8 @@ export class IoC {
     public get channelsController(): ChannelsController {
         if (!this._channelsController) {
             this._channelsController = new ChannelsController(
-                this.glueController
+                this.glueController,
+                this.windowsController
             );
         }
 
